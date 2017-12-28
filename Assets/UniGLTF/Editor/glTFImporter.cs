@@ -92,8 +92,7 @@ namespace UniGLTF
             {
                 case 5123: // GL_UNSIGNED_SHORT:
                     {
-                        var indices = new ushort[bytes.Count / SizeOfComponentType(accessor.componentType)];
-                        bytes.MarshalCoyTo(indices);
+                        var indices = GetAttrib<UInt16>(accessor, bytes);
                         return indices.Select(x => (int)x).ToArray();
                     }
             }
@@ -106,6 +105,11 @@ namespace UniGLTF
             var attrib = new T[accessor.count];
             bytes.MarshalCoyTo(attrib);
             return attrib;
+        }
+
+        static ArraySegment<Byte> GetBytes(Byte[][] bytesList, BufferView view)
+        {
+            return new ArraySegment<Byte>(bytesList[view.buffer], view.byteOffset, view.byteLength);
         }
 
         //Byte[] GetBuffers(Osaru.IParser<Json>)
@@ -144,12 +148,14 @@ namespace UniGLTF
                     foreach(var prim in meshJson["primitives"].ListItems)
                     {
                         var indexBuffer = prim["indices"].GetInt32();
-                        Debug.LogFormat("indices => {0}", indexBuffer);
+                        //Debug.LogFormat("indices => {0}", indexBuffer);
                         var attribs = prim["attributes"].ObjectItems.ToDictionary(x => x.Key, x => x.Value.GetInt32());
+                        /*
                         foreach (var kv in attribs)
                         {
                             Debug.LogFormat("{0} => {1}", kv.Key, kv.Value);
                         }
+                        */
 
                         var buffers =  DeserializeJsonList<Buffer>(parsed["buffers"]);
                         var bufferViews = DeserializeJsonList<BufferView>(parsed["bufferViews"]);
@@ -158,30 +164,32 @@ namespace UniGLTF
                         var bytesList = buffers.Select(x => x.GetBytes(Path.GetDirectoryName(ctx.assetPath))).ToArray();
 
                         var mesh = new Mesh();
+                        mesh.name = "UniGLTF import";
 
                         var vertexAccessor = accessors[attribs["POSITION"]];
-                        var vertexView = bufferViews[vertexAccessor.bufferView];
-                        var vertexBytes = new ArraySegment<Byte>(bytesList[vertexView.buffer], vertexView.byteOffset, vertexView.byteLength);
+                        var vertexBytes = GetBytes(bytesList, bufferViews[vertexAccessor.bufferView]);
                         mesh.vertices = GetAttrib<Vector3>(vertexAccessor, vertexBytes);
 
+                        var normalAccessor = accessors[attribs["NORMAL"]];
+                        var normalBytes = GetBytes(bytesList, bufferViews[normalAccessor.bufferView]);
+                        mesh.normals = GetAttrib<Vector3>(normalAccessor, normalBytes);
+
                         var indexAccessor = accessors[indexBuffer];
-                        var indexView = bufferViews[indexAccessor.bufferView];
-                        var indexBytes = new ArraySegment<Byte>(bytesList[indexView.buffer], indexView.byteOffset, indexView.byteLength);
+                        var indexBytes = GetBytes(bytesList, bufferViews[indexAccessor.bufferView]);
                         var indices = GetIndices(indexAccessor, indexBytes);
-                        //indexBytes.MarshalCoyTo(indices);
                         mesh.SetIndices(indices, MeshTopology.Triangles, 0);
 
                         ctx.AddObjectToAsset("mesh", mesh);
-                        //var bufferView = bufferViews[bytesList]
 
-                        /*
+                        var shader = Shader.Find("Standard");
+                        var material = new Material(shader);
+                        ctx.AddObjectToAsset("material", material);
 
-                        // indices
-                        var indicesAccessor = accessors[attribs["indices"]];
-                        var indicesBufferView = parsed["bufferViews"][indicesAccessor["bufferView"].GetInt32()];
-                        //var buffers = GetBuffers(parsed["buffers"]);
+                        var renderer = go.AddComponent<MeshRenderer>();
+                        renderer.sharedMaterials = new[] { material };
 
-                        */
+                        var filter = go.AddComponent<MeshFilter>();
+                        filter.sharedMesh = mesh;
                     }
                 }
 
