@@ -153,97 +153,58 @@ namespace UniGLTF
             return new ArraySegment<Byte>(bytesList[view.buffer], view.byteOffset, view.byteLength);
         }
 
-        static GameObject ReadRoot(string assetsPath, string json)
+        static Mesh ToMesh(byte[][] bytesList, 
+            Accessor[] accessors, 
+            BufferView[] bufferViews, 
+            JsonParser meshJson, int i)
         {
-            var parsed = json.ParseAsJson();
+            //Debug.Log(prims.ToJson());
+            var mesh = new Mesh();
+            mesh.name = string.Format("UniGLTF import#{0}", i);
 
-            // asset
-            var asset = parsed["asset"];
-            var generator = "unknown";
-            if(parsed.ObjectItems.Any(x => x.Key== "generator"))
+            if (meshJson["primitives"].ListItems.Count()>1)
             {
-                generator = parsed["generator"].GetString();
-            }
-            var version = float.Parse(asset["version"].GetString());
-            if (version != 2.0f)
-            {
-                throw new NotImplementedException(string.Format("unknown version: {0}", version));
-            }
-            Debug.LogFormat("{0}: glTF-{1}", generator, version);
-
-            // scene;
-            var scene = default(JsonParser);
-            if(parsed.ObjectItems.Any(x => x.Key == "scene"))
-            {
-                scene = parsed["scenes"][parsed["scene"].GetInt32()];
-            }
-            else
-            {
-                scene = parsed["scenes"][0];
+                throw new NotImplementedException("multi primitives");
             }
 
-            // buffer
-            var buffers = DeserializeJsonList<Buffer>(parsed["buffers"]);
-            var bufferViews = DeserializeJsonList<BufferView>(parsed["bufferViews"]);
-            var accessors = DeserializeJsonList<Accessor>(parsed["accessors"]);
-            var bytesList = buffers.Select(x => x.GetBytes(Path.GetDirectoryName(assetsPath))).ToArray();
-
-            // nodes
-            var root = new GameObject("_root_");
-            int i = 0;
-            foreach (var n in scene["nodes"].ListItems.Select(x => x.GetInt32()))
+            foreach (var prim in meshJson["primitives"].ListItems)
             {
-                //Debug.LogFormat("nodes: {0}", String.Join(", ", nodes.Select(x => x.ToString()).ToArray()));
-                var node = parsed["nodes"][n];
-                var meshJson = parsed["meshes"][node["mesh"].GetInt32()];
-
-                var go = new GameObject(string.Format("node{0}", i++));
-                go.transform.SetParent(root.transform, false);
-
-                //Debug.Log(prims.ToJson());
-                foreach (var prim in meshJson["primitives"].ListItems)
+                var indexBuffer = prim["indices"].GetInt32();
+                //Debug.LogFormat("indices => {0}", indexBuffer);
+                var attribs = prim["attributes"].ObjectItems.ToDictionary(x => x.Key, x => x.Value.GetInt32());
+                /*
+                foreach (var kv in attribs)
                 {
-                    var indexBuffer = prim["indices"].GetInt32();
-                    //Debug.LogFormat("indices => {0}", indexBuffer);
-                    var attribs = prim["attributes"].ObjectItems.ToDictionary(x => x.Key, x => x.Value.GetInt32());
-                    /*
-                    foreach (var kv in attribs)
-                    {
-                        Debug.LogFormat("{0} => {1}", kv.Key, kv.Value);
-                    }
-                    */
-
-                    var mesh = new Mesh();
-                    mesh.name = "UniGLTF import";
-
-                    // positions
-                    var vertexAccessor = accessors[attribs["POSITION"]];
-                    var vertexBytes = GetBytes(bytesList, bufferViews[vertexAccessor.bufferView]);
-                    mesh.vertices = GetAttrib<Vector3>(vertexAccessor, vertexBytes);
-
-                    // indices
-                    var indexAccessor = accessors[indexBuffer];
-                    var indexBytes = GetBytes(bytesList, bufferViews[indexAccessor.bufferView]);
-                    var indices = GetIndices(indexAccessor, indexBytes);
-                    mesh.SetIndices(indices, MeshTopology.Triangles, 0);
-
-                    if (attribs.ContainsKey("NORMAL"))
-                    {
-                        var normalAccessor = accessors[attribs["NORMAL"]];
-                        var normalBytes = GetBytes(bytesList, bufferViews[normalAccessor.bufferView]);
-                        mesh.normals = GetAttrib<Vector3>(normalAccessor, normalBytes);
-                    }
-                    else
-                    {
-                        mesh.RecalculateNormals();
-                    }
-
-                    var filter = go.AddComponent<MeshFilter>();
-                    filter.sharedMesh = mesh;
+                    Debug.LogFormat("{0} => {1}", kv.Key, kv.Value);
                 }
+                */
+
+                // positions
+                var vertexAccessor = accessors[attribs["POSITION"]];
+                var vertexBytes = GetBytes(bytesList, bufferViews[vertexAccessor.bufferView]);
+                mesh.vertices = GetAttrib<Vector3>(vertexAccessor, vertexBytes);
+
+                // indices
+                var indexAccessor = accessors[indexBuffer];
+                var indexBytes = GetBytes(bytesList, bufferViews[indexAccessor.bufferView]);
+                var indices = GetIndices(indexAccessor, indexBytes);
+                mesh.SetIndices(indices, MeshTopology.Triangles, 0);
+
+                if (attribs.ContainsKey("NORMAL"))
+                {
+                    var normalAccessor = accessors[attribs["NORMAL"]];
+                    var normalBytes = GetBytes(bytesList, bufferViews[normalAccessor.bufferView]);
+                    mesh.normals = GetAttrib<Vector3>(normalAccessor, normalBytes);
+                }
+                else
+                {
+                    mesh.RecalculateNormals();
+                }
+
+                break;
             }
 
-            return root;
+            return mesh;
         }
 
         public override void OnImportAsset(AssetImportContext ctx)
@@ -252,24 +213,78 @@ namespace UniGLTF
 
             try
             {
-                var root = ReadRoot(ctx.assetPath, File.ReadAllText(ctx.assetPath, Encoding.UTF8));
+                var json = File.ReadAllText(ctx.assetPath, Encoding.UTF8);
+                var parsed = json.ParseAsJson();
 
+                // asset
+                var asset = parsed["asset"];
+                var generator = "unknown";
+                if (parsed.ObjectItems.Any(x => x.Key == "generator"))
+                {
+                    generator = parsed["generator"].GetString();
+                }
+                var version = float.Parse(asset["version"].GetString());
+                if (version != 2.0f)
+                {
+                    throw new NotImplementedException(string.Format("unknown version: {0}", version));
+                }
+                Debug.LogFormat("{0}: glTF-{1}", generator, version);
+
+                // buffer
+                var buffers = DeserializeJsonList<Buffer>(parsed["buffers"]);
+                var bufferViews = DeserializeJsonList<BufferView>(parsed["bufferViews"]);
+                var accessors = DeserializeJsonList<Accessor>(parsed["accessors"]);
+                var bytesList = buffers.Select(x => x.GetBytes(Path.GetDirectoryName(ctx.assetPath))).ToArray();
+
+                // meshes
+                var meshes = parsed["meshes"].ListItems.Select((x, j) => ToMesh(bytesList, accessors, bufferViews, x, j)).ToArray();
+                foreach(var x in meshes)
+                {
+                    ctx.AddObjectToAsset(x.name, x);
+                }
+
+                // materials
+                var shader = Shader.Find("Standard");
+                var material = new Material(shader);
+                ctx.AddObjectToAsset(material.name, material);
+
+                var root = new GameObject("_root_");
                 ctx.SetMainObject("root", root);
 
-                var shader = Shader.Find("Standard");
-                foreach (Transform t in root.transform)
+                // scene;
+                var scene = default(JsonParser);
+                if (parsed.ObjectItems.Any(x => x.Key == "scene"))
                 {
-                    var filter = t.GetComponent<MeshFilter>();
-                    if (filter != null && filter.sharedMesh!=null)
-                    {
-                        ctx.AddObjectToAsset("mesh", filter.sharedMesh);
+                    scene = parsed["scenes"][parsed["scene"].GetInt32()];
+                }
+                else
+                {
+                    scene = parsed["scenes"][0];
+                }
 
-                        var material = new Material(shader);
-                        ctx.AddObjectToAsset("material", material);
+                // nodes
+                int i = 0;
+                foreach (var n in scene["nodes"].ListItems.Select(x => x.GetInt32()))
+                {
+                    //Debug.LogFormat("nodes: {0}", String.Join(", ", nodes.Select(x => x.ToString()).ToArray()));
+                    var node = parsed["nodes"][n];
 
-                        var renderer = t.gameObject.AddComponent<MeshRenderer>();
-                        renderer.sharedMaterials = new[] { material };
+                    var go = new GameObject(string.Format("node{0}", i++));
+
+                    // transform
+                    go.transform.SetParent(root.transform, false);
+                    if (node.ObjectItems.Any(x => x.Key == "translation")) {
+                        var values = node["translation"].ListItems.Select(x => x.GetSingle()).ToArray();
+                        go.transform.localPosition = new Vector3(values[0], values[1], values[2]);
                     }
+
+                    // set mesh
+                    var filter = go.AddComponent<MeshFilter>();
+                    filter.sharedMesh = meshes[node["mesh"].GetInt32()];
+
+                    var renderer = go.AddComponent<MeshRenderer>();
+                    renderer.sharedMaterials = new[] { material };
+
                 }
 
                 Debug.Log("imported");
