@@ -127,41 +127,81 @@ namespace UniGLTF
             }
         }
 
-        static int[] GetIndices(Accessor accessor, ArraySegment<byte> bytes)
-        {
-            switch(accessor.componentType)
-            {
-                case 5123: // GL_UNSIGNED_SHORT:
-                    {
-                        var indices = GetAttrib<UInt16>(accessor, bytes);
-                        return FlipTriangle(indices).ToArray();
-                    }
-            }
-
-            throw new NotImplementedException("GetIndices: unknown componenttype: " + accessor.componentType);
-        }
-
-        static T[] GetAttrib<T>(Accessor accessor, ArraySegment<byte> bytes) where T: struct
-        {
-            var attrib = new T[accessor.count];
-            bytes.MarshalCoyTo(attrib);
-            return attrib;
-        }
-
-        static ArraySegment<Byte> GetBytes(Byte[][] bytesList, BufferView view)
-        {
-            return new ArraySegment<Byte>(bytesList[view.buffer], view.byteOffset, view.byteLength);
-        }
-
         static Vector3 ReverseZ(Vector3 v)
         {
             return new Vector3(v.x, v.y, -v.z);
         }
 
-        static Mesh ToMesh(byte[][] bytesList, 
-            Accessor[] accessors, 
-            BufferView[] bufferViews, 
-            JsonParser meshJson, int i)
+        struct BlendShape
+        {
+            public Vector3[] Positions;
+            public Vector3[] Normals;
+            public Vector3[] Tangents;
+        }
+
+        static BlendShape ReadBlendShape(JsonParser targetJson,
+                        Accessor[] accessors
+            )
+        {
+            var blendShape = new BlendShape();
+            if(targetJson.ObjectItems.Any(x => x.Key == "POSITION")){
+            }
+            return blendShape;
+        }
+
+        class GltfBuffer
+        {
+            Byte[][] m_bytesList;
+            Buffer[] m_buffers;
+            BufferView[] m_bufferViews;
+            Accessor[] m_accessors;
+
+            public GltfBuffer(JsonParser parsed, string dir)
+            {
+                m_buffers = DeserializeJsonList<Buffer>(parsed["buffers"]);
+                m_bufferViews = DeserializeJsonList<BufferView>(parsed["bufferViews"]);
+                m_accessors = DeserializeJsonList<Accessor>(parsed["accessors"]);
+                m_bytesList = m_buffers.Select(x => x.GetBytes(dir)).ToArray();
+            }
+
+            ArraySegment<Byte> GetBytes(int index)
+            {
+                var view = m_bufferViews[index];
+                return new ArraySegment<Byte>(m_bytesList[view.buffer], view.byteOffset, view.byteLength);
+            }
+
+            T[] GetAttrib<T>(Accessor accessor, ArraySegment<byte> bytes) where T : struct
+            {
+                var attrib = new T[accessor.count];
+                bytes.MarshalCoyTo(attrib);
+                return attrib;
+            }
+
+            public int[] GetIndices(int index)
+            {
+                var accessor = m_accessors[index];
+                var bytes = GetBytes(index);
+                switch (accessor.componentType)
+                {
+                    case 5123: // GL_UNSIGNED_SHORT:
+                        {
+                            var indices = GetAttrib<UInt16>(accessor, bytes);
+                            return FlipTriangle(indices).ToArray();
+                        }
+                }
+
+                throw new NotImplementedException("GetIndices: unknown componenttype: " + accessor.componentType);
+            }
+
+            public T[] GetBuffer<T>(int index)where T: struct
+            {
+                var vertexAccessor = m_accessors[index];
+                var vertexBytes = GetBytes(vertexAccessor.bufferView);
+                return GetAttrib<T>(vertexAccessor, vertexBytes);
+            }
+        }
+
+        static Mesh ToMesh(GltfBuffer buffer, JsonParser meshJson, int i)
         {
             //Debug.Log(prims.ToJson());
             var mesh = new Mesh();
@@ -175,35 +215,39 @@ namespace UniGLTF
             foreach (var prim in meshJson["primitives"].ListItems)
             {
                 var indexBuffer = prim["indices"].GetInt32();
-                //Debug.LogFormat("indices => {0}", indexBuffer);
                 var attribs = prim["attributes"].ObjectItems.ToDictionary(x => x.Key, x => x.Value.GetInt32());
-                /*
-                foreach (var kv in attribs)
-                {
-                    Debug.LogFormat("{0} => {1}", kv.Key, kv.Value);
-                }
-                */
+
+                mesh.vertices = 
 
                 // positions
-                var vertexAccessor = accessors[attribs["POSITION"]];
-                var vertexBytes = GetBytes(bytesList, bufferViews[vertexAccessor.bufferView]);
-                mesh.vertices = GetAttrib<Vector3>(vertexAccessor, vertexBytes).Select(ReverseZ).ToArray();
+                mesh.vertices = buffer.GetBuffer<Vector3>(attribs["POSITION"]).Select(ReverseZ).ToArray();
 
                 // indices
-                var indexAccessor = accessors[indexBuffer];
-                var indexBytes = GetBytes(bytesList, bufferViews[indexAccessor.bufferView]);
-                var indices = GetIndices(indexAccessor, indexBytes);
-                mesh.SetIndices(indices, MeshTopology.Triangles, 0);
+                mesh.SetIndices(buffer.GetIndices(indexBuffer), MeshTopology.Triangles, 0);
 
                 if (attribs.ContainsKey("NORMAL"))
                 {
-                    var normalAccessor = accessors[attribs["NORMAL"]];
-                    var normalBytes = GetBytes(bytesList, bufferViews[normalAccessor.bufferView]);
-                    mesh.normals = GetAttrib<Vector3>(normalAccessor, normalBytes);
+                    mesh.normals = buffer.GetBuffer<Vector3>(attribs["NORMAL"]).Select(ReverseZ).ToArray();
                 }
                 else
                 {
                     mesh.RecalculateNormals();
+                }
+
+                // blendshape
+                if(prim.ObjectItems.Any(x => x.Key== "targets"))
+                {
+                    int j = 0;
+                    foreach(var x in prim["targets"].ListItems)
+                    {
+                        /*
+                        var blendShape = ReadBlendShape(x);
+
+                        var name = string.Format("target{0}", j++);
+
+                        mesh.AddBlendShapeFrame(name, 0, blendShape.Positions, blendShape.Normals, blendShape.Tangents);
+                        */
+                    }
                 }
 
                 break;
@@ -236,13 +280,10 @@ namespace UniGLTF
                 Debug.LogFormat("{0}: glTF-{1}", generator, version);
 
                 // buffer
-                var buffers = DeserializeJsonList<Buffer>(parsed["buffers"]);
-                var bufferViews = DeserializeJsonList<BufferView>(parsed["bufferViews"]);
-                var accessors = DeserializeJsonList<Accessor>(parsed["accessors"]);
-                var bytesList = buffers.Select(x => x.GetBytes(Path.GetDirectoryName(ctx.assetPath))).ToArray();
+                var buffer = new GltfBuffer(parsed, Path.GetDirectoryName(ctx.assetPath));
 
                 // meshes
-                var meshes = parsed["meshes"].ListItems.Select((x, j) => ToMesh(bytesList, accessors, bufferViews, x, j)).ToArray();
+                var meshes = parsed["meshes"].ListItems.Select((x, j) => ToMesh(buffer, x, j)).ToArray();
                 foreach(var x in meshes)
                 {
                     ctx.AddObjectToAsset(x.name, x);
