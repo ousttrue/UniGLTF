@@ -20,9 +20,20 @@ namespace UniGLTF
             public string uri;
             public int byteLength;
 
+            const string DataPrefix = "data:application/octet-stream;base64,";
+
             public Byte[] GetBytes(string baseDir)
             {
-                return File.ReadAllBytes(Path.Combine(baseDir, uri));
+                if (uri.StartsWith(DataPrefix))
+                {
+                    // embeded
+                    return Convert.FromBase64String(uri.Substring(DataPrefix.Length));
+                }
+                else
+                {
+                    // as local file path
+                    return File.ReadAllBytes(Path.Combine(baseDir, uri));
+                }
             }
         }
 
@@ -171,8 +182,14 @@ namespace UniGLTF
                 scene = parsed["scenes"][0];
             }
 
-            var root = new GameObject("_root_");
+            // buffer
+            var buffers = DeserializeJsonList<Buffer>(parsed["buffers"]);
+            var bufferViews = DeserializeJsonList<BufferView>(parsed["bufferViews"]);
+            var accessors = DeserializeJsonList<Accessor>(parsed["accessors"]);
+            var bytesList = buffers.Select(x => x.GetBytes(Path.GetDirectoryName(assetsPath))).ToArray();
 
+            // nodes
+            var root = new GameObject("_root_");
             int i = 0;
             foreach (var n in scene["nodes"].ListItems.Select(x => x.GetInt32()))
             {
@@ -195,12 +212,6 @@ namespace UniGLTF
                         Debug.LogFormat("{0} => {1}", kv.Key, kv.Value);
                     }
                     */
-
-                    var buffers = DeserializeJsonList<Buffer>(parsed["buffers"]);
-                    var bufferViews = DeserializeJsonList<BufferView>(parsed["bufferViews"]);
-                    var accessors = DeserializeJsonList<Accessor>(parsed["accessors"]);
-
-                    var bytesList = buffers.Select(x => x.GetBytes(Path.GetDirectoryName(assetsPath))).ToArray();
 
                     var mesh = new Mesh();
                     mesh.name = "UniGLTF import";
