@@ -132,23 +132,6 @@ namespace UniGLTF
             return new Vector3(v.x, v.y, -v.z);
         }
 
-        struct BlendShape
-        {
-            public Vector3[] Positions;
-            public Vector3[] Normals;
-            public Vector3[] Tangents;
-        }
-
-        static BlendShape ReadBlendShape(JsonParser targetJson,
-                        Accessor[] accessors
-            )
-        {
-            var blendShape = new BlendShape();
-            if(targetJson.ObjectItems.Any(x => x.Key == "POSITION")){
-            }
-            return blendShape;
-        }
-
         class GltfBuffer
         {
             Byte[][] m_bytesList;
@@ -201,6 +184,31 @@ namespace UniGLTF
             }
         }
 
+        struct BlendShape
+        {
+            public Vector3[] Positions;
+            public Vector3[] Normals;
+            public Vector3[] Tangents;
+        }
+
+        static BlendShape ReadBlendShape(GltfBuffer buffer, JsonParser targetJson)
+        {
+            var blendShape = new BlendShape();
+            if (targetJson.ObjectItems.Any(x => x.Key == "POSITION"))
+            {
+                blendShape.Positions = buffer.GetBuffer<Vector3>(targetJson["POSITION"].GetInt32()).Select(ReverseZ).ToArray();
+            }
+            if (targetJson.ObjectItems.Any(x => x.Key == "NORMAL"))
+            {
+                blendShape.Normals = buffer.GetBuffer<Vector3>(targetJson["NORMAL"].GetInt32()).Select(ReverseZ).ToArray();
+            }
+            if (targetJson.ObjectItems.Any(x => x.Key == "TANGENT"))
+            {
+                blendShape.Tangents = buffer.GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32()).Select(ReverseZ).ToArray();
+            }
+            return blendShape;
+        }
+
         static Mesh ToMesh(GltfBuffer buffer, JsonParser meshJson, int i)
         {
             //Debug.Log(prims.ToJson());
@@ -240,13 +248,11 @@ namespace UniGLTF
                     int j = 0;
                     foreach(var x in prim["targets"].ListItems)
                     {
-                        /*
-                        var blendShape = ReadBlendShape(x);
+                        var blendShape = ReadBlendShape(buffer, x);
 
                         var name = string.Format("target{0}", j++);
 
-                        mesh.AddBlendShapeFrame(name, 0, blendShape.Positions, blendShape.Normals, blendShape.Tangents);
-                        */
+                        mesh.AddBlendShapeFrame(name, 1.0f, blendShape.Positions, blendShape.Normals, blendShape.Tangents);
                     }
                 }
 
@@ -334,13 +340,25 @@ namespace UniGLTF
                         go.transform.localScale = new Vector3(values[0], values[1], values[2]);
                     }
 
-                    // set mesh
-                    var filter = go.AddComponent<MeshFilter>();
-                    filter.sharedMesh = meshes[node["mesh"].GetInt32()];
+                    // mesh
+                    var mesh = meshes[node["mesh"].GetInt32()];
+                    Renderer renderer = null;
+                    if (mesh.blendShapeCount == 0)
+                    {
+                        var filter = go.AddComponent<MeshFilter>();
+                        filter.sharedMesh = mesh;
 
-                    var renderer = go.AddComponent<MeshRenderer>();
+                        renderer = go.AddComponent<MeshRenderer>();
+                    }
+                    else
+                    {
+                        var _renderer = go.AddComponent<SkinnedMeshRenderer>();
+                        _renderer.sharedMesh = mesh;
+
+                        renderer = _renderer;
+                    }
+
                     renderer.sharedMaterials = new[] { material };
-
                 }
 
                 Debug.Log("imported");
