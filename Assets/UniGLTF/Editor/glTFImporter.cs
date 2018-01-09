@@ -74,7 +74,7 @@ namespace UniGLTF
         struct Accessor
         {
             public int bufferView;
-            public int bufferOffset;
+            public int byteOffset;
             public string type;
             public int componentType;
             public int count;
@@ -132,6 +132,14 @@ namespace UniGLTF
             return new Vector3(v.x, v.y, -v.z);
         }
 
+        static Quaternion ReverseZ(Quaternion q)
+        {
+            float angle;
+            Vector3 axis;
+            q.ToAngleAxis(out angle, out axis);
+            return Quaternion.AngleAxis(-angle, ReverseZ(axis));
+        }
+
         class GltfBuffer
         {
             Byte[][] m_bytesList;
@@ -147,15 +155,10 @@ namespace UniGLTF
                 m_bytesList = m_buffers.Select(x => x.GetBytes(dir)).ToArray();
             }
 
-            ArraySegment<Byte> GetBytes(int index)
-            {
-                var view = m_bufferViews[index];
-                return new ArraySegment<Byte>(m_bytesList[view.buffer], view.byteOffset, view.byteLength);
-            }
-
-            T[] GetAttrib<T>(Accessor accessor, ArraySegment<byte> bytes) where T : struct
+            T[] GetAttrib<T>(Accessor accessor, BufferView view) where T : struct
             {
                 var attrib = new T[accessor.count];
+                var bytes = new ArraySegment<Byte>(m_bytesList[view.buffer], view.byteOffset + accessor.byteOffset, accessor.count * view.byteStride);
                 bytes.MarshalCoyTo(attrib);
                 return attrib;
             }
@@ -163,12 +166,12 @@ namespace UniGLTF
             public int[] GetIndices(int index)
             {
                 var accessor = m_accessors[index];
-                var bytes = GetBytes(index);
+                var view = m_bufferViews[accessor.bufferView];
                 switch (accessor.componentType)
                 {
                     case 5123: // GL_UNSIGNED_SHORT:
                         {
-                            var indices = GetAttrib<UInt16>(accessor, bytes);
+                            var indices = GetAttrib<UInt16>(accessor, view);
                             return FlipTriangle(indices).ToArray();
                         }
                 }
@@ -179,8 +182,8 @@ namespace UniGLTF
             public T[] GetBuffer<T>(int index)where T: struct
             {
                 var vertexAccessor = m_accessors[index];
-                var vertexBytes = GetBytes(vertexAccessor.bufferView);
-                return GetAttrib<T>(vertexAccessor, vertexBytes);
+                var view = m_bufferViews[vertexAccessor.bufferView];
+                return GetAttrib<T>(vertexAccessor, view);
             }
         }
 
@@ -204,7 +207,7 @@ namespace UniGLTF
             }
             if (targetJson.ObjectItems.Any(x => x.Key == "TANGENT"))
             {
-                blendShape.Tangents = buffer.GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32()).Select(ReverseZ).ToArray();
+                blendShape.Tangents = buffer.GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32())/*.Select(ReverseZ).ToArray()*/;
             }
             return blendShape;
         }
@@ -213,7 +216,14 @@ namespace UniGLTF
         {
             //Debug.Log(prims.ToJson());
             var mesh = new Mesh();
-            mesh.name = string.Format("UniGLTF import#{0}", i);
+            if (meshJson.ObjectItems.Any(x => x.Key == "name"))
+            {
+                mesh.name = meshJson["name"].GetString();
+            }
+            else
+            {
+                mesh.name = string.Format("UniGLTF import#{0}", i);
+            }
 
             if (meshJson["primitives"].ListItems.Count()>1)
             {
@@ -224,8 +234,6 @@ namespace UniGLTF
             {
                 var indexBuffer = prim["indices"].GetInt32();
                 var attribs = prim["attributes"].ObjectItems.ToDictionary(x => x.Key, x => x.Value.GetInt32());
-
-                mesh.vertices = 
 
                 // positions
                 mesh.vertices = buffer.GetBuffer<Vector3>(attribs["POSITION"]).Select(ReverseZ).ToArray();
@@ -242,8 +250,10 @@ namespace UniGLTF
                     mesh.RecalculateNormals();
                 }
 
+                // TEXCOORD_0
+
                 // blendshape
-                if(prim.ObjectItems.Any(x => x.Key== "targets"))
+                if (prim.ObjectItems.Any(x => x.Key== "targets"))
                 {
                     int j = 0;
                     foreach(var x in prim["targets"].ListItems)
@@ -260,6 +270,88 @@ namespace UniGLTF
             }
 
             return mesh;
+        }
+
+        List<GameObject> ReadNodes(JsonParser nodesJson, Material material, Mesh[] meshes)
+        {
+            var list = new List<GameObject>();
+            int i = 0;
+            foreach (var node in nodesJson.ListItems)
+            {
+                var go = new GameObject(string.Format("node{0}", i));
+
+                // transform
+                if (node.ObjectItems.Any(x => x.Key == "translation"))
+                {
+                    var values = node["translation"].ListItems.Select(x => x.GetSingle()).ToArray();
+                    go.transform.localPosition = ReverseZ(new Vector3(values[0], values[1], values[2]));
+                }
+                if (node.ObjectItems.Any(x => x.Key == "rotation"))
+                {
+                    var values = node["rotation"].ListItems.Select(x => x.GetSingle()).ToArray();
+                    go.transform.localRotation = ReverseZ(new Quaternion(values[0], values[1], values[2], values[3]));
+                }
+                if (node.ObjectItems.Any(x => x.Key == "scale"))
+                {
+                    var values = node["scale"].ListItems.Select(x => x.GetSingle()).ToArray();
+                    go.transform.localScale = ReverseZ(new Vector3(values[0], values[1], values[2]));
+                }
+                if (node.ObjectItems.Any(x => x.Key == "matrix"))
+                {
+                    var values = node["matrix"].ListItems.Select(x => x.GetSingle()).ToArray();
+                    var col0 = new Vector4(values[0], values[1], values[2], values[3]);
+                    var col1 = new Vector4(values[4], values[5], values[6], values[7]);
+                    var col2 = new Vector4(values[8], values[9], values[10], values[11]);
+                    var col3 = new Vector4(values[12], values[13], values[14], values[15]);
+                    var m = new Matrix4x4(col0, col1, col2, col3);
+                    go.transform.localRotation = m.rotation;
+                    go.transform.localPosition = m.GetColumn(3);
+                }
+
+                // mesh
+                if (node.ObjectItems.Any(x => x.Key == "mesh"))
+                {
+                    var mesh = meshes[node["mesh"].GetInt32()];
+                    Renderer renderer = null;
+                    if (mesh.blendShapeCount == 0)
+                    {
+                        var filter = go.AddComponent<MeshFilter>();
+                        filter.sharedMesh = mesh;
+
+                        renderer = go.AddComponent<MeshRenderer>();
+                    }
+                    else
+                    {
+                        var _renderer = go.AddComponent<SkinnedMeshRenderer>();
+                        _renderer.sharedMesh = mesh;
+
+                        renderer = _renderer;
+                    }
+                    renderer.sharedMaterials = new[] { material };
+                }
+
+                list.Add(go);
+
+                ++i;
+            }
+
+            i = 0;
+            foreach (var node in nodesJson.ListItems)
+            {
+                // children
+                if (node.ObjectItems.Any(x => x.Key == "children"))
+                {
+                    var children = node["children"].ListItems.Select(x => x.GetInt32()).ToArray();
+                    foreach(var x in children)
+                    {
+                        list[x].transform.SetParent(list[i].transform, false);
+                    }
+                }
+
+                ++i;
+            }
+
+            return list;
         }
 
         public override void OnImportAsset(AssetImportContext ctx)
@@ -315,50 +407,13 @@ namespace UniGLTF
                 }
 
                 // nodes
-                int i = 0;
+                var nodes = ReadNodes(parsed["nodes"], material, meshes).ToArray();
+
+                // hierarchy
                 foreach (var n in scene["nodes"].ListItems.Select(x => x.GetInt32()))
                 {
                     //Debug.LogFormat("nodes: {0}", String.Join(", ", nodes.Select(x => x.ToString()).ToArray()));
-                    var node = parsed["nodes"][n];
-
-                    var go = new GameObject(string.Format("node{0}", i++));
-
-                    // transform
-                    go.transform.SetParent(root.transform, false);
-                    if (node.ObjectItems.Any(x => x.Key == "translation")) {
-                        var values = node["translation"].ListItems.Select(x => x.GetSingle()).ToArray();
-                        go.transform.localPosition = new Vector3(values[0], values[1], values[2]);
-                    }
-                    if (node.ObjectItems.Any(x => x.Key == "rotation"))
-                    {
-                        var values = node["rotation"].ListItems.Select(x => x.GetSingle()).ToArray();
-                        go.transform.localRotation = new Quaternion(values[0], values[1], values[2], values[3]);
-                    }
-                    if (node.ObjectItems.Any(x => x.Key == "scale"))
-                    {
-                        var values = node["scale"].ListItems.Select(x => x.GetSingle()).ToArray();
-                        go.transform.localScale = new Vector3(values[0], values[1], values[2]);
-                    }
-
-                    // mesh
-                    var mesh = meshes[node["mesh"].GetInt32()];
-                    Renderer renderer = null;
-                    if (mesh.blendShapeCount == 0)
-                    {
-                        var filter = go.AddComponent<MeshFilter>();
-                        filter.sharedMesh = mesh;
-
-                        renderer = go.AddComponent<MeshRenderer>();
-                    }
-                    else
-                    {
-                        var _renderer = go.AddComponent<SkinnedMeshRenderer>();
-                        _renderer.sharedMesh = mesh;
-
-                        renderer = _renderer;
-                    }
-
-                    renderer.sharedMaterials = new[] { material };
+                    nodes[n].transform.SetParent(root.transform, false);
                 }
 
                 Debug.Log("imported");
