@@ -153,6 +153,11 @@ namespace UniGLTF
             return new ArraySegment<Byte>(bytesList[view.buffer], view.byteOffset, view.byteLength);
         }
 
+        static Vector3 ReverseZ(Vector3 v)
+        {
+            return new Vector3(v.x, v.y, -v.z);
+        }
+
         static Mesh ToMesh(byte[][] bytesList, 
             Accessor[] accessors, 
             BufferView[] bufferViews, 
@@ -182,7 +187,7 @@ namespace UniGLTF
                 // positions
                 var vertexAccessor = accessors[attribs["POSITION"]];
                 var vertexBytes = GetBytes(bytesList, bufferViews[vertexAccessor.bufferView]);
-                mesh.vertices = GetAttrib<Vector3>(vertexAccessor, vertexBytes);
+                mesh.vertices = GetAttrib<Vector3>(vertexAccessor, vertexBytes).Select(ReverseZ).ToArray();
 
                 // indices
                 var indexAccessor = accessors[indexBuffer];
