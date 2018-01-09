@@ -282,6 +282,16 @@ namespace UniGLTF
                         var values = node["translation"].ListItems.Select(x => x.GetSingle()).ToArray();
                         go.transform.localPosition = new Vector3(values[0], values[1], values[2]);
                     }
+                    if (node.ObjectItems.Any(x => x.Key == "rotation"))
+                    {
+                        var values = node["rotation"].ListItems.Select(x => x.GetSingle()).ToArray();
+                        go.transform.localRotation = new Quaternion(values[0], values[1], values[2], values[3]);
+                    }
+                    if (node.ObjectItems.Any(x => x.Key == "scale"))
+                    {
+                        var values = node["scale"].ListItems.Select(x => x.GetSingle()).ToArray();
+                        go.transform.localScale = new Vector3(values[0], values[1], values[2]);
+                    }
 
                     // set mesh
                     var filter = go.AddComponent<MeshFilter>();
