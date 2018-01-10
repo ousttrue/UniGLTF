@@ -46,8 +46,9 @@ namespace UniGLTF
                     var col2 = new Vector4(values[8], values[9], values[10], values[11]);
                     var col3 = new Vector4(values[12], values[13], values[14], values[15]);
                     var m = new Matrix4x4(col0, col1, col2, col3);
-                    go.transform.localRotation = m.rotation;
-                    go.transform.localPosition = m.GetColumn(3);
+                    go.transform.localRotation = m.rotation.ReverseZ();
+                    Vector3 position= m.GetColumn(3);
+                    go.transform.localPosition = position.ReverseZ();
                 }
 
                 // mesh
