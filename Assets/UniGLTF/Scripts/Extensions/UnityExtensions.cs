@@ -10,6 +10,11 @@ namespace UniGLTF
             return new Vector3(v.x, v.y, -v.z);
         }
 
+        public static Vector2 ReverseY(this Vector2 v)
+        {
+            return new Vector2(v.x, -v.y);
+        }
+
         public static Quaternion ReverseZ(this Quaternion q)
         {
             float angle;

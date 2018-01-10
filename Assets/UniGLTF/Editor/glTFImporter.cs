@@ -14,21 +14,7 @@ namespace UniGLTF
     [ScriptedImporter(1, "gltf")]
     public class GLTFImporter : ScriptedImporter
     {
-        static int SizeOfComponentType(int compoenentType)
-        {
-            switch (compoenentType)
-            {
-                case 5123: // GL_UNSIGNED_SHORT
-                    return 2;
-                case 5126: // GL_FLOAT
-                    return 4;
-            }
-
-            throw new NotImplementedException("SizeOfComponentType: unknown componenttype: " + compoenentType);
-        }
-
-
-        List<GameObject> ReadNodes(JsonParser nodesJson, Material material, Mesh[] meshes)
+        List<GameObject> ReadNodes(JsonParser nodesJson, MeshWithMaterials[] meshes)
         {
             var list = new List<GameObject>();
             int i = 0;
@@ -37,22 +23,22 @@ namespace UniGLTF
                 var go = new GameObject(string.Format("node{0}", i));
 
                 // transform
-                if (node.ObjectItems.Any(x => x.Key == "translation"))
+                if (node.HasKey("translation"))
                 {
                     var values = node["translation"].ListItems.Select(x => x.GetSingle()).ToArray();
                     go.transform.localPosition = new Vector3(values[0], values[1], values[2]).ReverseZ();
                 }
-                if (node.ObjectItems.Any(x => x.Key == "rotation"))
+                if (node.HasKey("rotation"))
                 {
                     var values = node["rotation"].ListItems.Select(x => x.GetSingle()).ToArray();
                     go.transform.localRotation = new Quaternion(values[0], values[1], values[2], values[3]).ReverseZ();
                 }
-                if (node.ObjectItems.Any(x => x.Key == "scale"))
+                if (node.HasKey("scale"))
                 {
                     var values = node["scale"].ListItems.Select(x => x.GetSingle()).ToArray();
                     go.transform.localScale = new Vector3(values[0], values[1], values[2]).ReverseZ();
                 }
-                if (node.ObjectItems.Any(x => x.Key == "matrix"))
+                if (node.HasKey("matrix"))
                 {
                     var values = node["matrix"].ListItems.Select(x => x.GetSingle()).ToArray();
                     var col0 = new Vector4(values[0], values[1], values[2], values[3]);
@@ -65,25 +51,27 @@ namespace UniGLTF
                 }
 
                 // mesh
-                if (node.ObjectItems.Any(x => x.Key == "mesh"))
+                if (node.HasKey("mesh"))
                 {
                     var mesh = meshes[node["mesh"].GetInt32()];
                     Renderer renderer = null;
-                    if (mesh.blendShapeCount == 0)
+                    if (mesh.Mesh.blendShapeCount == 0)
                     {
                         var filter = go.AddComponent<MeshFilter>();
-                        filter.sharedMesh = mesh;
+                        filter.sharedMesh = mesh.Mesh;
 
                         renderer = go.AddComponent<MeshRenderer>();
                     }
                     else
                     {
                         var _renderer = go.AddComponent<SkinnedMeshRenderer>();
-                        _renderer.sharedMesh = mesh;
+                        _renderer.sharedMesh = mesh.Mesh;
 
                         renderer = _renderer;
                     }
-                    renderer.sharedMaterials = new[] { material };
+
+
+                    renderer.sharedMaterials = mesh.Materials;
                 }
 
                 list.Add(go);
@@ -95,7 +83,7 @@ namespace UniGLTF
             foreach (var node in nodesJson.ListItems)
             {
                 // children
-                if (node.ObjectItems.Any(x => x.Key == "children"))
+                if (node.HasKey("children"))
                 {
                     var children = node["children"].ListItems.Select(x => x.GetInt32()).ToArray();
                     foreach(var x in children)
@@ -110,38 +98,82 @@ namespace UniGLTF
             return list;
         }
 
+        IEnumerable<Material> ReadMaterials(JsonParser materialsJson, Texture2D[] textures)
+        {
+            foreach(var x in materialsJson.ListItems)
+            {
+                var shader = Shader.Find("Standard");
+
+                var material = new Material(shader);
+                material.name = x["name"].GetString();
+
+                if(x.HasKey("pbrMetallicRoughness"))
+                {
+                    var pbr = x["pbrMetallicRoughness"];
+                    if(pbr.HasKey("baseColorTexture"))
+                    {
+                        var textureIndex = pbr["baseColorTexture"]["index"].GetInt32();
+                        material.mainTexture = textures[textureIndex];
+                    }
+                }
+
+                yield return material;
+            }
+        }
+
         public override void OnImportAsset(AssetImportContext ctx)
         {
             Debug.LogFormat("## GLTFImporter ##: {0}", ctx.assetPath);
 
             try
             {
+                var baseDir = Path.GetDirectoryName(ctx.assetPath);
                 var parsed = File.ReadAllText(ctx.assetPath, Encoding.UTF8).ParseAsJson();
 
                 // buffer
-                var buffer = new GltfBuffer(parsed, Path.GetDirectoryName(ctx.assetPath));
+                var buffer = new GltfBuffer(parsed, baseDir);
 
-                // meshes
-                var meshes = buffer.ReadMeshes(parsed["meshes"]);
-                foreach(var x in meshes)
+                // textures
+                Texture2D[] textures = null;
+                if(parsed.HasKey("textures"))
                 {
-                    ctx.AddObjectToAsset(x.name, x);
+                    textures = GltfTexture.ReadTextures(parsed, baseDir);
                 }
 
                 // materials
-                var shader = Shader.Find("Standard");
-                var material = new Material(shader);
-                ctx.AddObjectToAsset(material.name, material);
+                Material[] materials = null;
+                if (parsed.HasKey("materials"))
+                {
+                    materials = ReadMaterials(parsed["materials"], textures).ToArray();
+                    foreach(var material in materials)
+                    {
+                        ctx.AddObjectToAsset(material.name, material);
+                    }
+                }
+                else
+                {
+                    var shader = Shader.Find("Standard");
+                    var material = new Material(shader);
+                    ctx.AddObjectToAsset(material.name, material);
+                    materials = new Material[] { material };
+                }
+
+                // meshes
+                var meshes = buffer.ReadMeshes(parsed["meshes"], materials);
+                foreach(var x in meshes)
+                {
+                    ctx.AddObjectToAsset(x.Mesh.name, x.Mesh);
+                }
 
                 var root = new GameObject("_root_");
                 ctx.SetMainObject("root", root);
 
                 // nodes
-                var nodes = ReadNodes(parsed["nodes"], material, meshes);
+                var nodes = ReadNodes(parsed["nodes"], meshes);
 
                 // scene;
                 var scene = default(JsonParser);
-                if (parsed.ObjectItems.Any(x => x.Key == "scene"))
+                if (parsed.HasKey("scene"))
                 {
                     scene = parsed["scenes"][parsed["scene"].GetInt32()];
                 }

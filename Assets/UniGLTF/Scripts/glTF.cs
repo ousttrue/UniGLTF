@@ -4,11 +4,68 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 
 namespace UniGLTF
 {
+    [Serializable]
+    public struct Image
+    {
+        public string uri;
+    }
+
+    [Serializable]
+    public struct Texture
+    {
+        public int sampler;
+        public int source;
+    }
+
+    public class GltfTexture
+    {
+        Texture[] m_textures;
+        Image[] m_images;
+
+        public GltfTexture(JsonParser parsed)
+        {
+            if (parsed.HasKey("textures"))
+            {
+                m_textures = parsed["textures"].DeserializeList<Texture>();
+            }
+            if (parsed.HasKey("images"))
+            {
+                m_images = parsed["images"].DeserializeList<Image>();
+            }
+        }
+
+        public IEnumerable<Texture2D> GetTextures(string dir)
+        {
+            foreach(var x in m_textures)
+            {
+                var path = Path.Combine(dir, m_images[x.source].uri);
+                Debug.LogFormat("load texture: {0}", path);
+
+                /*
+                var bytes = File.ReadAllBytes(path);
+
+                var texture = new Texture2D(2, 2);
+                texture.LoadImage(bytes);
+                */
+                var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+
+                yield return texture;
+            }
+        }
+
+        public static Texture2D[] ReadTextures(JsonParser parsed, string dir)
+        {
+            var texture = new GltfTexture(parsed);
+            return texture.GetTextures(dir).ToArray();
+        }
+    }
+
     [Serializable]
     public struct Buffer
     {
@@ -75,6 +132,12 @@ namespace UniGLTF
         public int count;
     }
 
+    public struct MeshWithMaterials
+    {
+        public Mesh Mesh;
+        public Material[] Materials;
+    }
+
     public class GltfBuffer
     {
         Byte[][] m_bytesList;
@@ -82,17 +145,12 @@ namespace UniGLTF
         BufferView[] m_bufferViews;
         Accessor[] m_accessors;
 
-        static T[] DeserializeJsonList<T>(JsonParser jsonList)
-        {
-            return jsonList.ListItems.Select(x => JsonUtility.FromJson<T>(x.ToJson())).ToArray();
-        }
-
         public GltfBuffer(JsonParser parsed, string dir)
         {
             // asset
             var asset = parsed["asset"];
             var generator = "unknown";
-            if (parsed.ObjectItems.Any(x => x.Key == "generator"))
+            if (parsed.HasKey("generator"))
             {
                 generator = parsed["generator"].GetString();
             }
@@ -103,9 +161,9 @@ namespace UniGLTF
             }
             Debug.LogFormat("{0}: glTF-{1}", generator, version);
 
-            m_buffers = DeserializeJsonList<Buffer>(parsed["buffers"]);
-            m_bufferViews = DeserializeJsonList<BufferView>(parsed["bufferViews"]);
-            m_accessors = DeserializeJsonList<Accessor>(parsed["accessors"]);
+            m_buffers = parsed["buffers"].DeserializeList<Buffer>();
+            m_bufferViews = parsed["bufferViews"].DeserializeList<BufferView>();
+            m_accessors = parsed["accessors"].DeserializeList<Accessor>();
             m_bytesList = m_buffers.Select(x => x.GetBytes(dir)).ToArray();
         }
 
@@ -169,36 +227,37 @@ namespace UniGLTF
             }
         }
 
-        public struct BlendShape
+        struct BlendShape
         {
             public Vector3[] Positions;
             public Vector3[] Normals;
             public Vector3[] Tangents;
         }
 
-        public BlendShape ReadBlendShape(JsonParser targetJson)
+        BlendShape ReadBlendShape(JsonParser targetJson)
         {
             var blendShape = new BlendShape();
-            if (targetJson.ObjectItems.Any(x => x.Key == "POSITION"))
+            if (targetJson.HasKey("POSITION"))
             {
                 blendShape.Positions = GetBuffer<Vector3>(targetJson["POSITION"].GetInt32()).Select(x => x.ReverseZ()).ToArray();
             }
-            if (targetJson.ObjectItems.Any(x => x.Key == "NORMAL"))
+            if (targetJson.HasKey("NORMAL"))
             {
                 blendShape.Normals = GetBuffer<Vector3>(targetJson["NORMAL"].GetInt32()).Select(x => x.ReverseZ()).ToArray();
             }
-            if (targetJson.ObjectItems.Any(x => x.Key == "TANGENT"))
+            if (targetJson.HasKey("TANGENT"))
             {
                 blendShape.Tangents = GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32())/*.Select(ReverseZ).ToArray()*/;
             }
             return blendShape;
         }
 
-        public Mesh ReadMesh(JsonParser meshJson, int i)
+        MeshWithMaterials ReadMesh(JsonParser meshJson, int i, Material[] materials)
         {
             //Debug.Log(prims.ToJson());
             var mesh = new Mesh();
-            if (meshJson.ObjectItems.Any(x => x.Key == "name"))
+            var materialIndices = new List<int>();
+            if (meshJson.HasKey("name"))
             {
                 mesh.name = meshJson["name"].GetString();
             }
@@ -223,6 +282,7 @@ namespace UniGLTF
                 // indices
                 mesh.SetIndices(GetIndices(indexBuffer), MeshTopology.Triangles, 0);
 
+                // normal
                 if (attribs.ContainsKey("NORMAL"))
                 {
                     mesh.normals = GetBuffer<Vector3>(attribs["NORMAL"]).Select(x => x.ReverseZ()).ToArray();
@@ -232,10 +292,20 @@ namespace UniGLTF
                     mesh.RecalculateNormals();
                 }
 
-                // TEXCOORD_0
+                // uv
+                if(attribs.ContainsKey("TEXCOORD_0"))
+                {
+                    mesh.uv = GetBuffer<Vector2>(attribs["TEXCOORD_0"]).Select(x => x.ReverseY()).ToArray();
+                }
+
+                // material
+                if(prim.HasKey("material"))
+                {
+                    materialIndices.Add(prim["material"].GetInt32());
+                }
 
                 // blendshape
-                if (prim.ObjectItems.Any(x => x.Key == "targets"))
+                if (prim.HasKey("targets"))
                 {
                     int j = 0;
                     foreach (var x in prim["targets"].ListItems)
@@ -251,12 +321,21 @@ namespace UniGLTF
                 break;
             }
 
-            return mesh;
+            if (!materialIndices.Any())
+            {
+                materialIndices.Add(0);
+            }
+
+            return new MeshWithMaterials
+            {
+                Mesh=mesh,
+                Materials=materialIndices.Select(x => materials[x]).ToArray(),
+            };
         }
 
-        public Mesh[] ReadMeshes(JsonParser meshesJson)
+        public MeshWithMaterials[] ReadMeshes(JsonParser meshesJson, Material[] materials)
         {
-            return meshesJson.ListItems.Select((x, j) => ReadMesh(x, j)).ToArray();
+            return meshesJson.ListItems.Select((x, j) => ReadMesh(x, j, materials)).ToArray();
         }
     }
 }
