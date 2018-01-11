@@ -138,6 +138,13 @@ namespace UniGLTF
         public Material[] Materials;
     }
 
+    [Serializable]
+    public struct Skin
+    {
+        public int inverseBindMatrices;
+        public int[] joints;
+    }
+
     public class GltfBuffer
     {
         Byte[][] m_bytesList;
@@ -271,6 +278,11 @@ namespace UniGLTF
                 throw new NotImplementedException("multi primitives");
             }
 
+            var result = new MeshWithMaterials
+            {
+                Mesh = mesh,
+            };
+            
             foreach (var prim in meshJson["primitives"].ListItems)
             {
                 var indexBuffer = prim["indices"].GetInt32();
@@ -298,8 +310,24 @@ namespace UniGLTF
                     mesh.uv = GetBuffer<Vector2>(attribs["TEXCOORD_0"]).Select(x => x.ReverseY()).ToArray();
                 }
 
+                // skin
+                if (attribs.ContainsKey("JOINTS_0") && attribs.ContainsKey("WEIGHTS_0"))
+                {
+                    var joints0 = GetBuffer<int>(attribs["JOINTS_0"]);
+                    var weights0 = GetBuffer<float>(attribs["WEIGHTS_0"]);
+
+                    var boneWeights = new BoneWeight[joints0.Length];
+                    for (int j=0; j<joints0.Length; ++j)
+                    {
+                        var bw = new BoneWeight();
+                        bw.boneIndex0 = joints0[j];
+                        bw.weight0 = weights0[j];
+                    }
+                    mesh.boneWeights = boneWeights;
+                }
+
                 // material
-                if(prim.HasKey("material"))
+                if (prim.HasKey("material"))
                 {
                     materialIndices.Add(prim["material"].GetInt32());
                 }
@@ -325,12 +353,9 @@ namespace UniGLTF
             {
                 materialIndices.Add(0);
             }
+            result.Materials = materialIndices.Select(x => materials[x]).ToArray();
 
-            return new MeshWithMaterials
-            {
-                Mesh=mesh,
-                Materials=materialIndices.Select(x => materials[x]).ToArray(),
-            };
+            return result;
         }
 
         public MeshWithMaterials[] ReadMeshes(JsonParser meshesJson, Material[] materials)

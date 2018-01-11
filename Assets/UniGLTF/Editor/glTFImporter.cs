@@ -11,16 +11,26 @@ using UnityEngine;
 
 namespace UniGLTF
 {
+    struct TransformWithSkin
+    {
+        public Transform Transform;
+        public int? SkinIndex;
+    }
+
     [ScriptedImporter(1, "gltf")]
     public class GLTFImporter : ScriptedImporter
     {
-        List<GameObject> ReadNodes(JsonParser nodesJson, MeshWithMaterials[] meshes)
+        List<TransformWithSkin> ReadNodes(JsonParser nodesJson, MeshWithMaterials[] meshes)
         {
-            var list = new List<GameObject>();
+            var list = new List<TransformWithSkin>();
             int i = 0;
             foreach (var node in nodesJson.ListItems)
             {
                 var go = new GameObject(string.Format("node{0}", i));
+                var nodeWithSkin = new TransformWithSkin
+                {
+                    Transform=go.transform,
+                };
 
                 // transform
                 if (node.HasKey("translation"))
@@ -45,10 +55,9 @@ namespace UniGLTF
                     var col1 = new Vector4(values[4], values[5], values[6], values[7]);
                     var col2 = new Vector4(values[8], values[9], values[10], values[11]);
                     var col3 = new Vector4(values[12], values[13], values[14], values[15]);
-                    var m = new Matrix4x4(col0, col1, col2, col3);
-                    go.transform.localRotation = m.rotation.ReverseZ();
-                    Vector3 position= m.GetColumn(3);
-                    go.transform.localPosition = position.ReverseZ();
+                    var m = new Matrix4x4(col0, col1, col2, col3).ReverseZ();
+                    go.transform.localRotation = m.rotation;
+                    go.transform.localPosition = m.GetColumn(3);
                 }
 
                 // mesh
@@ -56,8 +65,10 @@ namespace UniGLTF
                 {
                     var mesh = meshes[node["mesh"].GetInt32()];
                     Renderer renderer = null;
-                    if (mesh.Mesh.blendShapeCount == 0)
+                    var hasSkin = node.HasKey("skin");
+                    if (mesh.Mesh.blendShapeCount == 0 && !hasSkin)
                     {
+                        // without blendshape and bone skinning
                         var filter = go.AddComponent<MeshFilter>();
                         filter.sharedMesh = mesh.Mesh;
 
@@ -66,16 +77,21 @@ namespace UniGLTF
                     else
                     {
                         var _renderer = go.AddComponent<SkinnedMeshRenderer>();
+
+                        if (hasSkin)
+                        {
+                            nodeWithSkin.SkinIndex = node["skin"].GetInt32();
+                        }
+
                         _renderer.sharedMesh = mesh.Mesh;
 
                         renderer = _renderer;
                     }
 
-
                     renderer.sharedMaterials = mesh.Materials;
                 }
 
-                list.Add(go);
+                list.Add(nodeWithSkin);
 
                 ++i;
             }
@@ -89,7 +105,7 @@ namespace UniGLTF
                     var children = node["children"].ListItems.Select(x => x.GetInt32()).ToArray();
                     foreach(var x in children)
                     {
-                        list[x].transform.SetParent(list[i].transform, false);
+                        list[x].Transform.SetParent(list[i].Transform, false);
                     }
                 }
 
@@ -161,16 +177,18 @@ namespace UniGLTF
 
                 // meshes
                 var meshes = buffer.ReadMeshes(parsed["meshes"], materials);
-                foreach(var x in meshes)
+                foreach (var mesh in meshes.Select(x => x.Mesh))
                 {
-                    ctx.AddObjectToAsset(x.Mesh.name, x.Mesh);
+                    ctx.AddObjectToAsset(mesh.name, mesh);
                 }
 
                 var root = new GameObject("_root_");
-                ctx.SetMainObject("root", root);
 
                 // nodes
                 var nodes = ReadNodes(parsed["nodes"], meshes);
+
+                // skins
+                var skins = parsed["skins"].DeserializeList<Skin>();
 
                 // scene;
                 var scene = default(JsonParser);
@@ -182,11 +200,38 @@ namespace UniGLTF
                 {
                     scene = parsed["scenes"][0];
                 }
-                foreach (var n in scene["nodes"].ListItems.Select(x => x.GetInt32()))
+                // hierachy
+                var nodeJsonList = scene["nodes"].ListItems.ToArray();
+                foreach (var x in nodeJsonList)
                 {
                     //Debug.LogFormat("nodes: {0}", String.Join(", ", nodes.Select(x => x.ToString()).ToArray()));
-                    nodes[n].transform.SetParent(root.transform, false);
+                    nodes[x.GetInt32()].Transform.SetParent(root.transform, false);
                 }
+                // skinning
+                foreach(var x in nodes)
+                {
+                    var skinnedMeshRenderer = x.Transform.GetComponent<SkinnedMeshRenderer>();
+                    if (skinnedMeshRenderer != null)
+                    {
+                        var mesh = skinnedMeshRenderer.sharedMesh;
+                        if (x.SkinIndex.HasValue)
+                        {
+                            if (mesh == null) throw new Exception();
+                            if (skinnedMeshRenderer == null) throw new Exception();
+
+                            var skin = skins[x.SkinIndex.Value];
+
+                            //var m = new Matrix4x4(Vector3.zero, Vector3.zero, Vector3.zero, new Vector4(1, 1, 1, 1));
+                            var bindePoses = buffer.GetBuffer<Matrix4x4>(skin.inverseBindMatrices).Select(y => y.transpose.inverse).ToArray();
+                            //mesh.bindposes = bindePoses;
+
+                            var joints = skin.joints.Select(y => nodes[y].Transform).ToArray();
+                            skinnedMeshRenderer.rootBone = nodes[0].Transform;
+                            skinnedMeshRenderer.bones = joints;
+                        }
+                    }
+                }
+                ctx.SetMainObject("root", root);
 
                 Debug.LogFormat("Import completed");
             }
