@@ -102,10 +102,9 @@ namespace UniGLTF
                 // children
                 if (node.HasKey("children"))
                 {
-                    var children = node["children"].ListItems.Select(x => x.GetInt32()).ToArray();
-                    foreach(var x in children)
+                    foreach(var child in node["children"].ListItems)
                     {
-                        list[x].Transform.SetParent(list[i].Transform, false);
+                        list[child.GetInt32()].Transform.SetParent(list[i].Transform, false);
                     }
                 }
 
@@ -135,6 +134,41 @@ namespace UniGLTF
                 }
 
                 yield return material;
+            }
+        }
+
+        struct Matrix4
+        {
+            public float _00;
+            public float _01;
+            public float _02;
+            public float _03;
+
+            public float _04;
+            public float _05;
+            public float _06;
+            public float _07;
+
+            public float _08;
+            public float _09;
+            public float _10;
+            public float _11;
+
+            public float _12;
+            public float _13;
+            public float _14;
+            public float _15;
+        }
+
+        IEnumerable<Matrix4x4> ToMatrix(Matrix4[] matrices)
+        {
+            foreach(var m in matrices)
+            {
+                var v0 = new Vector4(m._00, m._01, m._02, m._03);
+                var v1 = new Vector4(m._04, m._05, m._06, m._07);
+                var v2 = new Vector4(m._08, m._09, m._10, m._11);
+                var v3 = new Vector4(m._12, m._13, m._14, m._15);
+                yield return new Matrix4x4(v0, v1, v2, v3);
             }
         }
 
@@ -188,7 +222,11 @@ namespace UniGLTF
                 var nodes = ReadNodes(parsed["nodes"], meshes);
 
                 // skins
-                var skins = parsed["skins"].DeserializeList<Skin>();
+                Skin[] skins = null;
+                if (parsed.HasKey("skins"))
+                {
+                    skins = parsed["skins"].DeserializeList<Skin>();
+                }
 
                 // scene;
                 var scene = default(JsonParser);
@@ -221,13 +259,20 @@ namespace UniGLTF
 
                             var skin = skins[x.SkinIndex.Value];
 
-                            //var m = new Matrix4x4(Vector3.zero, Vector3.zero, Vector3.zero, new Vector4(1, 1, 1, 1));
-                            var bindePoses = buffer.GetBuffer<Matrix4x4>(skin.inverseBindMatrices).Select(y => y.transpose.inverse).ToArray();
-                            //mesh.bindposes = bindePoses;
+                            skinnedMeshRenderer.sharedMesh = null;
 
                             var joints = skin.joints.Select(y => nodes[y].Transform).ToArray();
-                            skinnedMeshRenderer.rootBone = nodes[0].Transform;
                             skinnedMeshRenderer.bones = joints;
+                            skinnedMeshRenderer.rootBone = nodes[0].Transform;
+
+                            // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
+                            var _b = joints.Select(y => y.worldToLocalMatrix * nodes[0].Transform.localToWorldMatrix).ToArray();
+                            var bindePoses = buffer.GetBuffer<Matrix4x4>(skin.inverseBindMatrices).ToArray();
+                            var bindePosesR = bindePoses.Select(y => y.ReverseZ()).ToArray();
+
+                            // ...
+                            mesh.bindposes = _b;
+                            skinnedMeshRenderer.sharedMesh = mesh;
                         }
                     }
                 }

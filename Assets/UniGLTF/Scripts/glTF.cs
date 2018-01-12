@@ -259,6 +259,14 @@ namespace UniGLTF
             return blendShape;
         }
 
+        struct UShort4
+        {
+            public ushort x;
+            public ushort y;
+            public ushort z;
+            public ushort w;
+        }
+
         MeshWithMaterials ReadMesh(JsonParser meshJson, int i, Material[] materials)
         {
             //Debug.Log(prims.ToJson());
@@ -313,15 +321,22 @@ namespace UniGLTF
                 // skin
                 if (attribs.ContainsKey("JOINTS_0") && attribs.ContainsKey("WEIGHTS_0"))
                 {
-                    var joints0 = GetBuffer<int>(attribs["JOINTS_0"]);
-                    var weights0 = GetBuffer<float>(attribs["WEIGHTS_0"]);
+                    var joints0 = GetBuffer<UShort4>(attribs["JOINTS_0"]); // uint4
+                    var weights0 = GetBuffer<Vector4>(attribs["WEIGHTS_0"]); // float4
 
                     var boneWeights = new BoneWeight[joints0.Length];
                     for (int j=0; j<joints0.Length; ++j)
                     {
                         var bw = new BoneWeight();
-                        bw.boneIndex0 = joints0[j];
-                        bw.weight0 = weights0[j];
+                        bw.boneIndex0 = joints0[j].x;
+                        bw.weight0 = weights0[j].x;
+                        bw.boneIndex1 = joints0[j].y;
+                        bw.weight1 = weights0[j].y;
+                        bw.boneIndex2 = joints0[j].z;
+                        bw.weight2 = weights0[j].z;
+                        bw.boneIndex3 = joints0[j].w;
+                        bw.weight3 = weights0[j].w;
+                        boneWeights[j] = bw;
                     }
                     mesh.boneWeights = boneWeights;
                 }
