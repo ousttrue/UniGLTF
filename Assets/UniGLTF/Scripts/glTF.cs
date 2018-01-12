@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEngine;
 
@@ -130,6 +131,8 @@ namespace UniGLTF
         public string type;
         public int componentType;
         public int count;
+        public float[] max;
+        public float[] min;
     }
 
     public struct MeshWithMaterials
@@ -259,12 +262,34 @@ namespace UniGLTF
             return blendShape;
         }
 
+        [Serializable, StructLayout(LayoutKind.Sequential, Pack =1)]
         struct UShort4
         {
             public ushort x;
             public ushort y;
             public ushort z;
             public ushort w;
+        }
+        [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
+        struct Float4
+        {
+            public float x;
+            public float y;
+            public float z;
+            public float w;
+
+            public Float4 One()
+            {
+                var sum = x + y + z + w;
+                var f = 1.0f / sum;
+                return new Float4
+                {
+                    x = x * f,
+                    y = y * f,
+                    z = z * f,
+                    w = w * f,
+                };
+            }
         }
 
         MeshWithMaterials ReadMesh(JsonParser meshJson, int i, Material[] materials)
@@ -321,21 +346,44 @@ namespace UniGLTF
                 // skin
                 if (attribs.ContainsKey("JOINTS_0") && attribs.ContainsKey("WEIGHTS_0"))
                 {
+                    var jointsAccessor = m_accessors[attribs["JOINTS_0"]];
                     var joints0 = GetBuffer<UShort4>(attribs["JOINTS_0"]); // uint4
-                    var weights0 = GetBuffer<Vector4>(attribs["WEIGHTS_0"]); // float4
+                    var weightsAccessor = m_accessors[attribs["WEIGHTS_0"]];
+                    var weights0 = GetBuffer<Float4>(attribs["WEIGHTS_0"]).Select(x => x.One()).ToArray();
+
+                    var weightNorms = weights0.Select(x => x.x + x.y + x.z + x.w).ToArray();
 
                     var boneWeights = new BoneWeight[joints0.Length];
                     for (int j=0; j<joints0.Length; ++j)
                     {
                         var bw = new BoneWeight();
+
+#if false
+                        bw.boneIndex0 = (int)Mathf.Clamp(joints0[j].x, jointsAccessor.min[0], jointsAccessor.max[0]);
+                        bw.weight0 = Mathf.Clamp(weights0[j].x, weightsAccessor.min[0], weightsAccessor.max[0]);
+
+                        bw.boneIndex1 = (int)Mathf.Clamp(joints0[j].y, jointsAccessor.min[1], jointsAccessor.max[1]);
+                        bw.weight1 = Mathf.Clamp(weights0[j].y, weightsAccessor.min[1], weightsAccessor.max[1]);
+
+                        bw.boneIndex2 = (int)Mathf.Clamp(joints0[j].z, jointsAccessor.min[2], jointsAccessor.max[2]);
+                        bw.weight2 = Mathf.Clamp(weights0[j].z, weightsAccessor.min[2], weightsAccessor.max[2]);
+
+                        bw.boneIndex3 = (int)Mathf.Clamp(joints0[j].w, jointsAccessor.min[3], jointsAccessor.max[3]);
+                        bw.weight3 = Mathf.Clamp(weights0[j].w, weightsAccessor.min[3], weightsAccessor.max[3]);
+#else
                         bw.boneIndex0 = joints0[j].x;
                         bw.weight0 = weights0[j].x;
+
                         bw.boneIndex1 = joints0[j].y;
                         bw.weight1 = weights0[j].y;
+
                         bw.boneIndex2 = joints0[j].z;
                         bw.weight2 = weights0[j].z;
+
                         bw.boneIndex3 = joints0[j].w;
                         bw.weight3 = weights0[j].w;
+#endif
+
                         boneWeights[j] = bw;
                     }
                     mesh.boneWeights = boneWeights;
