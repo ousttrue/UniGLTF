@@ -289,8 +289,6 @@ namespace UniGLTF
                             // ...
                             mesh.bindposes = _b;
                             skinnedMeshRenderer.sharedMesh = mesh;
-
-                            nodes[0].Transform.gameObject.AddComponent<Animator>();
                         }
                     }
                 }
@@ -391,6 +389,8 @@ namespace UniGLTF
                                     break;
                             }
                         }
+
+                        nodes[0].Transform.gameObject.AddComponent<Animator>();
                     }
                     ctx.AddObjectToAsset(ANIMATION_NAME, clip);
                 }
