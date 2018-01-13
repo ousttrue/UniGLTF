@@ -1,72 +1,14 @@
-﻿using Osaru;
-using Osaru.Json;
+﻿using Osaru.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using UnityEditor;
 using UnityEngine;
 
 
 namespace UniGLTF
 {
-    [Serializable]
-    public struct Image
-    {
-        public string uri;
-    }
-
-    [Serializable]
-    public struct Texture
-    {
-        public int sampler;
-        public int source;
-    }
-
-    public class GltfTexture
-    {
-        Texture[] m_textures;
-        Image[] m_images;
-
-        public GltfTexture(JsonParser parsed)
-        {
-            if (parsed.HasKey("textures"))
-            {
-                m_textures = parsed["textures"].DeserializeList<Texture>();
-            }
-            if (parsed.HasKey("images"))
-            {
-                m_images = parsed["images"].DeserializeList<Image>();
-            }
-        }
-
-        public IEnumerable<Texture2D> GetTextures(string dir)
-        {
-            foreach(var x in m_textures)
-            {
-                var path = Path.Combine(dir, m_images[x.source].uri);
-                Debug.LogFormat("load texture: {0}", path);
-
-                /*
-                var bytes = File.ReadAllBytes(path);
-
-                var texture = new Texture2D(2, 2);
-                texture.LoadImage(bytes);
-                */
-                var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-
-                yield return texture;
-            }
-        }
-
-        public static Texture2D[] ReadTextures(JsonParser parsed, string dir)
-        {
-            var texture = new GltfTexture(parsed);
-            return texture.GetTextures(dir).ToArray();
-        }
-    }
-
     [Serializable]
     public struct Buffer
     {
@@ -100,29 +42,6 @@ namespace UniGLTF
         public int target; // ARRAY_BUFFER
     }
 
-    /*
-    [Serializable]
-    struct IndexView
-    {
-        public int bufferView;
-        public int componentType;
-    }
-
-    [Serializable]
-    struct Values
-    {
-        public int bufferView;
-    }
-
-    [Serializable]
-    struct Sparse
-    {
-        public int count;
-        public Values values;
-        public IndexView indices;
-    }
-    */
-
     [Serializable]
     public struct Accessor
     {
@@ -150,12 +69,12 @@ namespace UniGLTF
 
     public class GltfBuffer
     {
-        Byte[][] m_bytesList;
+        ArraySegment<Byte>[] m_bytesList;
         Buffer[] m_buffers;
         BufferView[] m_bufferViews;
         Accessor[] m_accessors;
 
-        public GltfBuffer(JsonParser parsed, string dir)
+        public GltfBuffer(JsonParser parsed, string dir, ArraySegment<byte> glbDataBytes)
         {
             // asset
             var asset = parsed["asset"];
@@ -174,13 +93,25 @@ namespace UniGLTF
             m_buffers = parsed["buffers"].DeserializeList<Buffer>();
             m_bufferViews = parsed["bufferViews"].DeserializeList<BufferView>();
             m_accessors = parsed["accessors"].DeserializeList<Accessor>();
-            m_bytesList = m_buffers.Select(x => x.GetBytes(dir)).ToArray();
+
+            if (glbDataBytes.Count > 0)
+            {
+                m_bytesList = new ArraySegment<Byte>[]
+                {
+                    glbDataBytes
+                };
+            }
+            else
+            {
+                m_bytesList = m_buffers.Select(x => new ArraySegment<Byte>(x.GetBytes(dir))).ToArray();
+            }
         }
 
         T[] GetAttrib<T>(Accessor accessor, BufferView view) where T : struct
         {
             var attrib = new T[accessor.count];
-            var bytes = new ArraySegment<Byte>(m_bytesList[view.buffer], view.byteOffset + accessor.byteOffset, accessor.count * view.byteStride);
+            //
+            var bytes = new ArraySegment<Byte>(m_bytesList[view.buffer].Array, m_bytesList[view.buffer].Offset+view.byteOffset + accessor.byteOffset, accessor.count * view.byteStride);
             bytes.MarshalCoyTo(attrib);
             return attrib;
         }
@@ -262,7 +193,7 @@ namespace UniGLTF
             return blendShape;
         }
 
-        [Serializable, StructLayout(LayoutKind.Sequential, Pack =1)]
+        [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
         struct UShort4
         {
             public ushort x;
@@ -409,7 +340,8 @@ namespace UniGLTF
             {
                 mesh.normals = normals.ToArray();
             }
-            else {
+            else
+            {
                 mesh.RecalculateNormals();
             }
             if (uv.Any())
@@ -421,7 +353,7 @@ namespace UniGLTF
                 mesh.boneWeights = boneWeights.ToArray();
             }
             mesh.subMeshCount = subMeshes.Count;
-            for(int i=0; i<subMeshes.Count; ++i)
+            for (int i = 0; i < subMeshes.Count; ++i)
             {
                 mesh.SetTriangles(subMeshes[i], i);
             }
@@ -430,7 +362,7 @@ namespace UniGLTF
             {
                 Mesh = mesh,
                 Materials = materialIndices.Select(x => materials[x]).ToArray()
-            };                    
+            };
 
             return result;
         }

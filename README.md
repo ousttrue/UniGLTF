@@ -11,10 +11,12 @@
 
 ## Implemented
 
+* [ ] Runtime Loader
+
 * Format
     * [x] gltf
     * [x] gltf-embeded
-    * [ ] glb
+    * [x] glb
 
 * Coordinate
     * [x] z-back to z-forward
