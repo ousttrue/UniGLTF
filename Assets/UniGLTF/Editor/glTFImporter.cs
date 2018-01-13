@@ -162,6 +162,11 @@ namespace UniGLTF
                         var textureIndex = pbr["baseColorTexture"]["index"].GetInt32();
                         material.mainTexture = textures[textureIndex];
                     }
+                    if (pbr.HasKey("baseColorFactor"))
+                    {
+                        var color = pbr["baseColorFactor"].ListItems.Select(y => y.GetSingle()).ToArray();
+                        material.color = new Color(color[0], color[1], color[2], color[3]);
+                    }
                 }
 
                 yield return material;

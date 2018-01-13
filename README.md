@@ -7,4 +7,5 @@ glTF importer for Unity using ScriptedImporter
 
 ![duck](duck.png)
 ![duck_assets](duck_assets.png)
+![animation](Recordings/animation.gif)
 
