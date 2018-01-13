@@ -3,14 +3,14 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Osaru.Json
+namespace UniGLTF
 {
     public class JsonFormatException : ArgumentException
     {
         public JsonFormatException(string msg) : base(msg) { }
     }
 
-    public class JsonFormatter : IFormatter
+    public class JsonFormatter
     {
         IStore m_w;
 

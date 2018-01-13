@@ -6,7 +6,7 @@ using System.Text;
 /// <summary>
 /// reference: http://www.json.org/index.html
 /// </summary>
-namespace Osaru.Json
+namespace UniGLTF
 {
     public class JsonParseException : FormatException
     {
@@ -502,7 +502,7 @@ namespace Osaru.Json
             return new ArraySegment<byte>(decoded); 
         }
 
-        public void Dump(IFormatter f)
+        public void Dump(JsonFormatter f)
         {
             f.Dump(Dump());
         }

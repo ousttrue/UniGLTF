@@ -11,7 +11,7 @@ using UnityEngine;
 #endif
 
 
-namespace Osaru
+namespace UniGLTF
 {
     public static class TypeExtensions
     {

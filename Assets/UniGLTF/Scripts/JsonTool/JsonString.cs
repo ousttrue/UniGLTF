@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 
 
-namespace Osaru.Json
+namespace UniGLTF
 {
     public static class JsonString
     {

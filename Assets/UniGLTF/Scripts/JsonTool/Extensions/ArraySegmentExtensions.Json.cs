@@ -1,8 +1,7 @@
-﻿using Osaru.Json;
-using System;
+﻿using System;
 
 
-namespace Osaru
+namespace UniGLTF
 {
     public static partial class ArraySegmentExtensions
     {

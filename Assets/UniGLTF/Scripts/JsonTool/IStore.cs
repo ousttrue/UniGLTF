@@ -1,7 +1,7 @@
 ﻿using System;
 
 
-namespace Osaru
+namespace UniGLTF
 {
     public interface IStore
     {

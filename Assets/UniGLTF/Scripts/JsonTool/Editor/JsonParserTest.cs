@@ -1,8 +1,8 @@
 ﻿using NUnit.Framework;
-using Osaru.Json;
 using System.Linq;
 
-namespace OsaruTest.Json
+
+namespace UniGLTF
 {
     public class JsonParserTest
     {

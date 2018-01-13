@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 
-namespace Osaru
+namespace UniGLTF
 {
     public class StringBuilderStore: IStore
     {

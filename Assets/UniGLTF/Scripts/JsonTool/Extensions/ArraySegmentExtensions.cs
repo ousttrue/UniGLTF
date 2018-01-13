@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 
 
-namespace Osaru
+namespace UniGLTF
 {
     public static partial class ArraySegmentExtensions
     {

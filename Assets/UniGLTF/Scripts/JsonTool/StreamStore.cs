@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace Osaru
+namespace UniGLTF
 {
     public class StreamStore: IStore
     {
