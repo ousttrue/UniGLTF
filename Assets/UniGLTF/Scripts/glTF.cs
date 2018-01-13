@@ -292,55 +292,31 @@ namespace UniGLTF
             }
         }
 
-        MeshWithMaterials ReadMesh(JsonParser meshJson, int i, Material[] materials)
+        MeshWithMaterials ReadMesh(JsonParser meshJson, int meshIndex, Material[] materials)
         {
-            //Debug.Log(prims.ToJson());
-            var mesh = new Mesh();
+            var positions = new List<Vector3>();
+            var normals = new List<Vector3>();
+            var uv = new List<Vector2>();
+            var boneWeights = new List<BoneWeight>();
+            var subMeshes = new List<int[]>();
             var materialIndices = new List<int>();
-            if (meshJson.HasKey("name"))
-            {
-                mesh.name = meshJson["name"].GetString();
-            }
-            else
-            {
-                mesh.name = string.Format("UniGLTF import#{0}", i);
-            }
-
-            if (meshJson["primitives"].ListItems.Count() > 1)
-            {
-                throw new NotImplementedException("multi primitives");
-            }
-
-            var result = new MeshWithMaterials
-            {
-                Mesh = mesh,
-            };
-            
             foreach (var prim in meshJson["primitives"].ListItems)
             {
+                var indexOffset = positions.Count;
                 var indexBuffer = prim["indices"].GetInt32();
                 var attribs = prim["attributes"].ObjectItems.ToDictionary(x => x.Key, x => x.Value.GetInt32());
 
-                // positions
-                mesh.vertices = GetBuffer<Vector3>(attribs["POSITION"]).Select(x => x.ReverseZ()).ToArray();
-
-                // indices
-                mesh.SetIndices(GetIndices(indexBuffer), MeshTopology.Triangles, 0);
+                positions.AddRange(GetBuffer<Vector3>(attribs["POSITION"]).Select(x => x.ReverseZ()));
 
                 // normal
                 if (attribs.ContainsKey("NORMAL"))
                 {
-                    mesh.normals = GetBuffer<Vector3>(attribs["NORMAL"]).Select(x => x.ReverseZ()).ToArray();
+                    normals.AddRange(GetBuffer<Vector3>(attribs["NORMAL"]).Select(x => x.ReverseZ()));
                 }
-                else
-                {
-                    mesh.RecalculateNormals();
-                }
-
                 // uv
-                if(attribs.ContainsKey("TEXCOORD_0"))
+                if (attribs.ContainsKey("TEXCOORD_0"))
                 {
-                    mesh.uv = GetBuffer<Vector2>(attribs["TEXCOORD_0"]).Select(x => x.ReverseY()).ToArray();
+                    uv.AddRange(GetBuffer<Vector2>(attribs["TEXCOORD_0"]).Select(x => x.ReverseY()).ToArray());
                 }
 
                 // skin
@@ -353,8 +329,8 @@ namespace UniGLTF
 
                     var weightNorms = weights0.Select(x => x.x + x.y + x.z + x.w).ToArray();
 
-                    var boneWeights = new BoneWeight[joints0.Length];
-                    for (int j=0; j<joints0.Length; ++j)
+                    //var _boneWeights = new BoneWeight[joints0.Length];
+                    for (int j = 0; j < joints0.Length; ++j)
                     {
                         var bw = new BoneWeight();
 
@@ -384,10 +360,11 @@ namespace UniGLTF
                         bw.weight3 = weights0[j].w;
 #endif
 
-                        boneWeights[j] = bw;
+                        boneWeights.Add(bw);
                     }
-                    mesh.boneWeights = boneWeights;
                 }
+
+                subMeshes.Add(GetIndices(indexBuffer).Select(x => x + indexOffset).ToArray());
 
                 // material
                 if (prim.HasKey("material"))
@@ -395,6 +372,7 @@ namespace UniGLTF
                     materialIndices.Add(prim["material"].GetInt32());
                 }
 
+                /*
                 // blendshape
                 if (prim.HasKey("targets"))
                 {
@@ -408,15 +386,51 @@ namespace UniGLTF
                         mesh.AddBlendShapeFrame(name, 1.0f, blendShape.Positions, blendShape.Normals, blendShape.Tangents);
                     }
                 }
-
-                break;
+                */
             }
-
             if (!materialIndices.Any())
             {
                 materialIndices.Add(0);
             }
-            result.Materials = materialIndices.Select(x => materials[x]).ToArray();
+
+            //Debug.Log(prims.ToJson());
+            var mesh = new Mesh();
+            if (meshJson.HasKey("name"))
+            {
+                mesh.name = meshJson["name"].GetString();
+            }
+            else
+            {
+                mesh.name = string.Format("UniGLTF import#{0}", meshIndex);
+            }
+
+            mesh.vertices = positions.ToArray();
+            if (normals.Any())
+            {
+                mesh.normals = normals.ToArray();
+            }
+            else {
+                mesh.RecalculateNormals();
+            }
+            if (uv.Any())
+            {
+                mesh.uv = uv.ToArray();
+            }
+            if (boneWeights.Any())
+            {
+                mesh.boneWeights = boneWeights.ToArray();
+            }
+            mesh.subMeshCount = subMeshes.Count;
+            for(int i=0; i<subMeshes.Count; ++i)
+            {
+                mesh.SetTriangles(subMeshes[i], i);
+            }
+            mesh.RecalculateNormals();
+            var result = new MeshWithMaterials
+            {
+                Mesh = mesh,
+                Materials = materialIndices.Select(x => materials[x]).ToArray()
+            };                    
 
             return result;
         }

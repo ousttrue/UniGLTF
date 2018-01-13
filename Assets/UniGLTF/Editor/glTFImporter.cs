@@ -59,7 +59,7 @@ namespace UniGLTF
                 var go = new GameObject(string.Format("node{0}", i));
                 var nodeWithSkin = new TransformWithSkin
                 {
-                    Transform=go.transform,
+                    Transform = go.transform,
                 };
 
                 // transform
@@ -132,7 +132,7 @@ namespace UniGLTF
                 // children
                 if (node.HasKey("children"))
                 {
-                    foreach(var child in node["children"].ListItems)
+                    foreach (var child in node["children"].ListItems)
                     {
                         // node has local transform
                         list[child.GetInt32()].Transform.SetParent(list[i].Transform, false);
@@ -147,17 +147,17 @@ namespace UniGLTF
 
         IEnumerable<Material> ReadMaterials(JsonParser materialsJson, Texture2D[] textures)
         {
-            foreach(var x in materialsJson.ListItems)
+            foreach (var x in materialsJson.ListItems)
             {
                 var shader = Shader.Find("Standard");
 
                 var material = new Material(shader);
                 material.name = x["name"].GetString();
 
-                if(x.HasKey("pbrMetallicRoughness"))
+                if (x.HasKey("pbrMetallicRoughness"))
                 {
                     var pbr = x["pbrMetallicRoughness"];
-                    if(pbr.HasKey("baseColorTexture"))
+                    if (pbr.HasKey("baseColorTexture"))
                     {
                         var textureIndex = pbr["baseColorTexture"]["index"].GetInt32();
                         material.mainTexture = textures[textureIndex];
@@ -170,7 +170,7 @@ namespace UniGLTF
 
         static string ANIMATION_NAME = "animation";
 
-        T GetOrCreate<T>(UnityEngine.Object[] assets, string name, Func<T> create)where T: UnityEngine.Object
+        T GetOrCreate<T>(UnityEngine.Object[] assets, string name, Func<T> create) where T : UnityEngine.Object
         {
             var found = assets.FirstOrDefault(x => x.name == name);
             if (found != null)
@@ -184,223 +184,216 @@ namespace UniGLTF
         {
             Debug.LogFormat("## GLTFImporter ##: {0}", ctx.assetPath);
 
-            try
+            var assets = AssetDatabase.LoadAllAssetsAtPath(ctx.assetPath);
+
+            var baseDir = Path.GetDirectoryName(ctx.assetPath);
+            var parsed = File.ReadAllText(ctx.assetPath, Encoding.UTF8).ParseAsJson();
+
+            // buffer
+            var buffer = new GltfBuffer(parsed, baseDir);
+
+            // textures
+            Texture2D[] textures = null;
+            if (parsed.HasKey("textures"))
             {
-                var assets = AssetDatabase.LoadAllAssetsAtPath(ctx.assetPath);
+                textures = GltfTexture.ReadTextures(parsed, baseDir);
+            }
 
-                var baseDir = Path.GetDirectoryName(ctx.assetPath);
-                var parsed = File.ReadAllText(ctx.assetPath, Encoding.UTF8).ParseAsJson();
-
-                // buffer
-                var buffer = new GltfBuffer(parsed, baseDir);
-
-                // textures
-                Texture2D[] textures = null;
-                if (parsed.HasKey("textures"))
+            // materials
+            Material[] materials = null;
+            if (parsed.HasKey("materials"))
+            {
+                materials = ReadMaterials(parsed["materials"], textures).ToArray();
+                foreach (var material in materials)
                 {
-                    textures = GltfTexture.ReadTextures(parsed, baseDir);
-                }
-
-                // materials
-                Material[] materials = null;
-                if (parsed.HasKey("materials"))
-                {
-                    materials = ReadMaterials(parsed["materials"], textures).ToArray();
-                    foreach (var material in materials)
-                    {
-                        ctx.AddObjectToAsset(material.name, material);
-                    }
-                }
-                else
-                {
-                    var shader = Shader.Find("Standard");
-                    var material = new Material(shader);
                     ctx.AddObjectToAsset(material.name, material);
-                    materials = new Material[] { material };
                 }
-
-                // meshes
-                var meshes = buffer.ReadMeshes(parsed["meshes"], materials);
-                foreach (var mesh in meshes.Select(x => x.Mesh))
-                {
-                    ctx.AddObjectToAsset(mesh.name, mesh);
-                }
-
-                var root = new GameObject("_root_");
-
-                // nodes
-                var nodes = ReadNodes(parsed["nodes"], meshes);
-
-                // skins
-                Skin[] skins = null;
-                if (parsed.HasKey("skins"))
-                {
-                    skins = parsed["skins"].DeserializeList<Skin>();
-                }
-
-                // scene;
-                var scene = default(JsonParser);
-                if (parsed.HasKey("scene"))
-                {
-                    scene = parsed["scenes"][parsed["scene"].GetInt32()];
-                }
-                else
-                {
-                    scene = parsed["scenes"][0];
-                }
-                // hierachy
-                var nodeJsonList = scene["nodes"].ListItems.ToArray();
-                foreach (var x in nodeJsonList)
-                {
-                    nodes[x.GetInt32()].Transform.SetParent(root.transform, false);
-                }
-                // fix nodes coordinate
-                // reverse Z in global
-                foreach (var x in nodes)
-                {
-                    x.Transform.localPosition = x.Transform.localPosition.ReverseZ();
-                    x.Transform.localRotation = x.Transform.localRotation.ReverseZ();
-                }
-                // skinning
-                foreach (var x in nodes)
-                {
-                    var skinnedMeshRenderer = x.Transform.GetComponent<SkinnedMeshRenderer>();
-                    if (skinnedMeshRenderer != null)
-                    {
-                        var mesh = skinnedMeshRenderer.sharedMesh;
-                        if (x.SkinIndex.HasValue)
-                        {
-                            if (mesh == null) throw new Exception();
-                            if (skinnedMeshRenderer == null) throw new Exception();
-
-                            var skin = skins[x.SkinIndex.Value];
-
-                            skinnedMeshRenderer.sharedMesh = null;
-
-                            var joints = skin.joints.Select(y => nodes[y].Transform).ToArray();
-                            skinnedMeshRenderer.bones = joints;
-                            skinnedMeshRenderer.rootBone = nodes[0].Transform;
-
-                            // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
-                            var _b = joints.Select(y => y.worldToLocalMatrix * nodes[0].Transform.localToWorldMatrix).ToArray();
-                            var bindePoses = buffer.GetBuffer<Matrix4x4>(skin.inverseBindMatrices).ToArray();
-                            var bindePosesR = bindePoses.Select(y => y.ReverseZ()).ToArray();
-
-                            // ...
-                            mesh.bindposes = _b;
-                            skinnedMeshRenderer.sharedMesh = mesh;
-                        }
-                    }
-                }
-                ctx.SetMainObject("root", root);
-
-                // animation
-                if (parsed.HasKey("animations"))
-                {
-                    var animations = parsed["animations"].DeserializeList<Animation>();
-
-                    var clip = GetOrCreate(assets, ANIMATION_NAME, ()=>new AnimationClip());
-                    clip.name = ANIMATION_NAME;
-                    clip.ClearCurves();
-
-                    foreach (var x in animations)
-                    {
-                        foreach (var y in x.channels)
-                        {
-                            var node = nodes[y.target.node];
-                            switch (y.target.path)
-                            {
-                                case "translation":
-                                    {
-                                        var curveX = new AnimationCurve();
-                                        var curveY = new AnimationCurve();
-                                        var curveZ = new AnimationCurve();
-
-                                        var sampler = x.samplers[y.sampler];
-                                        var input = buffer.GetBuffer<float>(sampler.input);
-                                        var output = buffer.GetBuffer<Vector3>(sampler.output);
-                                        for(int i=0; i<input.Length; ++i)
-                                        {
-                                            var time = input[i];
-                                            var pos = output[i].ReverseZ();
-                                            curveX.AddKey(time, pos.x);
-                                            curveY.AddKey(time, pos.y);
-                                            curveZ.AddKey(time, pos.z);
-                                        }
-
-                                        var relativePath = node.Transform.RelativePathFrom(nodes[0].Transform);
-                                        clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
-                                        clip.SetCurve(relativePath, typeof(Transform), "localPosition.y", curveY);
-                                        clip.SetCurve(relativePath, typeof(Transform), "localPosition.z", curveZ);
-                                    }
-                                    break;
-
-                                case "rotation":
-                                    {
-                                        var curveX = new AnimationCurve();
-                                        var curveY = new AnimationCurve();
-                                        var curveZ = new AnimationCurve();
-                                        var curveW = new AnimationCurve();
-
-                                        var sampler = x.samplers[y.sampler];
-                                        var input = buffer.GetBuffer<float>(sampler.input);
-                                        var output = buffer.GetBuffer<Quaternion>(sampler.output);
-                                        for (int i = 0; i < input.Length; ++i)
-                                        {
-                                            var time = input[i];
-                                            var rot = output[i].ReverseZ();
-                                            curveX.AddKey(time, rot.x);
-                                            curveY.AddKey(time, rot.y);
-                                            curveZ.AddKey(time, rot.z);
-                                            curveW.AddKey(time, rot.w);
-                                        }
-
-                                        var relativePath = node.Transform.RelativePathFrom(nodes[0].Transform);
-                                        clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
-                                        clip.SetCurve(relativePath, typeof(Transform), "localRotation.y", curveY);
-                                        clip.SetCurve(relativePath, typeof(Transform), "localRotation.z", curveZ);
-                                        clip.SetCurve(relativePath, typeof(Transform), "localRotation.w", curveW);
-                                    }
-                                    break;
-
-                                case "scale":
-                                    {
-                                        var curveX = new AnimationCurve();
-                                        var curveY = new AnimationCurve();
-                                        var curveZ = new AnimationCurve();
-
-                                        var sampler = x.samplers[y.sampler];
-                                        var input = buffer.GetBuffer<float>(sampler.input);
-                                        var output = buffer.GetBuffer<Vector3>(sampler.output);
-                                        for (int i = 0; i < input.Length; ++i)
-                                        {
-                                            var time = input[i];
-                                            var scale = output[i];
-                                            curveX.AddKey(time, scale.x);
-                                            curveY.AddKey(time, scale.y);
-                                            curveZ.AddKey(time, scale.z);
-                                        }
-
-                                        var relativePath = node.Transform.RelativePathFrom(nodes[0].Transform);
-                                        clip.SetCurve(relativePath, typeof(Transform), "localScale.x", curveX);
-                                        clip.SetCurve(relativePath, typeof(Transform), "localScale.y", curveY);
-                                        clip.SetCurve(relativePath, typeof(Transform), "localScale.z", curveZ);
-                                    }
-                                    break;
-                            }
-                        }
-
-                        nodes[0].Transform.gameObject.AddComponent<Animator>();
-                    }
-                    ctx.AddObjectToAsset(ANIMATION_NAME, clip);
-                }
-
-                Debug.LogFormat("Import completed");
             }
-            catch (Exception e)
+            else
             {
-                Debug.LogError(e);
+                var shader = Shader.Find("Standard");
+                var material = new Material(shader);
+                ctx.AddObjectToAsset(material.name, material);
+                materials = new Material[] { material };
             }
+
+            // meshes
+            var meshes = buffer.ReadMeshes(parsed["meshes"], materials);
+            foreach (var mesh in meshes.Select(x => x.Mesh))
+            {
+                ctx.AddObjectToAsset(mesh.name, mesh);
+            }
+
+            var root = new GameObject("_root_");
+
+            // nodes
+            var nodes = ReadNodes(parsed["nodes"], meshes);
+
+            // skins
+            Skin[] skins = null;
+            if (parsed.HasKey("skins"))
+            {
+                skins = parsed["skins"].DeserializeList<Skin>();
+            }
+
+            // scene;
+            var scene = default(JsonParser);
+            if (parsed.HasKey("scene"))
+            {
+                scene = parsed["scenes"][parsed["scene"].GetInt32()];
+            }
+            else
+            {
+                scene = parsed["scenes"][0];
+            }
+            // hierachy
+            var nodeJsonList = scene["nodes"].ListItems.ToArray();
+            foreach (var x in nodeJsonList)
+            {
+                nodes[x.GetInt32()].Transform.SetParent(root.transform, false);
+            }
+            // fix nodes coordinate
+            // reverse Z in global
+            foreach (var x in nodes)
+            {
+                x.Transform.localPosition = x.Transform.localPosition.ReverseZ();
+                x.Transform.localRotation = x.Transform.localRotation.ReverseZ();
+            }
+            // skinning
+            foreach (var x in nodes)
+            {
+                var skinnedMeshRenderer = x.Transform.GetComponent<SkinnedMeshRenderer>();
+                if (skinnedMeshRenderer != null)
+                {
+                    var mesh = skinnedMeshRenderer.sharedMesh;
+                    if (x.SkinIndex.HasValue)
+                    {
+                        if (mesh == null) throw new Exception();
+                        if (skinnedMeshRenderer == null) throw new Exception();
+
+                        var skin = skins[x.SkinIndex.Value];
+
+                        skinnedMeshRenderer.sharedMesh = null;
+
+                        var joints = skin.joints.Select(y => nodes[y].Transform).ToArray();
+                        skinnedMeshRenderer.bones = joints;
+                        skinnedMeshRenderer.rootBone = nodes[0].Transform;
+
+                        // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
+                        var _b = joints.Select(y => y.worldToLocalMatrix * nodes[0].Transform.localToWorldMatrix).ToArray();
+                        var bindePoses = buffer.GetBuffer<Matrix4x4>(skin.inverseBindMatrices).ToArray();
+                        var bindePosesR = bindePoses.Select(y => y.ReverseZ()).ToArray();
+
+                        // ...
+                        mesh.bindposes = _b;
+                        skinnedMeshRenderer.sharedMesh = mesh;
+                    }
+                }
+            }
+            ctx.SetMainObject("root", root);
+
+            // animation
+            if (parsed.HasKey("animations"))
+            {
+                var animations = parsed["animations"].DeserializeList<Animation>();
+
+                var clip = GetOrCreate(assets, ANIMATION_NAME, () => new AnimationClip());
+                clip.name = ANIMATION_NAME;
+                clip.ClearCurves();
+
+                foreach (var x in animations)
+                {
+                    foreach (var y in x.channels)
+                    {
+                        var node = nodes[y.target.node];
+                        switch (y.target.path)
+                        {
+                            case "translation":
+                                {
+                                    var curveX = new AnimationCurve();
+                                    var curveY = new AnimationCurve();
+                                    var curveZ = new AnimationCurve();
+
+                                    var sampler = x.samplers[y.sampler];
+                                    var input = buffer.GetBuffer<float>(sampler.input);
+                                    var output = buffer.GetBuffer<Vector3>(sampler.output);
+                                    for (int i = 0; i < input.Length; ++i)
+                                    {
+                                        var time = input[i];
+                                        var pos = output[i].ReverseZ();
+                                        curveX.AddKey(time, pos.x);
+                                        curveY.AddKey(time, pos.y);
+                                        curveZ.AddKey(time, pos.z);
+                                    }
+
+                                    var relativePath = node.Transform.RelativePathFrom(nodes[0].Transform);
+                                    clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
+                                    clip.SetCurve(relativePath, typeof(Transform), "localPosition.y", curveY);
+                                    clip.SetCurve(relativePath, typeof(Transform), "localPosition.z", curveZ);
+                                }
+                                break;
+
+                            case "rotation":
+                                {
+                                    var curveX = new AnimationCurve();
+                                    var curveY = new AnimationCurve();
+                                    var curveZ = new AnimationCurve();
+                                    var curveW = new AnimationCurve();
+
+                                    var sampler = x.samplers[y.sampler];
+                                    var input = buffer.GetBuffer<float>(sampler.input);
+                                    var output = buffer.GetBuffer<Quaternion>(sampler.output);
+                                    for (int i = 0; i < input.Length; ++i)
+                                    {
+                                        var time = input[i];
+                                        var rot = output[i].ReverseZ();
+                                        curveX.AddKey(time, rot.x);
+                                        curveY.AddKey(time, rot.y);
+                                        curveZ.AddKey(time, rot.z);
+                                        curveW.AddKey(time, rot.w);
+                                    }
+
+                                    var relativePath = node.Transform.RelativePathFrom(nodes[0].Transform);
+                                    clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
+                                    clip.SetCurve(relativePath, typeof(Transform), "localRotation.y", curveY);
+                                    clip.SetCurve(relativePath, typeof(Transform), "localRotation.z", curveZ);
+                                    clip.SetCurve(relativePath, typeof(Transform), "localRotation.w", curveW);
+                                }
+                                break;
+
+                            case "scale":
+                                {
+                                    var curveX = new AnimationCurve();
+                                    var curveY = new AnimationCurve();
+                                    var curveZ = new AnimationCurve();
+
+                                    var sampler = x.samplers[y.sampler];
+                                    var input = buffer.GetBuffer<float>(sampler.input);
+                                    var output = buffer.GetBuffer<Vector3>(sampler.output);
+                                    for (int i = 0; i < input.Length; ++i)
+                                    {
+                                        var time = input[i];
+                                        var scale = output[i];
+                                        curveX.AddKey(time, scale.x);
+                                        curveY.AddKey(time, scale.y);
+                                        curveZ.AddKey(time, scale.z);
+                                    }
+
+                                    var relativePath = node.Transform.RelativePathFrom(nodes[0].Transform);
+                                    clip.SetCurve(relativePath, typeof(Transform), "localScale.x", curveX);
+                                    clip.SetCurve(relativePath, typeof(Transform), "localScale.y", curveY);
+                                    clip.SetCurve(relativePath, typeof(Transform), "localScale.z", curveZ);
+                                }
+                                break;
+                        }
+                    }
+
+                    nodes[0].Transform.gameObject.AddComponent<Animator>();
+                }
+                ctx.AddObjectToAsset(ANIMATION_NAME, clip);
+            }
+
+            Debug.LogFormat("Import completed");
         }
     }
 }
