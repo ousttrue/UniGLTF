@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 
 namespace UniGLTF
@@ -36,6 +38,22 @@ namespace UniGLTF
 #else
             return new Matrix4x4(m.GetColumn(0), m.GetColumn(1), -m.GetColumn(2), m.GetColumn(3));
 #endif
+        }
+
+        public static string RelativePathFrom(this Transform self, Transform root)
+        {
+            var path=new List<String>();
+            for(var current=self; current!=null; current=current.parent)
+            {
+                if (current == root)
+                {
+                    return String.Join("/", path.ToArray());
+                }
+
+                path.Insert(0, current.name);
+            }
+
+            throw new Exception("no RelativePath");
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using UnityEditor;
 using UnityEditor.Experimental.AssetImporters;
 using UnityEngine;
 
@@ -15,6 +16,35 @@ namespace UniGLTF
     {
         public Transform Transform;
         public int? SkinIndex;
+    }
+
+    [Serializable]
+    struct AnimationTarget
+    {
+        public int node;
+        public string path;
+    }
+
+    [Serializable]
+    struct Channel
+    {
+        public int sampler;
+        public AnimationTarget target;
+    }
+
+    [Serializable]
+    struct Sampler
+    {
+        public int input;
+        public string interpolation;
+        public int output;
+    }
+
+    [Serializable]
+    struct Animation
+    {
+        public Channel[] channels;
+        public Sampler[] samplers;
     }
 
     [ScriptedImporter(1, "gltf")]
@@ -104,6 +134,7 @@ namespace UniGLTF
                 {
                     foreach(var child in node["children"].ListItems)
                     {
+                        // node has local transform
                         list[child.GetInt32()].Transform.SetParent(list[i].Transform, false);
                     }
                 }
@@ -137,39 +168,16 @@ namespace UniGLTF
             }
         }
 
-        struct Matrix4
+        static string ANIMATION_NAME = "animation";
+
+        T GetOrCreate<T>(UnityEngine.Object[] assets, string name, Func<T> create)where T: UnityEngine.Object
         {
-            public float _00;
-            public float _01;
-            public float _02;
-            public float _03;
-
-            public float _04;
-            public float _05;
-            public float _06;
-            public float _07;
-
-            public float _08;
-            public float _09;
-            public float _10;
-            public float _11;
-
-            public float _12;
-            public float _13;
-            public float _14;
-            public float _15;
-        }
-
-        IEnumerable<Matrix4x4> ToMatrix(Matrix4[] matrices)
-        {
-            foreach(var m in matrices)
+            var found = assets.FirstOrDefault(x => x.name == name);
+            if (found != null)
             {
-                var v0 = new Vector4(m._00, m._01, m._02, m._03);
-                var v1 = new Vector4(m._04, m._05, m._06, m._07);
-                var v2 = new Vector4(m._08, m._09, m._10, m._11);
-                var v3 = new Vector4(m._12, m._13, m._14, m._15);
-                yield return new Matrix4x4(v0, v1, v2, v3);
+                return found as T;
             }
+            return create();
         }
 
         public override void OnImportAsset(AssetImportContext ctx)
@@ -178,6 +186,8 @@ namespace UniGLTF
 
             try
             {
+                var assets = AssetDatabase.LoadAllAssetsAtPath(ctx.assetPath);
+
                 var baseDir = Path.GetDirectoryName(ctx.assetPath);
                 var parsed = File.ReadAllText(ctx.assetPath, Encoding.UTF8).ParseAsJson();
 
@@ -186,7 +196,7 @@ namespace UniGLTF
 
                 // textures
                 Texture2D[] textures = null;
-                if(parsed.HasKey("textures"))
+                if (parsed.HasKey("textures"))
                 {
                     textures = GltfTexture.ReadTextures(parsed, baseDir);
                 }
@@ -196,7 +206,7 @@ namespace UniGLTF
                 if (parsed.HasKey("materials"))
                 {
                     materials = ReadMaterials(parsed["materials"], textures).ToArray();
-                    foreach(var material in materials)
+                    foreach (var material in materials)
                     {
                         ctx.AddObjectToAsset(material.name, material);
                     }
@@ -244,6 +254,7 @@ namespace UniGLTF
                 {
                     nodes[x.GetInt32()].Transform.SetParent(root.transform, false);
                 }
+                // fix nodes coordinate
                 // reverse Z in global
                 foreach (var x in nodes)
                 {
@@ -278,10 +289,111 @@ namespace UniGLTF
                             // ...
                             mesh.bindposes = _b;
                             skinnedMeshRenderer.sharedMesh = mesh;
+
+                            nodes[0].Transform.gameObject.AddComponent<Animator>();
                         }
                     }
                 }
                 ctx.SetMainObject("root", root);
+
+                // animation
+                if (parsed.HasKey("animations"))
+                {
+                    var animations = parsed["animations"].DeserializeList<Animation>();
+
+                    var clip = GetOrCreate(assets, ANIMATION_NAME, ()=>new AnimationClip());
+                    clip.name = ANIMATION_NAME;
+                    clip.ClearCurves();
+
+                    foreach (var x in animations)
+                    {
+                        foreach (var y in x.channels)
+                        {
+                            var node = nodes[y.target.node];
+                            switch (y.target.path)
+                            {
+                                case "translation":
+                                    {
+                                        var curveX = new AnimationCurve();
+                                        var curveY = new AnimationCurve();
+                                        var curveZ = new AnimationCurve();
+
+                                        var sampler = x.samplers[y.sampler];
+                                        var input = buffer.GetBuffer<float>(sampler.input);
+                                        var output = buffer.GetBuffer<Vector3>(sampler.output);
+                                        for(int i=0; i<input.Length; ++i)
+                                        {
+                                            var time = input[i];
+                                            var pos = output[i].ReverseZ();
+                                            curveX.AddKey(time, pos.x);
+                                            curveY.AddKey(time, pos.y);
+                                            curveZ.AddKey(time, pos.z);
+                                        }
+
+                                        var relativePath = node.Transform.RelativePathFrom(nodes[0].Transform);
+                                        clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
+                                        clip.SetCurve(relativePath, typeof(Transform), "localPosition.y", curveY);
+                                        clip.SetCurve(relativePath, typeof(Transform), "localPosition.z", curveZ);
+                                    }
+                                    break;
+
+                                case "rotation":
+                                    {
+                                        var curveX = new AnimationCurve();
+                                        var curveY = new AnimationCurve();
+                                        var curveZ = new AnimationCurve();
+                                        var curveW = new AnimationCurve();
+
+                                        var sampler = x.samplers[y.sampler];
+                                        var input = buffer.GetBuffer<float>(sampler.input);
+                                        var output = buffer.GetBuffer<Quaternion>(sampler.output);
+                                        for (int i = 0; i < input.Length; ++i)
+                                        {
+                                            var time = input[i];
+                                            var rot = output[i].ReverseZ();
+                                            curveX.AddKey(time, rot.x);
+                                            curveY.AddKey(time, rot.y);
+                                            curveZ.AddKey(time, rot.z);
+                                            curveW.AddKey(time, rot.w);
+                                        }
+
+                                        var relativePath = node.Transform.RelativePathFrom(nodes[0].Transform);
+                                        clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
+                                        clip.SetCurve(relativePath, typeof(Transform), "localRotation.y", curveY);
+                                        clip.SetCurve(relativePath, typeof(Transform), "localRotation.z", curveZ);
+                                        clip.SetCurve(relativePath, typeof(Transform), "localRotation.w", curveW);
+                                    }
+                                    break;
+
+                                case "scale":
+                                    {
+                                        var curveX = new AnimationCurve();
+                                        var curveY = new AnimationCurve();
+                                        var curveZ = new AnimationCurve();
+
+                                        var sampler = x.samplers[y.sampler];
+                                        var input = buffer.GetBuffer<float>(sampler.input);
+                                        var output = buffer.GetBuffer<Vector3>(sampler.output);
+                                        for (int i = 0; i < input.Length; ++i)
+                                        {
+                                            var time = input[i];
+                                            var scale = output[i];
+                                            curveX.AddKey(time, scale.x);
+                                            curveY.AddKey(time, scale.y);
+                                            curveZ.AddKey(time, scale.z);
+                                        }
+
+                                        var relativePath = node.Transform.RelativePathFrom(nodes[0].Transform);
+                                        clip.SetCurve(relativePath, typeof(Transform), "localScale.x", curveX);
+                                        clip.SetCurve(relativePath, typeof(Transform), "localScale.y", curveY);
+                                        clip.SetCurve(relativePath, typeof(Transform), "localScale.z", curveZ);
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                    ctx.AddObjectToAsset(ANIMATION_NAME, clip);
+                }
 
                 Debug.LogFormat("Import completed");
             }
