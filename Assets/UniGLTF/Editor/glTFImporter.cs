@@ -383,6 +383,10 @@ namespace UniGLTF
                     }
                 }
             }
+
+            // rename nodes0
+            nodes[0].Transform.name = Path.GetFileNameWithoutExtension(ctx.assetPath) + "0";
+
             ctx.SetMainObject("root", root);
 
             // animation
