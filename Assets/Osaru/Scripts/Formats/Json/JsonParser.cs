@@ -37,7 +37,7 @@ namespace Osaru.Json
         ToEnd,
     }
 
-    public struct JsonParser: IParser<JsonParser>
+    public struct JsonParser
     {
         StringSegment m_segment;
         public StringSegment Segment
@@ -90,6 +90,7 @@ namespace Osaru.Json
             private set;
         }
 
+        /*
         public ParserValueType ValueType
         {
             get
@@ -105,6 +106,7 @@ namespace Osaru.Json
                 return ParserValueType.Unknown;
             }
         }
+        */
 
         static StringSegment SearchTokenEnd(StringSegment segment)
         {
