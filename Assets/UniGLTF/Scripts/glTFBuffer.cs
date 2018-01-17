@@ -119,9 +119,15 @@ namespace UniGLTF
         {
             var accessor = m_accessors[index];
             var view = m_bufferViews[accessor.bufferView];
-            switch (accessor.componentType)
+            switch ((glComponentType)accessor.componentType)
             {
-                case 5123: // GL_UNSIGNED_SHORT:
+                case glComponentType.UNSIGNED_BYTE:
+                    {
+                        var indices = GetAttrib<Byte>(accessor, view);
+                        return FlipTriangle(indices).ToArray();
+                    }
+
+                case glComponentType.UNSIGNED_SHORT:
                     {
                         var indices = GetAttrib<UInt16>(accessor, view);
                         return FlipTriangle(indices).ToArray();
@@ -138,7 +144,17 @@ namespace UniGLTF
             return GetAttrib<T>(vertexAccessor, view);
         }
 
+        static IEnumerable<int> FlipTriangle(IEnumerable<Byte> src)
+        {
+            return FlipTriangle(src.Select(x => (Int32)x));
+        }
+
         static IEnumerable<int> FlipTriangle(IEnumerable<UInt16> src)
+        {
+            return FlipTriangle(src.Select(x => (Int32)x));
+        }
+
+        static IEnumerable<int> FlipTriangle(IEnumerable<Int32> src)
         {
             var it = src.GetEnumerator();
             while (true)

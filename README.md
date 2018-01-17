@@ -1,6 +1,6 @@
 # UniGLTF
 
-[glTF](https://github.com/KhronosGroup/glTF) importer for Unity using ScriptedImporter
+[glTF](https://github.com/KhronosGroup/glTF) importer for Unity using [ScriptedImporter](https://docs.unity3d.com/ScriptReference/Experimental.AssetImporters.ScriptedImporter.html)
 
 * Unity2017.3.0f3
 * glTF-2.0
