@@ -115,6 +115,12 @@ namespace UniGLTF
             return attrib;
         }
 
+        public ArraySegment<Byte> GetViewBytes(int bufferView)
+        {
+            var view = m_bufferViews[bufferView];
+            return new ArraySegment<byte>(m_bytesList[view.buffer].Array, m_bytesList[view.buffer].Offset + view.byteOffset, view.byteLength);
+        }
+
         public int[] GetIndices(int index)
         {
             var accessor = m_accessors[index];

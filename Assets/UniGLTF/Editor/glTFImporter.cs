@@ -32,7 +32,16 @@ namespace UniGLTF
             Texture2D[] textures = null;
             if (parsed.HasKey("textures"))
             {
-                textures = GltfTexture.ReadTextures(parsed, baseDir);
+                textures = GltfTexture.ReadTextures(parsed, baseDir, buffer)
+                    .Select(x =>
+                    {
+                        if (!x.IsAsset)
+                        {
+                            ctx.AddObjectToAsset(x.Texture.name, x.Texture);
+                        }
+                        return x.Texture;
+                    })
+                    .ToArray();
             }
 
             // materials

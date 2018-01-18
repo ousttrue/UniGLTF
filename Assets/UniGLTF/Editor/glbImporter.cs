@@ -69,8 +69,9 @@ namespace UniGLTF
             }
 
             var jsonBytes = chunks[0].Bytes;
+            var json = Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count);
             gltfImporter.Import(ctx,
-                Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count), 
+                json, 
                 chunks[1].Bytes);
         }
     }
