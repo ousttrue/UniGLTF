@@ -25,8 +25,19 @@ namespace UniGLTF
         {
             Debug.LogFormat("## glbImporter ##: {0}", ctx.assetPath);
 
-            var baseDir = Path.GetDirectoryName(ctx.assetPath);
             var bytes = File.ReadAllBytes(ctx.assetPath);
+
+            Import(new gltfImporter.Context(ctx), bytes);
+        }
+
+        public static GameObject Import(string path, Byte[] bytes)
+        {
+            return Import(new gltfImporter.Context(path), bytes);
+        }
+
+        public static GameObject Import(gltfImporter.Context ctx, Byte[] bytes)
+        {
+            var baseDir = Path.GetDirectoryName(ctx.Path);
 
             int pos = 0;
             if(Encoding.ASCII.GetString(bytes, 0, 4) != "glTF")
@@ -70,7 +81,8 @@ namespace UniGLTF
 
             var jsonBytes = chunks[0].Bytes;
             var json = Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count);
-            gltfImporter.Import(ctx,
+
+            return gltfImporter.Import(ctx,
                 json, 
                 chunks[1].Bytes);
         }

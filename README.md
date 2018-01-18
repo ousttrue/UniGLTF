@@ -11,7 +11,7 @@
 
 ## Implemented
 
-* [ ] Runtime Loader
+* [x] Runtime Loader
 
 * Format
     * [x] gltf

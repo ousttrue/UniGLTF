@@ -20,9 +20,55 @@ namespace UniGLTF
             Import(ctx, json, new ArraySegment<byte>());
         }
 
-        public static void Import(AssetImportContext ctx, string json, ArraySegment<Byte> bytes)
+        public struct Context
         {
-            var baseDir = Path.GetDirectoryName(ctx.assetPath);
+            public AssetImportContext AssetImportContext;
+            public String Path;
+
+            public Context(AssetImportContext assetImportContext)
+            {
+                AssetImportContext = assetImportContext;
+                Path = assetImportContext.assetPath;
+            }
+
+            public Context(String path)
+            {
+                AssetImportContext = null;
+                Path = path;
+            }
+
+            public void AddObjectToAsset(string key, UnityEngine.Object o)
+            {
+                if (AssetImportContext == null)
+                {
+                    return;
+                }
+                AssetImportContext.AddObjectToAsset(key, o);
+            }
+
+            public void SetMainObject(string key, UnityEngine.Object o)
+            {
+                if (AssetImportContext == null)
+                {
+                    return;
+                }
+                AssetImportContext.SetMainObject(key, o);
+            }
+        }
+
+        public static GameObject Import(AssetImportContext ctx, string json, ArraySegment<Byte> bytes = default(ArraySegment<Byte>))
+        {
+            return Import(new Context(ctx), json, bytes);
+        }
+
+        public static GameObject Import(string path, string json, ArraySegment<Byte> bytes = default(ArraySegment<Byte>))
+        {
+            return Import(new Context(path), json, bytes);
+        }
+
+        public static GameObject Import(Context ctx, string json, ArraySegment<Byte> bytes)
+        {
+            var baseDir = Path.GetDirectoryName(ctx.Path);
             var parsed = json.ParseAsJson();
 
             // buffer
@@ -137,7 +183,7 @@ namespace UniGLTF
             }
 
             // rename nodes0
-            nodes[0].Transform.name = Path.GetFileNameWithoutExtension(ctx.assetPath) + "0";
+            nodes[0].Transform.name = Path.GetFileNameWithoutExtension(ctx.Path) + "0";
 
             ctx.SetMainObject("root", root);
 
@@ -156,6 +202,8 @@ namespace UniGLTF
             }
 
             Debug.LogFormat("Import completed");
+
+            return root;
         }
     }
 }
