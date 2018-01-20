@@ -23,7 +23,7 @@ namespace UniGLTF
                 }
                 else
                 {
-                    go.name = string.Format("node{0}", i);
+                    go.name = string.Format("node{0:000}", i);
                 }
 
                 var nodeWithSkin = new TransformWithSkin

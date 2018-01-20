@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 
@@ -54,6 +55,53 @@ namespace UniGLTF
             }
 
             throw new Exception("no RelativePath");
+        }
+
+        public static IEnumerable<Transform> GetChildren(this Transform self)
+        {
+            foreach(Transform child in self)
+            {
+                yield return child;
+            }
+        }
+
+        public static IEnumerable<Transform> Traverse(this Transform t)
+        {
+            yield return t;
+            foreach (Transform x in t)
+            {
+                foreach (Transform y in x.Traverse())
+                {
+                    yield return y;
+                }
+            }
+        }
+
+        public static Transform FindDescenedant(this Transform t, string name)
+        {
+            return t.Traverse().First(x => x.name == name);
+        }
+
+        public static IEnumerable<Transform> Ancestors(this Transform t)
+        {
+            yield return t;
+            if (t.parent != null)
+            {
+                foreach (Transform x in t.parent.Ancestors())
+                {
+                    yield return x;
+                }
+            }
+        }
+
+        public static SkeletonBone ToSkeletonBone(this Transform t)
+        {
+            var sb = new SkeletonBone();
+            sb.name = t.name;
+            sb.position = t.localPosition;
+            sb.rotation = t.localRotation;
+            sb.scale = t.localScale;
+            return sb;
         }
     }
 }

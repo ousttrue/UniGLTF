@@ -133,8 +133,6 @@ namespace UniGLTF
                             break;
                     }
                 }
-
-                nodes[0].gameObject.AddComponent<Animator>();
             }
         }
     }

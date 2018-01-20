@@ -77,7 +77,7 @@ namespace UniGLTF
         {
             // asset
             var asset = parsed["asset"];
-            var generator = "unknown";
+            var generator = "unknown generator";
             if (parsed.HasKey("generator"))
             {
                 generator = parsed["generator"].GetString();
