@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -64,6 +65,22 @@ namespace UniGLTF
         public static GameObject Import(string path, string json, ArraySegment<Byte> bytes = default(ArraySegment<Byte>))
         {
             return Import(new Context(path), json, bytes);
+        }
+
+        static void TraverseTransform(Transform t, Action<Transform> pred)
+        {
+            pred(t);
+
+            foreach (Transform child in t)
+            {
+                TraverseTransform(child, pred);
+            }
+        }
+
+        struct PosRot
+        {
+            public Vector3 Position;
+            public Quaternion Rotation;
         }
 
         public static GameObject Import(Context ctx, string json, ArraySegment<Byte> bytes)
@@ -137,19 +154,28 @@ namespace UniGLTF
             {
                 scene = parsed["scenes"][0];
             }
+            var globalTransformMap = nodes.ToDictionary(x => x.Transform, x => new PosRot
+            {
+                Position = x.Transform.position,
+                Rotation = x.Transform.rotation,
+            });
             // hierachy
             var nodeJsonList = scene["nodes"].ListItems.ToArray();
             foreach (var x in nodeJsonList)
             {
-                nodes[x.GetInt32()].Transform.SetParent(root.transform, false);
+                // fix nodes coordinate
+                // reverse Z in global
+                var t = nodes[x.GetInt32()].Transform;
+                t.SetParent(root.transform, false);
+
+                TraverseTransform(t, transform =>
+                {
+                    var g = globalTransformMap[transform];
+                    transform.position = g.Position.ReverseZ();
+                    transform.rotation = g.Rotation.ReverseZ();
+                });
             }
-            // fix nodes coordinate
-            // reverse Z in global
-            foreach (var x in nodes)
-            {
-                x.Transform.localPosition = x.Transform.localPosition.ReverseZ();
-                x.Transform.localRotation = x.Transform.localRotation.ReverseZ();
-            }
+
             // skinning
             foreach (var x in nodes)
             {
@@ -178,6 +204,9 @@ namespace UniGLTF
                         // ...
                         mesh.bindposes = _b;
                         skinnedMeshRenderer.sharedMesh = mesh;
+
+                        // make humanoid avatar
+
                     }
                 }
             }

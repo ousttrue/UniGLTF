@@ -16,7 +16,16 @@ namespace UniGLTF
             int i = 0;
             foreach (var node in nodesJson.ListItems)
             {
-                var go = new GameObject(string.Format("node{0}", i));
+                var go = new GameObject();
+                if (node.HasKey("name"))
+                {
+                    go.name = node["name"].GetString();
+                }
+                else
+                {
+                    go.name = string.Format("node{0}", i);
+                }
+
                 var nodeWithSkin = new TransformWithSkin
                 {
                     Transform = go.transform,
