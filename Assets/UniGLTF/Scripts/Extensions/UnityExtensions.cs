@@ -93,15 +93,5 @@ namespace UniGLTF
                 }
             }
         }
-
-        public static SkeletonBone ToSkeletonBone(this Transform t)
-        {
-            var sb = new SkeletonBone();
-            sb.name = t.name;
-            sb.position = t.localPosition;
-            sb.rotation = t.localRotation;
-            sb.scale = t.localScale;
-            return sb;
-        }
     }
 }

@@ -10,6 +10,17 @@ namespace UniGLTF
         public Transform Transform;
         public int? SkinIndex;
 
+        static void CancelRotation(Transform t, Dictionary<Transform, Vector3> positionMap)
+        {
+            t.rotation = Quaternion.identity;
+            t.position = positionMap[t];
+
+            foreach(Transform child in t)
+            {
+                CancelRotation(child, positionMap);
+            }
+        }
+
         public static List<TransformWithSkin> ReadNodes(JsonParser nodesJson, MeshWithMaterials[] meshes)
         {
             var list = new List<TransformWithSkin>();
@@ -31,7 +42,9 @@ namespace UniGLTF
                     Transform = go.transform,
                 };
 
+                //
                 // transform
+                //
                 if (node.HasKey("translation"))
                 {
                     var values = node["translation"].ListItems.Select(x => x.GetSingle()).ToArray();
@@ -59,7 +72,9 @@ namespace UniGLTF
                     go.transform.localPosition = m.GetColumn(3);
                 }
 
-                // mesh
+                //
+                // attach mesh
+                //
                 if (node.HasKey("mesh"))
                 {
                     var mesh = meshes[node["mesh"].GetInt32()];
@@ -95,6 +110,9 @@ namespace UniGLTF
                 ++i;
             }
 
+            //
+            // setparent
+            // 
             i = 0;
             foreach (var node in nodesJson.ListItems)
             {
@@ -110,6 +128,18 @@ namespace UniGLTF
 
                 ++i;
             }
+
+            /*
+            //
+            // cancel rotation
+            //
+            var rootNodes = list.Where(x => x.Transform.parent == null).ToArray();
+            var positionMap = list.ToDictionary(x => x.Transform, x => x.Transform.position);
+            foreach(var node in rootNodes)
+            {
+                CancelRotation(node.Transform, positionMap);
+            }
+            */
 
             return list;
         }

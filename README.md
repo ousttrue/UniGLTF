@@ -11,6 +11,7 @@
 
 ## Implemented
 
+* [x] AssetImporter
 * [x] Runtime Loader
 
 * Format
@@ -35,6 +36,9 @@
 
 * AnimationClip
     * [x] transform
+
+* Humanoid
+    * [ ] avatar build
 
 * Camera
     * not implemented
