@@ -5,9 +5,14 @@
 * Unity2017.3.0f3
 * glTF-2.0
 
-![duck](duck.png)
-![duck_assets](duck_assets.png)
+![duck](doc/duck.png)
+![duck_assets](doc/duck_assets.png)
 ![animation](Recordings/animation.gif)
+
+## Humanoid Helper
+
+![gizmo](doc/BoneMappingGizmo.png)
+![inspector](doc/BoneMappingInspector.png)
 
 ## Implemented
 
@@ -38,7 +43,7 @@
     * [x] transform
 
 * Humanoid
-    * [ ] avatar build
+    * [x] manual avatar build
 
 * Camera
     * not implemented

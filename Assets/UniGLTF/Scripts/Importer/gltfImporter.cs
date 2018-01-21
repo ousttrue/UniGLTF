@@ -176,7 +176,9 @@ namespace UniGLTF
                 });
             }
 
-            var animator=nodes[0].Transform.gameObject.AddComponent<Animator>();
+            var animator=root.AddComponent<Animator>();
+
+            root.AddComponent<UniHumanoid.BoneMapping>();
 
             // skinning
             foreach (var x in nodes)

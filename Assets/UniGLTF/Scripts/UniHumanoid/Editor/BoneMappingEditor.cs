@@ -77,6 +77,9 @@ namespace UniHumanoid
 
             var bones = m_target.Bones;
 
+            m_target.HipsParent = (GameObject)EditorGUILayout.ObjectField("HipsParent", m_target.HipsParent, typeof(GameObject), true);
+            EditorGUILayout.Space();
+
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Arm", EditorStyles.boldLabel, GUILayout.Width(LABEL_WIDTH));
             EditorGUILayout.LabelField("Left", EditorStyles.boldLabel, GUILayout.Width(40));
@@ -162,6 +165,8 @@ namespace UniHumanoid
                 BoneField(HumanBodyBones.LeftLittleIntermediate, HumanBodyBones.RightLittleIntermediate, bones);
                 BoneField(HumanBodyBones.LeftLittleDistal, HumanBodyBones.RightLittleDistal, bones);
             }
+
+            EditorUtility.SetDirty(m_target);
         }
 
         void DrawBone(HumanBodyBones bone, GameObject go)

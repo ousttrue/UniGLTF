@@ -7,6 +7,9 @@ namespace UniHumanoid
     public class BoneMapping : MonoBehaviour
     {
         [SerializeField]
+        public GameObject HipsParent;
+
+        [SerializeField]
         public GameObject[] Bones;
 
         private void Reset()
@@ -16,7 +19,8 @@ namespace UniHumanoid
 
         public void GuessBoneMapping()
         {
-            var bones = HumanoidUtility.TraverseSkeleton(transform, transform.Traverse().Skip(1).ToArray()).ToArray();
+            var bones = HumanoidUtility.TraverseSkeleton(HipsParent.transform, 
+                HipsParent.transform.Traverse().Skip(1).ToArray()).ToArray();
             foreach (var x in bones)
             {
                 Bones[(int)x.Key] = x.Value.gameObject;
