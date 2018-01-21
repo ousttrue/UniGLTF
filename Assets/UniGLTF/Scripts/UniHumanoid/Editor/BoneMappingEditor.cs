@@ -49,35 +49,49 @@ namespace UniHumanoid
 
         public override void OnInspectorGUI()
         {
-            if (GUILayout.Button("Guess bone mapping"))
-            {
-                m_target.GuessBoneMapping();
-            }
-
-            if (GUILayout.Button("Ensure T-Pose"))
-            {
-                m_target.EnsureTPose();
-            }
-
-            if (GUILayout.Button("Create avatar"))
-            {
-                var avatar = m_target.CreateAvatar();
-                if (avatar != null)
-                {                
-                    var path = string.Format("Assets/{0}.asset", avatar.name);
-                    AssetDatabase.CreateAsset(avatar, path);
-                    Debug.LogFormat("Create avatar {0}", path);
-                }
-                else
-                {
-                    Debug.LogWarning("fail to CreateAvatar");
-                }
-            }
-
             var bones = m_target.Bones;
 
-            m_target.HipsParent = (GameObject)EditorGUILayout.ObjectField("HipsParent", m_target.HipsParent, typeof(GameObject), true);
-            EditorGUILayout.Space();
+            BoneField(HumanBodyBones.Hips, bones);
+
+            if (bones[(int)HumanBodyBones.Hips] == null)
+            {
+                EditorGUILayout.HelpBox(@"First, you set hips", MessageType.Warning);
+            }
+            else
+            {
+                if (GUILayout.Button("Guess bone mapping"))
+                {
+                    m_target.GuessBoneMapping();
+                }
+                EditorGUILayout.HelpBox(@"Guess bones from hips", MessageType.Info);
+
+                if (GUILayout.Button("Ensure T-Pose"))
+                {
+                    m_target.EnsureTPose();
+                }
+                EditorGUILayout.HelpBox(@"Arms to Horizontal", MessageType.Info);
+
+                if (GUILayout.Button("Create avatar"))
+                {
+                    var avatar = m_target.CreateAvatar();
+                    if (avatar != null)
+                    {
+                        var path = string.Format("Assets/{0}.asset", avatar.name);
+                        AssetDatabase.CreateAsset(avatar, path);
+                        Debug.LogFormat("Create avatar {0}", path);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("fail to CreateAvatar");
+                    }
+                }
+                EditorGUILayout.HelpBox(@"before create,
+
+1. Model root transform should reset(origin without rotation)
+2. Model forward to Z+(rotate child of model root)
+3. Required bones filled(todo)
+", MessageType.Info);
+            }
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Arm", EditorStyles.boldLabel, GUILayout.Width(LABEL_WIDTH));
@@ -91,7 +105,6 @@ namespace UniHumanoid
             BoneField(HumanBodyBones.LeftHand, HumanBodyBones.RightHand, bones);
 
             EditorGUILayout.LabelField("Body", EditorStyles.boldLabel);
-            BoneField(HumanBodyBones.Hips, bones);
             BoneField(HumanBodyBones.Spine, bones);
             BoneField(HumanBodyBones.Chest, bones);
             BoneField(HumanBodyBones.UpperChest, bones);

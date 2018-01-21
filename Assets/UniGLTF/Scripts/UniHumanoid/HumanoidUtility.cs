@@ -164,10 +164,12 @@ namespace UniHumanoid
             var leftLeg = GetLeftLeg(hipsChildren);
             var leftLowerLeg = leftLeg.GetChild(0);
             var leftFoot = leftLowerLeg.GetChild(0);
+            var leftToes = leftFoot.GetChild(0);
 
             var rightLeg = GetRightLeg(hipsChildren);
             var rightLowerLeg = rightLeg.GetChild(0);
             var rightFoot = rightLowerLeg.GetChild(0);
+            var rightToes = rightFoot.GetChild(0);
 
             var spine = GetSpine(hipsChildren);
 
@@ -199,10 +201,12 @@ namespace UniHumanoid
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.LeftUpperLeg, leftLeg);
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.LeftLowerLeg, leftLowerLeg);
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.LeftFoot, leftFoot);
+            yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.LeftToes, leftToes);
 
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.RightUpperLeg, rightLeg);
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.RightLowerLeg, rightLowerLeg);
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.RightFoot, rightFoot);
+            yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.RightToes, rightToes);
 
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.Spine, spine);
             if (chest != spine)

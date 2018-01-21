@@ -21,10 +21,10 @@
 
 ## Implemented
 
-* [x] AssetImporter
-* [x] Runtime Loader
-
-* [ ] Exporter(node rotation is cleared and avatar definition)
+* Importer/Exporter
+    * [x] AssetImporter
+    * [x] Runtime Loader
+    * [ ] Exporter(node rotation is cleared and avatar definition)
 
 * Format
     * [x] gltf
@@ -51,6 +51,7 @@
 
 * Humanoid
     * [x] manual avatar build
+    * [ ] avatar creation parameter
 
 * Camera
     * not implemented
