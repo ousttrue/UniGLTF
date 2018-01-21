@@ -76,7 +76,17 @@ namespace UniHumanoid
                     legStretch = 0.05f,
                     feetSpacing = 0.0f,
                 };
-                return AvatarBuilder.BuildHumanAvatar(copy, description);
+
+                var avatar=AvatarBuilder.BuildHumanAvatar(copy, description);
+                avatar.name = name;
+
+                var animator = GetComponent<Animator>();
+                if (animator != null)
+                {
+                    animator.avatar = avatar;
+                }
+
+                return avatar;
             }
             finally
             {

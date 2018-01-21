@@ -63,9 +63,8 @@ namespace UniHumanoid
             {
                 var avatar = m_target.CreateAvatar();
                 if (avatar != null)
-                {
-                    avatar.name = "avatar";
-                    var path = "Assets/avtar.asset";
+                {                
+                    var path = string.Format("Assets/{0}.asset", avatar.name);
                     AssetDatabase.CreateAsset(avatar, path);
                     Debug.LogFormat("Create avatar {0}", path);
                 }

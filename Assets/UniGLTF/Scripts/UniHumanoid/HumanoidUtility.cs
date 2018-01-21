@@ -178,14 +178,21 @@ namespace UniHumanoid
 
             var leftArm = GetLeftArm(chest, chestChildren, -rightDir);
             var leftLowerArm = leftArm.GetChild(0);
-            var leftHand = leftLowerArm.GetChild(0);
 
             var rightArm = GetRightArm(chest, chestChildren, rightDir);
             var rightLowerArm = rightArm.GetChild(0);
-            var rightHand = rightLowerArm.GetChild(0);
 
             var neck = GetNeck(chestChildren);
-            var head = neck.GetChild(0);
+            Transform head = null;
+            if (neck.childCount == 0)
+            {
+                head = neck;
+                neck = null;
+            }
+            else
+            {
+                head = neck.GetChild(0);
+            }
 
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.Hips, hips);
 
@@ -198,17 +205,31 @@ namespace UniHumanoid
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.RightFoot, rightFoot);
 
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.Spine, spine);
-            yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.Chest, chest);
-            yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.Neck, neck);
+            if (chest != spine)
+            {
+                yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.Chest, chest);
+            }
+            if (neck != null)
+            {
+                yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.Neck, neck);
+            }
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.Head, head);
 
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.LeftUpperArm, leftArm);
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.LeftLowerArm, leftLowerArm);
-            yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.LeftHand, leftHand);
+            if (leftLowerArm.childCount > 0)
+            {
+                var leftHand = leftLowerArm.GetChild(0);
+                yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.LeftHand, leftHand);
+            }
 
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.RightUpperArm, rightArm);
             yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.RightLowerArm, rightLowerArm);
-            yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.RightHand, rightHand);
+            if (rightLowerArm.childCount > 0)
+            {
+                var rightHand = rightLowerArm.GetChild(0);
+                yield return new KeyValuePair<HumanBodyBones, Transform>(HumanBodyBones.RightHand, rightHand);
+            }
         }
 
         public static String ToHumanBoneName(HumanBodyBones b)

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -208,18 +207,6 @@ namespace UniGLTF
                         // ...
                         mesh.bindposes = _b;
                         skinnedMeshRenderer.sharedMesh = mesh;
-
-                        // make humanoid avatar
-                        /*
-                        var avatar = CreateAvatar(nodes[0].Transform, joints);
-                        if (avatar != null)
-                        {
-                            Debug.LogFormat("isValid: {0}, isHuman: {1}", avatar.isValid, avatar.isHuman, avatar);
-                            avatar.name = "avatar";
-                            ctx.AddObjectToAsset("avatar", avatar);
-                            animator.avatar = avatar;
-                        }
-                        */
                     }
                 }
             }
@@ -231,24 +218,6 @@ namespace UniGLTF
                 var t = nodes[x.GetInt32()].Transform;
                 t.SetParent(root.transform, false);
             }
-
-#if false
-            // reset nodes[0] rotation
-            var nodes0map = nodes[0].Transform.GetChildren().ToDictionary(x =>x, x=> new PosRot
-            {
-                Position=x.position,
-                Rotation =x.rotation,
-            });
-            nodes[0].Transform.rotation = Quaternion.identity;
-            foreach(Transform x in nodes[0].Transform)
-            {
-                x.position = nodes0map[x].Position;
-                x.rotation = nodes0map[x].Rotation;
-            }
-#endif
-
-            // rename nodes0
-            nodes[0].Transform.name = Path.GetFileNameWithoutExtension(ctx.Path) + "0";
 
             ctx.SetMainObject("root", root);
 

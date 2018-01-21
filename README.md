@@ -17,6 +17,7 @@
 
 ![gizmo](doc/BoneMappingGizmo.png)
 ![inspector](doc/BoneMappingInspector.png)
+![humanoid](Recordings/humanoid.gif)
 
 ## Implemented
 
