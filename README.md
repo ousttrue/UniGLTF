@@ -11,6 +11,10 @@
 
 ## Humanoid Helper
 
+* model position is origin
+* model look at +z orientation
+* model root node rotation is Quatenion.identity
+
 ![gizmo](doc/BoneMappingGizmo.png)
 ![inspector](doc/BoneMappingInspector.png)
 
@@ -18,6 +22,8 @@
 
 * [x] AssetImporter
 * [x] Runtime Loader
+
+* [ ] Exporter(node rotation is cleared and avatar definition)
 
 * Format
     * [x] gltf
@@ -50,7 +56,6 @@
 
 * Light
     * not implemented
-
 
 ## Sample Models
 
