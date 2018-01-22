@@ -73,6 +73,12 @@ namespace UniGLTF
         BufferView[] m_bufferViews;
         Accessor[] m_accessors;
 
+        public GltfBuffer()
+        {
+
+        }
+
+        #region Importer
         public GltfBuffer(JsonParser parsed, string dir, ArraySegment<byte> glbDataBytes)
         {
             m_buffers = parsed["buffers"].DeserializeList<Buffer>();
@@ -345,5 +351,13 @@ namespace UniGLTF
 
             return result;
         }
+        #endregion
+
+        #region Exporter
+        public int AddBuffer(Byte[] bytes)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
     }
 }

@@ -8,71 +8,69 @@ using UnityEngine;
 namespace UniGLTF
 {
     [Serializable]
-    public struct Image
+    public struct gltfImage
     {
         public string uri;
         public int bufferView;
     }
 
+    public struct TextureWithIsAsset
+    {
+        public Texture2D Texture;
+        public bool IsAsset;
+    }
+
+    public struct TextureWithImage
+    {
+        public gltfTexture Texture;
+        public gltfTexture Image;
+    }
+
     [Serializable]
-    public struct Texture
+    public struct gltfTexture
     {
         public int sampler;
         public int source;
-    }
 
-    public class GltfTexture
-    {
-        Texture[] m_textures;
-        Image[] m_images;
-
-        public GltfTexture(JsonParser parsed)
+        /*
+        public static gltfImage Create(Texture2D texture, GltfBuffer buffer)
         {
-            if (parsed.HasKey("textures"))
+            var bytes = texture.EncodeToPNG();
+
+            var bufferViewIndex = buffer.AddBuffer(bytes);
+
+            return new gltfImage
             {
-                m_textures = parsed["textures"].DeserializeList<Texture>();
-            }
-            if (parsed.HasKey("images"))
-            {
-                m_images = parsed["images"].DeserializeList<Image>();
-            }
+
+            };
         }
+        */
 
-        public struct TextureWithIsAsset
+        public TextureWithIsAsset GetTexture(string dir, GltfBuffer buffer, gltfImage[] images)
         {
-            public Texture2D Texture;
-            public bool IsAsset;
-        }
-
-        public IEnumerable<TextureWithIsAsset> GetTextures(string dir, GltfBuffer buffer)
-        {
-            int i = 0;
-            foreach (var x in m_textures)
+            var image = images[source];
+            if (string.IsNullOrEmpty(image.uri))
             {
-                var image = m_images[x.source];
-                if (string.IsNullOrEmpty(image.uri))
-                {
-                    // use buffer view
-                    var texture = new Texture2D(2, 2);
-                    texture.name = string.Format("texture#{0:00}", i++);
-                    var bytes = buffer.GetViewBytes(image.bufferView);
-                    texture.LoadImage(bytes.Array.Skip(bytes.Offset).Take(bytes.Count).ToArray());
-                    yield return  new TextureWithIsAsset{ Texture=texture, IsAsset=false };
-                }
-                else
-                {
-                    var path = Path.Combine(dir, m_images[x.source].uri);
-                    Debug.LogFormat("load texture: {0}", path);
+                // use buffer view
+                var texture = new Texture2D(2, 2);
+                //texture.name = string.Format("texture#{0:00}", i++);
+                var bytes = buffer.GetViewBytes(image.bufferView);
+                texture.LoadImage(bytes.Array.Skip(bytes.Offset).Take(bytes.Count).ToArray());
+                return new TextureWithIsAsset { Texture = texture, IsAsset = false };
+            }
+            else
+            {
+                var path = Path.Combine(dir, image.uri);
+                Debug.LogFormat("load texture: {0}", path);
 
-                    /*
-                    var bytes = File.ReadAllBytes(path);
+                /*
+                var bytes = File.ReadAllBytes(path);
 
-                    var texture = new Texture2D(2, 2);
-                    texture.LoadImage(bytes);
-                    */
-                    var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                    yield return new TextureWithIsAsset { Texture = texture, IsAsset = true };
-                }
+                var texture = new Texture2D(2, 2);
+                texture.LoadImage(bytes);
+                */
+                var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                return new TextureWithIsAsset { Texture = texture, IsAsset = true };
             }
         }
     }

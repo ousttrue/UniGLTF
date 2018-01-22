@@ -21,7 +21,7 @@
 
 ## Implemented
 
-[ ] Sample scene and model
+* [ ] Sample scene and model
 
 * Importer/Exporter
     * [x] AssetImporter
@@ -45,8 +45,9 @@
 
 * Material
     * [x] color
-    * [x] texture
     * [ ] PBR
+    * [x] texture
+    * [ ] sampler
 
 * AnimationClip
     * [x] transform

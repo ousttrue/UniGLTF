@@ -76,12 +76,6 @@ namespace UniGLTF
             }
         }
 
-        struct PosRot
-        {
-            public Vector3 Position;
-            public Quaternion Rotation;
-        }
-
         public static GameObject Import(Context ctx, string json, ArraySegment<Byte> bytes)
         {
             var baseDir = Path.GetDirectoryName(ctx.Path);

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-
+using System.Text;
 
 namespace UniGLTF
 {
@@ -27,6 +27,13 @@ namespace UniGLTF
     {
         public GlbChunkType ChunkType;
         public ArraySegment<Byte> Bytes;
+
+        public GlbChunk(string json): this(
+            GlbChunkType.JSON, 
+            new ArraySegment<byte>(Encoding.UTF8.GetBytes(json))
+            )
+        {
+        }
 
         public GlbChunk(GlbChunkType type, ArraySegment<Byte> bytes)
         {

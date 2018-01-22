@@ -43,8 +43,8 @@ namespace UniGLTF
 
         public static string RelativePathFrom(this Transform self, Transform root)
         {
-            var path=new List<String>();
-            for(var current=self; current!=null; current=current.parent)
+            var path = new List<String>();
+            for (var current = self; current != null; current = current.parent)
             {
                 if (current == root)
                 {
@@ -59,7 +59,7 @@ namespace UniGLTF
 
         public static IEnumerable<Transform> GetChildren(this Transform self)
         {
-            foreach(Transform child in self)
+            foreach (Transform child in self)
             {
                 yield return child;
             }
@@ -92,6 +92,60 @@ namespace UniGLTF
                     yield return x;
                 }
             }
+        }
+
+        public static float[] ToArray(this Quaternion q)
+        {
+            return new float[] { q.x, q.y, q.z, q.w };
+        }
+
+        public static float[] ToArray(this Vector3 v)
+        {
+            return new float[] { v.x, v.y, v.z };
+        }
+
+        public static float[] ToArray(this Color c)
+        {
+            return new float[] { c.r, c.g, c.b, c.a };
+        }
+
+        public static void ReverseZ(this Transform root)
+        {
+            var globalMap = root.Traverse().ToDictionary(x => x, x => PosRot.FromGlobalTransform(x));
+
+            foreach (var x in root.Traverse())
+            {
+                x.position = globalMap[x].Position.ReverseZ();
+                x.rotation = globalMap[x].Rotation.ReverseZ();
+            }
+        }
+
+        public static Mesh GetSharedMesh(this Transform t)
+        {
+            var meshFilter = t.GetComponent<MeshFilter>();
+            if (meshFilter != null)
+            {
+                return meshFilter.sharedMesh;
+            }
+
+            var skinnedMeshRenderer = t.GetComponent<SkinnedMeshRenderer>();
+            if (skinnedMeshRenderer != null)
+            {
+                return skinnedMeshRenderer.sharedMesh;
+            }
+
+            return null;
+        }
+
+        public static Material[] GetSharedMaterials(this Transform t)
+        {
+            var renderer = t.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                return renderer.sharedMaterials;
+            }
+
+            return new Material[] { };
         }
     }
 }

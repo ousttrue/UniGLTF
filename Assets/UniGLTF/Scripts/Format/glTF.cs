@@ -7,25 +7,45 @@ using UnityEngine;
 
 namespace UniGLTF
 {
-    public class glTF : MonoBehaviour
+    public struct PosRot
     {
-        public string baseDir;
+        public Vector3 Position;
+        public Quaternion Rotation;
+
+        public static PosRot FromGlobalTransform(Transform t)
+        {
+            return new PosRot
+            {
+                Position = t.position,
+                Rotation = t.rotation,
+            };
+        }
+    }
+
+    public class glTF
+    {
+        public string baseDir
+        {
+            get;
+            set;
+        }
 
         public glTFAssets asset;
 
         public GltfBuffer buffer;
 
-        public GltfTexture texture;
+        public gltfTexture[] textures;
+        public gltfImage[] images;
 
-        public IEnumerable<GltfTexture.TextureWithIsAsset> ReadTextures()
+        public IEnumerable<TextureWithIsAsset> ReadTextures()
         {
-            if (texture == null)
+            if (textures == null)
             {
-                return new GltfTexture.TextureWithIsAsset[] { };
+                return new TextureWithIsAsset[] { };
             }
             else
             {
-                return texture.GetTextures(baseDir, buffer);
+                return textures.Select(x => x.GetTexture(baseDir, buffer, images));
             }
         }
 
@@ -92,9 +112,71 @@ namespace UniGLTF
 
         public GltfAnimation[] animations;
 
+        public static glTF FromGameObject(GameObject go)
+        {
+            var gltf = new glTF();
+
+            gltf.asset = new glTFAssets
+            {
+                generator="UniGLTF",
+                version=2.0f,
+            };
+
+            var copy = GameObject.Instantiate(go);
+            try
+            {
+                // Left handed to Right handed
+                go.transform.ReverseZ();
+            }
+            finally
+            {
+                if (Application.isEditor)
+                {
+                    GameObject.DestroyImmediate(copy);
+                }
+                else
+                {
+                    GameObject.Destroy(copy);
+                }
+            }
+
+            var buffer = new GltfBuffer();
+
+            var nodes = go.transform.Traverse().Skip(1).ToList();
+
+            var meshes = nodes.Select(x => x.GetSharedMesh()).Where(x => x != null).ToList();
+            var skins = nodes.Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x!= null).ToList();
+
+            gltf.nodes = nodes.Select(x => gltfNode.Create(x, nodes, meshes, skins)).ToArray();
+
+            var materials = nodes.SelectMany(x => x.GetSharedMaterials()).Distinct().ToArray();
+            var textures = materials.Select(x => x.mainTexture).Distinct().ToArray();
+
+            /*
+            var textureWithImages = materials.Select(x => (Texture2D)x.mainTexture).Where(x => x != null).Select(x => gltfTexture.Create(x, buffer)).ToArray();
+
+            gltf.materials = materials.Select(x => GltfMaterial.Create(x)).ToArray();
+
+            gltf.meshes = meshes.Select(x => glTFMesh.Create(x, materials)).ToArray();
+            */
+
+            return gltf;
+        }
+
         public override string ToString()
         {
             return string.Format("{0}", asset);
+        }
+
+        public ArraySegment<Byte> ToJson()
+        {
+            var formatter = new JsonFormatter();
+            formatter.BeginMap();
+
+
+
+            formatter.EndMap();
+            return formatter.GetStore().Bytes;
         }
 
         public static glTF Parse(string json, string baseDir, ArraySegment<Byte> bytes)
@@ -119,7 +201,12 @@ namespace UniGLTF
             // texture
             if (parsed.HasKey("textures"))
             {
-                gltf.texture = new GltfTexture(parsed);
+                gltf.textures = parsed["textures"].DeserializeList<gltfTexture>();
+            }
+
+            if (parsed.HasKey("images"))
+            {
+                gltf.images = parsed["images"].DeserializeList<gltfImage>();
             }
 
             // material

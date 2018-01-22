@@ -1,5 +1,9 @@
-﻿namespace UniGLTF
+﻿using System;
+
+
+namespace UniGLTF
 {
+    [Serializable]
     public struct glTFAssets
     {
         public string generator;

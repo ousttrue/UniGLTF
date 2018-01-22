@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using UnityEngine;
 
 namespace UniGLTF
 {
@@ -31,5 +33,27 @@ namespace UniGLTF
         public GltfTextureRef occlusionTexture = null;
         public GltfTextureRef emissiveTexture = null;
         public float[] emissiveFactor;
+
+        public static GltfMaterial Create(Material m, List<Texture> textures)
+        {
+            var material= new GltfMaterial
+            {
+                name=m.name,
+                pbrMetallicRoughness=new GltfPbrMetallicRoughness
+                {
+                    baseColorFactor=m.color.ToArray(),
+                }
+            };
+
+            if (m.mainTexture!=null)
+            {
+                material.pbrMetallicRoughness.baseColorTexture = new GltfTextureRef
+                {
+                    index=textures.IndexOf(m.mainTexture),
+                };
+            }
+
+            return material;
+        }
     }
 }

@@ -19,6 +19,33 @@ namespace UniGLTF
         public int skin = -1;
         public int camera = -1;
 
+        public static gltfNode Create(Transform x, List<Transform> nodes, List<Mesh> meshes, List<SkinnedMeshRenderer> skins)
+        {
+            var node = new gltfNode
+            {
+                name = x.name,
+                children = x.transform.GetChildren().Select(y => nodes.IndexOf(y)).ToArray(),
+                rotation = x.transform.localRotation.ToArray(),
+                translation = x.transform.localPosition.ToArray(),
+                scale = x.transform.localScale.ToArray(),
+            };
+
+            var meshFilter = x.GetComponent<MeshFilter>();
+            if (meshFilter != null)
+            {
+                node.mesh = meshes.IndexOf(meshFilter.sharedMesh);
+            }
+
+            var skinnredMeshRenderer = x.GetComponent<SkinnedMeshRenderer>();
+            if (skinnredMeshRenderer != null)
+            {
+                node.mesh = meshes.IndexOf(skinnredMeshRenderer.sharedMesh);
+                node.skin = skins.IndexOf(skinnredMeshRenderer);
+            }
+
+            return node;
+        }
+
         public GameObject ToGameObject()
         {
             var go = new GameObject(name);

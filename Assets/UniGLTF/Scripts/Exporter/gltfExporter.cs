@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,6 +11,8 @@ namespace UniGLTF
     public static class gltfExporter
     {
         const string CONVERT_HUMANOID_KEY = "GameObject/gltf/export";
+        private static readonly UnityEngine.Object json;
+
         [MenuItem(CONVERT_HUMANOID_KEY, true, 1)]
         private static bool ExportValidate()
         {
@@ -30,15 +33,15 @@ namespace UniGLTF
                 return;
             }
 
-            var formatter = new JsonFormatter();
+            var gltf = glTF.FromGameObject(go);
 
-            formatter.BeginMap();
-            formatter.EndMap();
-
-            var jsonBytes = formatter.GetStore().Bytes;
+            //var jsonBytes = gltf.ToJson();
+            var json = JsonUtility.ToJson(gltf);
+            var jsonBytes = Encoding.UTF8.GetBytes(json);
+            Debug.Log(json);
 
             var chunks = new List<GlbChunk>();
-            chunks.Add(new GlbChunk(GlbChunkType.JSON, jsonBytes));
+            chunks.Add(new GlbChunk(json));
 
             using (var s = new FileStream(path, FileMode.Create))
             {
