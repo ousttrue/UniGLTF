@@ -60,7 +60,7 @@ namespace UniGLTF
     }
 
     [Serializable]
-    public struct Skin
+    public struct gltfSkin
     {
         public int inverseBindMatrices;
         public int[] joints;
@@ -75,20 +75,6 @@ namespace UniGLTF
 
         public GltfBuffer(JsonParser parsed, string dir, ArraySegment<byte> glbDataBytes)
         {
-            // asset
-            var asset = parsed["asset"];
-            var generator = "unknown generator";
-            if (parsed.HasKey("generator"))
-            {
-                generator = parsed["generator"].GetString();
-            }
-            var version = float.Parse(asset["version"].GetString());
-            if (version != 2.0f)
-            {
-                throw new NotImplementedException(string.Format("unknown version: {0}", version));
-            }
-            Debug.LogFormat("{0}: glTF-{1}", generator, version);
-
             m_buffers = parsed["buffers"].DeserializeList<Buffer>();
             m_bufferViews = parsed["bufferViews"].DeserializeList<BufferView>();
             m_accessors = parsed["accessors"].DeserializeList<Accessor>();
@@ -110,7 +96,7 @@ namespace UniGLTF
         {
             var attrib = new T[accessor.count];
             //
-            var bytes = new ArraySegment<Byte>(m_bytesList[view.buffer].Array, m_bytesList[view.buffer].Offset+view.byteOffset + accessor.byteOffset, accessor.count * view.byteStride);
+            var bytes = new ArraySegment<Byte>(m_bytesList[view.buffer].Array, m_bytesList[view.buffer].Offset + view.byteOffset + accessor.byteOffset, accessor.count * view.byteStride);
             bytes.MarshalCoyTo(attrib);
             return attrib;
         }
@@ -244,7 +230,7 @@ namespace UniGLTF
             }
         }
 
-        MeshWithMaterials ReadMesh(JsonParser meshJson, int meshIndex, Material[] materials)
+        public MeshWithMaterials ReadMesh(glTFMesh gltfMesh, Material[] materials)
         {
             var positions = new List<Vector3>();
             var normals = new List<Vector3>();
@@ -252,53 +238,36 @@ namespace UniGLTF
             var boneWeights = new List<BoneWeight>();
             var subMeshes = new List<int[]>();
             var materialIndices = new List<int>();
-            foreach (var prim in meshJson["primitives"].ListItems)
+            foreach (var prim in gltfMesh.primitives)
             {
                 var indexOffset = positions.Count;
-                var indexBuffer = prim["indices"].GetInt32();
-                var attribs = prim["attributes"].ObjectItems.ToDictionary(x => x.Key, x => x.Value.GetInt32());
+                var indexBuffer = prim.indices;
 
-                positions.AddRange(GetBuffer<Vector3>(attribs["POSITION"]).Select(x => x.ReverseZ()));
+                positions.AddRange(GetBuffer<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
 
                 // normal
-                if (attribs.ContainsKey("NORMAL"))
+                if (prim.attributes.NORMAL != -1)
                 {
-                    normals.AddRange(GetBuffer<Vector3>(attribs["NORMAL"]).Select(x => x.ReverseZ()));
+                    normals.AddRange(GetBuffer<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
                 }
                 // uv
-                if (attribs.ContainsKey("TEXCOORD_0"))
+                if (prim.attributes.TEXCOORD_0 != -1)
                 {
-                    uv.AddRange(GetBuffer<Vector2>(attribs["TEXCOORD_0"]).Select(x => x.ReverseY()).ToArray());
+                    uv.AddRange(GetBuffer<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
                 }
 
                 // skin
-                if (attribs.ContainsKey("JOINTS_0") && attribs.ContainsKey("WEIGHTS_0"))
+                if (prim.attributes.JOINTS_0 != -1 && prim.attributes.WEIGHTS_0 != -1)
                 {
-                    var jointsAccessor = m_accessors[attribs["JOINTS_0"]];
-                    var joints0 = GetBuffer<UShort4>(attribs["JOINTS_0"]); // uint4
-                    var weightsAccessor = m_accessors[attribs["WEIGHTS_0"]];
-                    var weights0 = GetBuffer<Float4>(attribs["WEIGHTS_0"]).Select(x => x.One()).ToArray();
+                    var joints0 = GetBuffer<UShort4>(prim.attributes.JOINTS_0); // uint4
+                    var weights0 = GetBuffer<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
 
                     var weightNorms = weights0.Select(x => x.x + x.y + x.z + x.w).ToArray();
 
-                    //var _boneWeights = new BoneWeight[joints0.Length];
                     for (int j = 0; j < joints0.Length; ++j)
                     {
                         var bw = new BoneWeight();
 
-#if false
-                        bw.boneIndex0 = (int)Mathf.Clamp(joints0[j].x, jointsAccessor.min[0], jointsAccessor.max[0]);
-                        bw.weight0 = Mathf.Clamp(weights0[j].x, weightsAccessor.min[0], weightsAccessor.max[0]);
-
-                        bw.boneIndex1 = (int)Mathf.Clamp(joints0[j].y, jointsAccessor.min[1], jointsAccessor.max[1]);
-                        bw.weight1 = Mathf.Clamp(weights0[j].y, weightsAccessor.min[1], weightsAccessor.max[1]);
-
-                        bw.boneIndex2 = (int)Mathf.Clamp(joints0[j].z, jointsAccessor.min[2], jointsAccessor.max[2]);
-                        bw.weight2 = Mathf.Clamp(weights0[j].z, weightsAccessor.min[2], weightsAccessor.max[2]);
-
-                        bw.boneIndex3 = (int)Mathf.Clamp(joints0[j].w, jointsAccessor.min[3], jointsAccessor.max[3]);
-                        bw.weight3 = Mathf.Clamp(weights0[j].w, weightsAccessor.min[3], weightsAccessor.max[3]);
-#else
                         bw.boneIndex0 = joints0[j].x;
                         bw.weight0 = weights0[j].x;
 
@@ -310,7 +279,6 @@ namespace UniGLTF
 
                         bw.boneIndex3 = joints0[j].w;
                         bw.weight3 = weights0[j].w;
-#endif
 
                         boneWeights.Add(bw);
                     }
@@ -319,10 +287,7 @@ namespace UniGLTF
                 subMeshes.Add(GetIndices(indexBuffer).Select(x => x + indexOffset).ToArray());
 
                 // material
-                if (prim.HasKey("material"))
-                {
-                    materialIndices.Add(prim["material"].GetInt32());
-                }
+                materialIndices.Add(prim.material);
 
                 /*
                 // blendshape
@@ -347,14 +312,7 @@ namespace UniGLTF
 
             //Debug.Log(prims.ToJson());
             var mesh = new Mesh();
-            if (meshJson.HasKey("name"))
-            {
-                mesh.name = meshJson["name"].GetString();
-            }
-            else
-            {
-                mesh.name = string.Format("UniGLTF import#{0}", meshIndex);
-            }
+            mesh.name = gltfMesh.name;
 
             mesh.vertices = positions.ToArray();
             if (normals.Any())
@@ -386,11 +344,6 @@ namespace UniGLTF
             };
 
             return result;
-        }
-
-        public MeshWithMaterials[] ReadMeshes(JsonParser meshesJson, Material[] materials)
-        {
-            return meshesJson.ListItems.Select((x, j) => ReadMesh(x, j, materials)).ToArray();
         }
     }
 }

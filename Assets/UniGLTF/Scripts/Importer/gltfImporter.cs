@@ -85,16 +85,12 @@ namespace UniGLTF
         public static GameObject Import(Context ctx, string json, ArraySegment<Byte> bytes)
         {
             var baseDir = Path.GetDirectoryName(ctx.Path);
-            var parsed = json.ParseAsJson();
 
-            // buffer
-            var buffer = new GltfBuffer(parsed, baseDir, bytes);
+            var gltf = glTF.Parse(json, baseDir, bytes);
+            Debug.Log(gltf);
 
             // textures
-            Texture2D[] textures = null;
-            if (parsed.HasKey("textures"))
-            {
-                textures = GltfTexture.ReadTextures(parsed, baseDir, buffer)
+            var textures = gltf.ReadTextures()
                     .Select(x =>
                     {
                         if (!x.IsAsset)
@@ -104,67 +100,105 @@ namespace UniGLTF
                         return x.Texture;
                     })
                     .ToArray();
-            }
 
             // materials
-            Material[] materials = null;
-            if (parsed.HasKey("materials"))
+            var materials = gltf.ReadMaterials(textures).ToArray();
+            foreach (var material in materials)
             {
-                materials = GltfMaterial.ReadMaterials(parsed["materials"], textures).ToArray();
-                foreach (var material in materials)
-                {
-                    ctx.AddObjectToAsset(material.name, material);
-                }
-            }
-            else
-            {
-                var shader = Shader.Find("Standard");
-                var material = new Material(shader);
                 ctx.AddObjectToAsset(material.name, material);
-                materials = new Material[] { material };
             }
 
             // meshes
-            var meshes = buffer.ReadMeshes(parsed["meshes"], materials);
-            foreach (var mesh in meshes.Select(x => x.Mesh))
+            var meshes = gltf.meshes.Select((x, i) =>
             {
+                var meshWithMaterials = gltf.buffer.ReadMesh(x, materials);
+                var mesh = meshWithMaterials.Mesh;
+                if (string.IsNullOrEmpty(mesh.name))
+                {
+                    mesh.name = string.Format("UniGLTF import#{0}", i);
+                }
+
                 ctx.AddObjectToAsset(mesh.name, mesh);
-            }
+
+                return meshWithMaterials;
+            }).ToArray();
 
             var root = new GameObject("_root_");
 
             // nodes
-            var nodes = TransformWithSkin.ReadNodes(parsed["nodes"], meshes);
+            var _nodes = gltf.nodes.Select(x => x.ToGameObject()).ToArray();
 
-            // skins
-            Skin[] skins = null;
-            if (parsed.HasKey("skins"))
+            var nodes = _nodes.Select((go, i) =>
             {
-                skins = parsed["skins"].DeserializeList<Skin>();
-            }
+                if (string.IsNullOrEmpty(go.name))
+                {
+                    go.name = string.Format("node{0:000}", i);
+                }
 
-            // scene;
-            var scene = default(JsonParser);
-            if (parsed.HasKey("scene"))
-            {
-                scene = parsed["scenes"][parsed["scene"].GetInt32()];
-            }
-            else
-            {
-                scene = parsed["scenes"][0];
-            }
+                var nodeWithSkin = new TransformWithSkin
+                {
+                    Transform = go.transform,
+                };
+
+                var node = gltf.nodes[i];
+
+                //
+                // build hierachy
+                //
+                if (node.children != null)
+                {
+                    foreach (var child in node.children)
+                    {
+                        _nodes[child].transform.SetParent(_nodes[i].transform,
+                            false // node has local transform
+                            );
+                    }
+                }
+
+                //
+                // attach mesh
+                //
+                if (node.mesh != -1)
+                {
+                    var mesh = meshes[node.mesh];
+                    if (mesh.Mesh.blendShapeCount == 0 && node.skin == -1)
+                    {
+                        // without blendshape and bone skinning
+                        var filter = go.AddComponent<MeshFilter>();
+                        filter.sharedMesh = mesh.Mesh;
+                        var renderer = go.AddComponent<MeshRenderer>();
+                        renderer.sharedMaterials = mesh.Materials;
+                    }
+                    else
+                    {
+                        var renderer = go.AddComponent<SkinnedMeshRenderer>();
+
+                        if (node.skin != -1)
+                        {
+                            nodeWithSkin.SkinIndex = node.skin;
+                        }
+
+                        renderer.sharedMesh = mesh.Mesh;
+                        renderer.sharedMaterials = mesh.Materials;
+                    }
+                }
+
+                return nodeWithSkin;
+            }).ToArray();
+
+            //
+            // fix node's coordinate. z-back to z-forward
+            //
             var globalTransformMap = nodes.ToDictionary(x => x.Transform, x => new PosRot
             {
                 Position = x.Transform.position,
                 Rotation = x.Transform.rotation,
             });
-            // hierachy
-            var nodeJsonList = scene["nodes"].ListItems.ToArray();
-            foreach (var x in nodeJsonList)
+            foreach (var x in gltf.rootnodes)
             {
                 // fix nodes coordinate
                 // reverse Z in global
-                var t = nodes[x.GetInt32()].Transform;
+                var t = nodes[x].Transform;
                 //t.SetParent(root.transform, false);
 
                 TraverseTransform(t, transform =>
@@ -175,7 +209,7 @@ namespace UniGLTF
                 });
             }
 
-            var animator=root.AddComponent<Animator>();
+            var animator = root.AddComponent<Animator>();
 
             root.AddComponent<UniHumanoid.BoneMapping>();
 
@@ -191,7 +225,7 @@ namespace UniGLTF
                         if (mesh == null) throw new Exception();
                         if (skinnedMeshRenderer == null) throw new Exception();
 
-                        var skin = skins[x.SkinIndex.Value];
+                        var skin = gltf.skins[x.SkinIndex.Value];
 
                         skinnedMeshRenderer.sharedMesh = null;
 
@@ -201,7 +235,7 @@ namespace UniGLTF
 
                         // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
                         var _b = joints.Select(y => y.worldToLocalMatrix * nodes[0].Transform.localToWorldMatrix).ToArray();
-                        var bindePoses = buffer.GetBuffer<Matrix4x4>(skin.inverseBindMatrices).ToArray();
+                        var bindePoses = gltf.buffer.GetBuffer<Matrix4x4>(skin.inverseBindMatrices).ToArray();
                         var bindePosesR = bindePoses.Select(y => y.ReverseZ()).ToArray();
 
                         // ...
@@ -211,26 +245,24 @@ namespace UniGLTF
                 }
             }
 
-            foreach (var x in nodeJsonList)
+            foreach (var x in gltf.rootnodes)
             {
                 // fix nodes coordinate
                 // reverse Z in global
-                var t = nodes[x.GetInt32()].Transform;
+                var t = nodes[x].Transform;
                 t.SetParent(root.transform, false);
             }
 
             ctx.SetMainObject("root", root);
 
             // animation
-            if (parsed.HasKey("animations"))
+            if (gltf.animations != null)
             {
-                var animations = parsed["animations"].DeserializeList<GltfAnimation>();
-
                 var clip = new AnimationClip();
                 clip.name = GltfAnimation.ANIMATION_NAME;
                 clip.ClearCurves();
 
-                GltfAnimation.ReadAnimation(clip, animations, nodes.Select(x => x.Transform).ToArray(), buffer);
+                GltfAnimation.ReadAnimation(clip, gltf.animations, nodes.Select(x => x.Transform).ToArray(), gltf.buffer);
 
                 ctx.AddObjectToAsset(GltfAnimation.ANIMATION_NAME, clip);
             }

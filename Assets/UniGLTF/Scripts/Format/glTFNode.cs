@@ -1,15 +1,75 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 
 namespace UniGLTF
 {
+    [Serializable]
+    public class gltfNode
+    {
+        public string name = "";
+        public int[] children;
+        public float[] matrix;
+        public float[] translation;
+        public float[] rotation;
+        public float[] scale;
+        public int mesh = -1;
+        public int skin = -1;
+        public int camera = -1;
+
+        public GameObject ToGameObject()
+        {
+            var go = new GameObject(name);
+
+            //
+            // transform
+            //
+            if (translation != null)
+            {
+                go.transform.localPosition = new Vector3(
+                    translation[0],
+                    translation[1],
+                    translation[2]);
+            }
+            if (rotation != null)
+            {
+                go.transform.localRotation = new Quaternion(
+                    rotation[0],
+                    rotation[1],
+                    rotation[2],
+                    rotation[3]);
+            }
+            if (scale != null)
+            {
+                go.transform.localScale = new Vector3(
+                    scale[0],
+                    scale[1],
+                    scale[2]);
+            }
+            if (matrix != null)
+            {
+                var values = matrix;
+                var col0 = new Vector4(values[0], values[1], values[2], values[3]);
+                var col1 = new Vector4(values[4], values[5], values[6], values[7]);
+                var col2 = new Vector4(values[8], values[9], values[10], values[11]);
+                var col3 = new Vector4(values[12], values[13], values[14], values[15]);
+                var m = new Matrix4x4(col0, col1, col2, col3);
+                go.transform.localRotation = m.rotation;
+                go.transform.localPosition = m.GetColumn(3);
+            }
+
+            return go;
+        }
+    }
+
     public struct TransformWithSkin
     {
         public Transform Transform;
         public int? SkinIndex;
 
+        /*
         static void CancelRotation(Transform t, Dictionary<Transform, Vector3> positionMap)
         {
             t.rotation = Quaternion.identity;
@@ -20,128 +80,6 @@ namespace UniGLTF
                 CancelRotation(child, positionMap);
             }
         }
-
-        public static List<TransformWithSkin> ReadNodes(JsonParser nodesJson, MeshWithMaterials[] meshes)
-        {
-            var list = new List<TransformWithSkin>();
-            int i = 0;
-            foreach (var node in nodesJson.ListItems)
-            {
-                var go = new GameObject();
-                if (node.HasKey("name"))
-                {
-                    go.name = node["name"].GetString();
-                }
-                else
-                {
-                    go.name = string.Format("node{0:000}", i);
-                }
-
-                var nodeWithSkin = new TransformWithSkin
-                {
-                    Transform = go.transform,
-                };
-
-                //
-                // transform
-                //
-                if (node.HasKey("translation"))
-                {
-                    var values = node["translation"].ListItems.Select(x => x.GetSingle()).ToArray();
-                    go.transform.localPosition = new Vector3(values[0], values[1], values[2]);
-                }
-                if (node.HasKey("rotation"))
-                {
-                    var values = node["rotation"].ListItems.Select(x => x.GetSingle()).ToArray();
-                    go.transform.localRotation = new Quaternion(values[0], values[1], values[2], values[3]);
-                }
-                if (node.HasKey("scale"))
-                {
-                    var values = node["scale"].ListItems.Select(x => x.GetSingle()).ToArray();
-                    go.transform.localScale = new Vector3(values[0], values[1], values[2]);
-                }
-                if (node.HasKey("matrix"))
-                {
-                    var values = node["matrix"].ListItems.Select(x => x.GetSingle()).ToArray();
-                    var col0 = new Vector4(values[0], values[1], values[2], values[3]);
-                    var col1 = new Vector4(values[4], values[5], values[6], values[7]);
-                    var col2 = new Vector4(values[8], values[9], values[10], values[11]);
-                    var col3 = new Vector4(values[12], values[13], values[14], values[15]);
-                    var m = new Matrix4x4(col0, col1, col2, col3);
-                    go.transform.localRotation = m.rotation;
-                    go.transform.localPosition = m.GetColumn(3);
-                }
-
-                //
-                // attach mesh
-                //
-                if (node.HasKey("mesh"))
-                {
-                    var mesh = meshes[node["mesh"].GetInt32()];
-                    Renderer renderer = null;
-                    var hasSkin = node.HasKey("skin");
-                    if (mesh.Mesh.blendShapeCount == 0 && !hasSkin)
-                    {
-                        // without blendshape and bone skinning
-                        var filter = go.AddComponent<MeshFilter>();
-                        filter.sharedMesh = mesh.Mesh;
-
-                        renderer = go.AddComponent<MeshRenderer>();
-                    }
-                    else
-                    {
-                        var _renderer = go.AddComponent<SkinnedMeshRenderer>();
-
-                        if (hasSkin)
-                        {
-                            nodeWithSkin.SkinIndex = node["skin"].GetInt32();
-                        }
-
-                        _renderer.sharedMesh = mesh.Mesh;
-
-                        renderer = _renderer;
-                    }
-
-                    renderer.sharedMaterials = mesh.Materials;
-                }
-
-                list.Add(nodeWithSkin);
-
-                ++i;
-            }
-
-            //
-            // setparent
-            // 
-            i = 0;
-            foreach (var node in nodesJson.ListItems)
-            {
-                // children
-                if (node.HasKey("children"))
-                {
-                    foreach (var child in node["children"].ListItems)
-                    {
-                        // node has local transform
-                        list[child.GetInt32()].Transform.SetParent(list[i].Transform, false);
-                    }
-                }
-
-                ++i;
-            }
-
-            /*
-            //
-            // cancel rotation
-            //
-            var rootNodes = list.Where(x => x.Transform.parent == null).ToArray();
-            var positionMap = list.ToDictionary(x => x.Transform, x => x.Transform.position);
-            foreach(var node in rootNodes)
-            {
-                CancelRotation(node.Transform, positionMap);
-            }
-            */
-
-            return list;
-        }
+        */
     }
 }

@@ -1,38 +1,35 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
-
+﻿using System;
+using System.ComponentModel;
 
 namespace UniGLTF
 {
-    public static class GltfMaterial
+    [Serializable]
+    public class GltfTextureRef
     {
-        public static IEnumerable<Material> ReadMaterials(JsonParser materialsJson, Texture2D[] textures)
-        {
-            foreach (var x in materialsJson.ListItems)
-            {
-                var shader = Shader.Find("Standard");
+        public int index = -1;
+        public int texCoord;
+        public float scale;
+        public float streangth;
+    }
 
-                var material = new Material(shader);
-                material.name = x["name"].GetString();
+    [Serializable]
+    public class GltfPbrMetallicRoughness
+    {
+        public GltfTextureRef baseColorTexture = null;
+        public float[] baseColorFactor;
+        public GltfTextureRef metallicRoghnessTexture = null;
+        public float metallicFactor;
+        public float roughnessFactor;
+    }
 
-                if (x.HasKey("pbrMetallicRoughness"))
-                {
-                    var pbr = x["pbrMetallicRoughness"];
-                    if (pbr.HasKey("baseColorTexture"))
-                    {
-                        var textureIndex = pbr["baseColorTexture"]["index"].GetInt32();
-                        material.mainTexture = textures[textureIndex];
-                    }
-                    if (pbr.HasKey("baseColorFactor"))
-                    {
-                        var color = pbr["baseColorFactor"].ListItems.Select(y => y.GetSingle()).ToArray();
-                        material.color = new Color(color[0], color[1], color[2], color[3]);
-                    }
-                }
-
-                yield return material;
-            }
-        }
+    [Serializable]
+    public class GltfMaterial
+    {
+        public string name;
+        public GltfPbrMetallicRoughness pbrMetallicRoughness;
+        public GltfTextureRef normalTexture = null;
+        public GltfTextureRef occlusionTexture = null;
+        public GltfTextureRef emissiveTexture = null;
+        public float[] emissiveFactor;
     }
 }

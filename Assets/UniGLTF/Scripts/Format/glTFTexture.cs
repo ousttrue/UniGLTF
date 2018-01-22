@@ -75,11 +75,5 @@ namespace UniGLTF
                 }
             }
         }
-
-        public static TextureWithIsAsset[] ReadTextures(JsonParser parsed, string dir, GltfBuffer buffer)
-        {
-            var texture = new GltfTexture(parsed);
-            return texture.GetTextures(dir, buffer).ToArray();
-        }
     }
 }
