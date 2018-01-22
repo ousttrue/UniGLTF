@@ -8,19 +8,12 @@ using UnityEngine;
 
 namespace UniGLTF
 {
-    enum ChunkType : UInt32
-    {
-    }
-
-    struct GlbChunk
-    {
-        public ChunkType ChunkType;
-        public ArraySegment<Byte> Bytes;
-    }
-
     [ScriptedImporter(1, "glb")]
     public class glbImporter : ScriptedImporter
     {
+        public const string GLB_MAGIC = "glTF";
+        public const float GLB_VERSION = 2.0f;
+
         public override void OnImportAsset(AssetImportContext ctx)
         {
             Debug.LogFormat("## glbImporter ##: {0}", ctx.assetPath);
@@ -40,14 +33,14 @@ namespace UniGLTF
             var baseDir = Path.GetDirectoryName(ctx.Path);
 
             int pos = 0;
-            if(Encoding.ASCII.GetString(bytes, 0, 4) != "glTF")
+            if(Encoding.ASCII.GetString(bytes, 0, 4) != GLB_MAGIC)
             {
                 throw new Exception("invalid magic");
             }
             pos += 4;
 
             var version = BitConverter.ToUInt32(bytes, pos);
-            if (version != 2.0f)
+            if (version != GLB_VERSION)
             {
                 throw new Exception("unknown version: " + version);
             }
@@ -62,7 +55,7 @@ namespace UniGLTF
                 var chunkDataSize = BitConverter.ToInt32(bytes, pos);
                 pos += 4;
 
-                var type = (ChunkType)BitConverter.ToUInt32(bytes, pos);
+                var type = (GlbChunkType)BitConverter.ToUInt32(bytes, pos);
                 pos += 4;
 
                 chunks.Add(new GlbChunk

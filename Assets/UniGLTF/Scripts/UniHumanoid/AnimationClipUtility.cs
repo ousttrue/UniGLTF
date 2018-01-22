@@ -1,6 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -23,7 +22,15 @@ namespace UniHumanoid
             {
                 if (string.IsNullOrEmpty(binding.path))
                 {
-                    Debug.LogFormat("{0}:{1}:{2}", binding.path, binding.type, binding.propertyName);
+                    if (HumanTrait.MuscleName.Contains(binding.propertyName))
+                    {
+                        // muscle
+                    }
+                    else
+                    {
+                        // not muscle
+                        Debug.LogFormat("{0}:{1}:{2}", binding.path, binding.type, binding.propertyName);
+                    }
                 }
                 /*
                 var curve = AnimationUtility.GetEditorCurve(clip, binding);
@@ -40,14 +47,45 @@ namespace UniHumanoid
                 */
             }
 
+            var muscles = HumanTrait.MuscleName.Select((x, i) => string.Format("[{0}]{1}", i, x)).ToArray();
+            var str = string.Join("\n", muscles);
+
             var dst = new AnimationClip();
-            var dstPath = AssetDatabase.GenerateUniqueAssetPath(Path.GetDirectoryName(path) + "/" + Path.GetFileNameWithoutExtension(path) + ".anim");
-
-            var dstBinding = new EditorCurveBinding
             {
-                propertyName = "Spine Front - Back",
-            };
+                var curve = new AnimationCurve(new Keyframe[]
+                {
+                new Keyframe(0, 0),
+                });
+                var muscle = "RootT.x";
+                dst.SetCurve(null, typeof(Animator), muscle, curve);
+            }
+            {
+                var curve = new AnimationCurve(new Keyframe[]
+                {
+                new Keyframe(0, 0.8f),
+                });
+                var muscle = "RootT.y";
+                dst.SetCurve(null, typeof(Animator), muscle, curve);
+            }
+            {
+                var curve = new AnimationCurve(new Keyframe[]
+                {
+                new Keyframe(0, 0),
+                });
+                var muscle = "RootT.z";
+                dst.SetCurve(null, typeof(Animator), muscle, curve);
+            }
+            {
+                var curve = new AnimationCurve(new Keyframe[]
+                {
+                new Keyframe(0, -1),
+                new Keyframe(1, 1),
+                });
+                var muscle = "Spine Front-Back";
+                dst.SetCurve(null, typeof(Animator), muscle, curve);
+            }
 
+            var dstPath = AssetDatabase.GenerateUniqueAssetPath(Path.GetDirectoryName(path) + "/" + Path.GetFileNameWithoutExtension(path) + ".anim");
             Debug.LogFormat("create: {0}", dstPath);
             AssetDatabase.CreateAsset(dst, dstPath);
             AssetDatabase.Refresh();
