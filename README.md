@@ -21,6 +21,8 @@
 
 ## Implemented
 
+[ ] Sample scene and model
+
 * Importer/Exporter
     * [x] AssetImporter
     * [x] Runtime Loader
