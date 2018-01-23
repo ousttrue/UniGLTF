@@ -50,6 +50,10 @@ namespace UniHumanoid
         public override void OnInspectorGUI()
         {
             var bones = m_target.Bones;
+            if (bones == null)
+            {
+                return;
+            }
 
             BoneField(HumanBodyBones.Hips, bones);
 
@@ -195,9 +199,12 @@ namespace UniHumanoid
         private void OnSceneGUI()
         {
             var bones = m_target.Bones;
-            for (int i = 0; i < bones.Length; ++i)
+            if (bones != null)
             {
-                DrawBone((HumanBodyBones)i, bones[i]);
+                for (int i = 0; i < bones.Length; ++i)
+                {
+                    DrawBone((HumanBodyBones)i, bones[i]);
+                }
             }
         }
     }
