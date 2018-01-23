@@ -53,14 +53,14 @@ namespace UniGLTF
             //
             // transform
             //
-            if (translation != null)
+            if (translation != null && translation.Length>0)
             {
                 go.transform.localPosition = new Vector3(
                     translation[0],
                     translation[1],
                     translation[2]);
             }
-            if (rotation != null)
+            if (rotation != null && rotation.Length>0)
             {
                 go.transform.localRotation = new Quaternion(
                     rotation[0],
@@ -68,14 +68,14 @@ namespace UniGLTF
                     rotation[2],
                     rotation[3]);
             }
-            if (scale != null)
+            if (scale != null && scale.Length>0)
             {
                 go.transform.localScale = new Vector3(
                     scale[0],
                     scale[1],
                     scale[2]);
             }
-            if (matrix != null)
+            if (matrix != null && matrix.Length>0)
             {
                 var values = matrix;
                 var col0 = new Vector4(values[0], values[1], values[2], values[3]);

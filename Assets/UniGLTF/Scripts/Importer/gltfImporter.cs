@@ -205,8 +205,6 @@ namespace UniGLTF
 
             var animator = root.AddComponent<Animator>();
 
-            root.AddComponent<UniHumanoid.BoneMapping>();
-
             // skinning
             foreach (var x in nodes)
             {
@@ -219,22 +217,25 @@ namespace UniGLTF
                         if (mesh == null) throw new Exception();
                         if (skinnedMeshRenderer == null) throw new Exception();
 
-                        var skin = gltf.skins[x.SkinIndex.Value];
+                        if (x.SkinIndex.Value < gltf.skins.Count)
+                        {
+                            var skin = gltf.skins[x.SkinIndex.Value];
 
-                        skinnedMeshRenderer.sharedMesh = null;
+                            skinnedMeshRenderer.sharedMesh = null;
 
-                        var joints = skin.joints.Select(y => nodes[y].Transform).ToArray();
-                        skinnedMeshRenderer.bones = joints;
-                        skinnedMeshRenderer.rootBone = nodes[0].Transform;
+                            var joints = skin.joints.Select(y => nodes[y].Transform).ToArray();
+                            skinnedMeshRenderer.bones = joints;
+                            skinnedMeshRenderer.rootBone = nodes[0].Transform;
 
-                        // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
-                        var _b = joints.Select(y => y.worldToLocalMatrix * nodes[0].Transform.localToWorldMatrix).ToArray();
-                        var bindePoses = gltf.GetBuffer<Matrix4x4>(skin.inverseBindMatrices).ToArray();
-                        var bindePosesR = bindePoses.Select(y => y.ReverseZ()).ToArray();
+                            // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
+                            var _b = joints.Select(y => y.worldToLocalMatrix * nodes[0].Transform.localToWorldMatrix).ToArray();
+                            var bindePoses = gltf.GetBuffer<Matrix4x4>(skin.inverseBindMatrices).ToArray();
+                            var bindePosesR = bindePoses.Select(y => y.ReverseZ()).ToArray();
 
-                        // ...
-                        mesh.bindposes = _b;
-                        skinnedMeshRenderer.sharedMesh = mesh;
+                            // ...
+                            mesh.bindposes = _b;
+                            skinnedMeshRenderer.sharedMesh = mesh;
+                        }
                     }
                 }
             }

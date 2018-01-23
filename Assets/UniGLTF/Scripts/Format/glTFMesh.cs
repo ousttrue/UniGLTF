@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
+
 
 namespace UniGLTF
 {
@@ -27,6 +27,12 @@ namespace UniGLTF
     public struct glTFMesh
     {
         public string name;
-        public glTFPrimitives[] primitives;
+        public List<glTFPrimitives> primitives;
+
+        public glTFMesh(string _name)
+        {
+            name = _name;
+            primitives = new List<glTFPrimitives>();
+        }
     }
 }

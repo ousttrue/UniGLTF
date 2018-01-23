@@ -40,8 +40,9 @@ namespace UniGLTF
                 // use buffer view
                 var texture = new Texture2D(2, 2);
                 //texture.name = string.Format("texture#{0:00}", i++);
-                var bytes = buffer.GetViewBytes(image.bufferView);
-                texture.LoadImage(bytes.Array.Skip(bytes.Offset).Take(bytes.Count).ToArray());
+                var byteSegment = buffer.GetViewBytes(image.bufferView);
+                var bytes = byteSegment.Array.Skip(byteSegment.Offset).Take(byteSegment.Count).ToArray();
+                texture.LoadImage(bytes, true);
                 return new TextureWithIsAsset { Texture = texture, IsAsset = false };
             }
             else

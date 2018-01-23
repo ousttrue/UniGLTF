@@ -55,12 +55,13 @@ namespace UniGLTF
                 var chunkDataSize = BitConverter.ToInt32(bytes, pos);
                 pos += 4;
 
-                var type = (GlbChunkType)BitConverter.ToUInt32(bytes, pos);
+                //var type = (GlbChunkType)BitConverter.ToUInt32(bytes, pos);
+                var type = Encoding.ASCII.GetString(bytes, pos, 4);
                 pos += 4;
 
                 chunks.Add(new GlbChunk
                 {
-                    ChunkType=type,
+                    ChunkType = (GlbChunkType)Enum.Parse(typeof(GlbChunkType), type),
                     Bytes = new ArraySegment<byte>(bytes, (int)pos, (int)chunkDataSize)
                 });
 
@@ -70,6 +71,16 @@ namespace UniGLTF
             if(chunks.Count!=2)
             {
                 throw new Exception("unknown chunk count: "+chunks.Count);
+            }
+
+            if (chunks[0].ChunkType != GlbChunkType.JSON)
+            {
+                throw new Exception("chunk 0 is not JSON");
+            }
+
+            if (chunks[1].ChunkType != GlbChunkType.BIN)
+            {
+                throw new Exception("chunk 1 is not BIN");
             }
 
             var jsonBytes = chunks[0].Bytes;
