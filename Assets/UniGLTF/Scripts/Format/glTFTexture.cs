@@ -32,7 +32,7 @@ namespace UniGLTF
         public int sampler;
         public int source;
 
-        public TextureWithIsAsset GetTexture(string dir, glTF buffer, gltfImage[] images)
+        public TextureWithIsAsset GetTexture(string dir, glTF buffer, List<gltfImage> images)
         {
             var image = images[source];
             if (string.IsNullOrEmpty(image.uri))

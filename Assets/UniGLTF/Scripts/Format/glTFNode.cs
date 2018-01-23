@@ -7,7 +7,7 @@ using UnityEngine;
 namespace UniGLTF
 {
     [Serializable]
-    public class gltfNode
+    public class glTFNode
     {
         public string name = "";
         public int[] children;
@@ -19,9 +19,9 @@ namespace UniGLTF
         public int skin = -1;
         public int camera = -1;
 
-        public static gltfNode Create(Transform x, List<Transform> nodes, List<Mesh> meshes, List<SkinnedMeshRenderer> skins)
+        public static glTFNode Create(Transform x, List<Transform> nodes, List<Mesh> meshes, List<SkinnedMeshRenderer> skins)
         {
-            var node = new gltfNode
+            var node = new glTFNode
             {
                 name = x.name,
                 children = x.transform.GetChildren().Select(y => nodes.IndexOf(y)).ToArray(),

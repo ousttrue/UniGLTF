@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -45,7 +46,7 @@ namespace UniGLTF
             return create();
         }
 
-        public static void ReadAnimation(AnimationClip clip, GltfAnimation[] animations, Transform[] nodes, glTF buffer)
+        public static void ReadAnimation(AnimationClip clip, List<GltfAnimation> animations, Transform[] nodes, glTF buffer)
         {
             foreach (var x in animations)
             {

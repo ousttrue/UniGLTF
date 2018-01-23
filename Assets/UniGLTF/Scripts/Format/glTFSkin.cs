@@ -3,7 +3,7 @@
 namespace UniGLTF
 {
     [Serializable]
-    public struct gltfSkin
+    public struct glTFSkin
     {
         public int inverseBindMatrices;
         public int[] joints;

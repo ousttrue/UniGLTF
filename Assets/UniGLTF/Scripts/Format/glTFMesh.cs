@@ -28,10 +28,5 @@ namespace UniGLTF
     {
         public string name;
         public glTFPrimitives[] primitives;
-
-        public static glTFMesh Create(Mesh mesh, List<Material> materials)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

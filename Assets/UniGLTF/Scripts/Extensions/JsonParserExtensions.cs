@@ -1,13 +1,13 @@
 ﻿using UniGLTF;
 using System.Linq;
 using UnityEngine;
-
+using System.Collections.Generic;
 
 namespace UniGLTF
 {
     public static class JsonParserExtensions
     {
-        public static T[] DeserializeList<T>(this JsonParser jsonList)
+        public static List<T> DeserializeList<T>(this JsonParser jsonList)
         {
             return jsonList.ListItems.Select(x => {
 
@@ -18,7 +18,7 @@ namespace UniGLTF
 
                 return JsonUtility.FromJson<T>(x.Segment.ToString());
                 
-            }).ToArray();
+            }).ToList();
         }
 
         public static bool HasKey(this JsonParser parsed, string key)
