@@ -308,6 +308,61 @@ namespace UniGLTF
             return result;
         }
         #endregion
+
+        #region Exporter
+        static glComponentType GetComponentType<T>()
+        {
+            if (typeof(T) == typeof(Vector2))
+            {
+                return glComponentType.FLOAT;
+            }
+            else if (typeof(T) == typeof(Vector3))
+            {
+                return glComponentType.FLOAT;
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        static string GetAccessorType<T>()
+        {
+            if (typeof(T) == typeof(Vector2))
+            {
+                return "VEC2";
+            }
+            else if (typeof(T)==typeof(Vector3))
+            {
+                return "VEC3";
+            }
+            else
+            {
+                return "SCALAR";
+            }
+        }
+
+        public int AddBuffer<T>(ArrayByteBuffer bytesBuffer, T[] array)where T: struct
+        {
+            if (array.Length == 0)
+            {
+                return -1;
+            }
+            var view = bytesBuffer.Add(array);
+            var viewIndex = bufferViews.Count;
+            bufferViews.Add(view);
+            var accessorIndex = accessors.Count;
+            accessors.Add(new glTFAccessor
+            {
+                bufferView = viewIndex,
+                byteOffset = 0,
+                componentType =  (int)GetComponentType<T>(),
+                type = GetAccessorType<T>(),
+                count = array.Length,
+            });
+            return accessorIndex;
+        }
+        #endregion
         #endregion
 
         #region Material & Texture
@@ -476,50 +531,10 @@ namespace UniGLTF
             {
                 var x = unityMeshes[i];
 
-                // position
-                var position = x.vertices;
-                var positionView = bytesBuffer.Add(position);
-                var positionViewIndex = gltf.bufferViews.Count;
-                gltf.bufferViews.Add(positionView);
-                var positionAccessorIndex = gltf.accessors.Count;
-                gltf.accessors.Add(new glTFAccessor
-                {
-                    bufferView = positionViewIndex,
-                    byteOffset = 0,
-                    componentType = (int)glComponentType.FLOAT,
-                    type = "VEC3",
-                    count = position.Length,
-                });
-
-                // normal
-                var normal = x.normals;
-                var normalView = bytesBuffer.Add(normal);
-                var normalViewIndex = gltf.bufferViews.Count;
-                gltf.bufferViews.Add(normalView);
-                var normalAccessorIndex = gltf.accessors.Count;
-                gltf.accessors.Add(new glTFAccessor
-                {
-                    bufferView = normalViewIndex,
-                    byteOffset = 0,
-                    componentType = (int)glComponentType.FLOAT,
-                    type = "VEC3",
-                    count = normal.Length,
-                });
-
-                // uv
-                var uv = x.uv;
-                var uvView = bytesBuffer.Add(uv);
-                var uvViewIndex = gltf.bufferViews.Count;
-                gltf.bufferViews.Add(uvView);
-                var uvAccessorIndex = gltf.accessors.Count;
-                gltf.accessors.Add(new glTFAccessor
-                {
-                    bufferView = uvViewIndex,
-                    byteOffset = 0,
-                    componentType = (int)glComponentType.FLOAT,
-                    type = "VEC2",
-                    count = uv.Length,
-                });
+                var positionAccessorIndex = gltf.AddBuffer(bytesBuffer, x.vertices);
+                var normalAccessorIndex = gltf.AddBuffer(bytesBuffer, x.normals);
+                var uvAccessorIndex = gltf.AddBuffer(bytesBuffer, x.uv);
+                var tangentAccessorIndex = gltf.AddBuffer(bytesBuffer, x.tangents);
 
                 gltf.meshes.Add(new glTFMesh(x.name));
                 for (int j = 0; j < x.subMeshCount; ++j)
@@ -538,14 +553,22 @@ namespace UniGLTF
                         count = indices.Length,
                     });
 
+                    var attributes = new glTFAttributes
+                    {
+                        POSITION = positionAccessorIndex,
+                    };
+                    if (normalAccessorIndex != -1)
+                    {
+                        attributes.NORMAL = normalAccessorIndex;
+                    }
+                    if (uvAccessorIndex != -1)
+                    {
+                        attributes.TEXCOORD_0 = uvAccessorIndex;
+                    }
+
                     gltf.meshes.Last().primitives.Add(new glTFPrimitives
                     {
-                        attributes = new glTFAttributes
-                        {
-                            POSITION=positionAccessorIndex,
-                            NORMAL=normalAccessorIndex,
-                            TEXCOORD_0=uvAccessorIndex,
-                        },
+                        attributes = attributes,
                         indices = indicesAccessorIndex,
                         mode = 4 // triangels ?
                     });
