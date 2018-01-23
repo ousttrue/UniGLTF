@@ -105,7 +105,7 @@ namespace UniGLTF
             // meshes
             var meshes = gltf.meshes.Select((x, i) =>
             {
-                var meshWithMaterials = gltf.buffer.ReadMesh(x, materials);
+                var meshWithMaterials = gltf.ReadMesh(x, materials);
                 var mesh = meshWithMaterials.Mesh;
                 if (string.IsNullOrEmpty(mesh.name))
                 {
@@ -229,7 +229,7 @@ namespace UniGLTF
 
                         // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
                         var _b = joints.Select(y => y.worldToLocalMatrix * nodes[0].Transform.localToWorldMatrix).ToArray();
-                        var bindePoses = gltf.buffer.GetBuffer<Matrix4x4>(skin.inverseBindMatrices).ToArray();
+                        var bindePoses = gltf.GetBuffer<Matrix4x4>(skin.inverseBindMatrices).ToArray();
                         var bindePosesR = bindePoses.Select(y => y.ReverseZ()).ToArray();
 
                         // ...
@@ -256,7 +256,7 @@ namespace UniGLTF
                 clip.name = GltfAnimation.ANIMATION_NAME;
                 clip.ClearCurves();
 
-                GltfAnimation.ReadAnimation(clip, gltf.animations, nodes.Select(x => x.Transform).ToArray(), gltf.buffer);
+                GltfAnimation.ReadAnimation(clip, gltf.animations, nodes.Select(x => x.Transform).ToArray(), gltf);
 
                 ctx.AddObjectToAsset(GltfAnimation.ANIMATION_NAME, clip);
             }

@@ -46,7 +46,7 @@ namespace UniGLTF
         }
         */
 
-        public TextureWithIsAsset GetTexture(string dir, GltfBuffer buffer, gltfImage[] images)
+        public TextureWithIsAsset GetTexture(string dir, glTF buffer, gltfImage[] images)
         {
             var image = images[source];
             if (string.IsNullOrEmpty(image.uri))
