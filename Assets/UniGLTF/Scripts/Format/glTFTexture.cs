@@ -45,18 +45,23 @@ namespace UniGLTF
                 texture.LoadImage(bytes, true);
                 return new TextureWithIsAsset { Texture = texture, IsAsset = false };
             }
-            else
+            else if (dir.StartsWith("Assets/"))
             {
+                // local folder
                 var path = Path.Combine(dir, image.uri);
                 Debug.LogFormat("load texture: {0}", path);
 
-                /*
+                var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                return new TextureWithIsAsset { Texture = texture, IsAsset = true };
+            }
+            else
+            {
+                // external
+                var path = Path.Combine(dir, image.uri);
                 var bytes = File.ReadAllBytes(path);
 
                 var texture = new Texture2D(2, 2);
                 texture.LoadImage(bytes);
-                */
-                var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 return new TextureWithIsAsset { Texture = texture, IsAsset = true };
             }
         }
