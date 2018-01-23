@@ -36,13 +36,66 @@ namespace UniGLTF
         glTFBuffer[] m_buffers;
         glTFBufferView[] m_bufferViews;
         glTFAccessor[] m_accessors;
-        ArraySegment<Byte>[] m_bytesList;
+
+        interface IBytesBuffer
+        {
+            ArraySegment<Byte> Get();
+        }
+
+        class ArraySegmentByteBuffer: IBytesBuffer
+        {
+            ArraySegment<Byte> m_bytes;
+
+            public ArraySegmentByteBuffer(ArraySegment<Byte> bytes)
+            {
+                m_bytes = bytes;
+            }
+
+            public ArraySegment<byte> Get()
+            {
+                return m_bytes;
+            }
+        }
+
+        class ArrayByteBuffer : IBytesBuffer
+        {
+            Byte[] m_bytes;
+
+            public ArrayByteBuffer(Byte[] bytes)
+            {
+                m_bytes = bytes;
+            }
+
+            public void Add(Byte[] bytes)
+            {
+                if (m_bytes == null)
+                {
+                    m_bytes = bytes;
+                }
+                else
+                {
+                    var tmp = m_bytes;
+                    m_bytes = new Byte[m_bytes.Length + bytes.Length];
+                    Buffer.BlockCopy(tmp, 0, m_bytes, 0, tmp.Length);
+                    Buffer.BlockCopy(bytes, 0, m_bytes, tmp.Length, bytes.Length);
+                }
+            }
+
+            public ArraySegment<byte> Get()
+            {
+                return new ArraySegment<byte>(m_bytes);
+            }
+        }
+
+        IBytesBuffer[] m_bytesList;
+
         #region Importer
         T[] GetAttrib<T>(glTFAccessor accessor, glTFBufferView view) where T : struct
         {
             var attrib = new T[accessor.count];
             //
-            var bytes = new ArraySegment<Byte>(m_bytesList[view.buffer].Array, m_bytesList[view.buffer].Offset + view.byteOffset + accessor.byteOffset, accessor.count * view.byteStride);
+            var segment = m_bytesList[view.buffer].Get();
+            var bytes = new ArraySegment<Byte>(segment.Array, segment.Offset + view.byteOffset + accessor.byteOffset, accessor.count * view.byteStride);
             bytes.MarshalCoyTo(attrib);
             return attrib;
         }
@@ -50,7 +103,8 @@ namespace UniGLTF
         public ArraySegment<Byte> GetViewBytes(int bufferView)
         {
             var view = m_bufferViews[bufferView];
-            return new ArraySegment<byte>(m_bytesList[view.buffer].Array, m_bytesList[view.buffer].Offset + view.byteOffset, view.byteLength);
+            var segment = m_bytesList[view.buffer].Get();
+            return new ArraySegment<byte>(segment.Array, segment.Offset + view.byteOffset, view.byteLength);
         }
 
         public int[] GetIndices(int index)
@@ -300,7 +354,7 @@ namespace UniGLTF
         #endregion
 
         #region Exporter
-        public int AddBuffer(Byte[] bytes)
+        int AddBuffer(Byte[] bytes)
         {
             throw new NotImplementedException();
         }
@@ -421,16 +475,29 @@ namespace UniGLTF
 
             gltf.nodes = nodes.Select(x => gltfNode.Create(x, nodes, meshes, skins)).ToArray();
 
-            var materials = nodes.SelectMany(x => x.GetSharedMaterials()).Distinct().ToArray();
-            var textures = materials.Select(x => x.mainTexture).Distinct().ToArray();
+            var materials = nodes.SelectMany(x => x.GetSharedMaterials()).Distinct().ToList();
+            var textures = materials.Select(x => (Texture2D)x.mainTexture).Where(x => x!=null).Distinct().ToList();
 
-            /*
-            var textureWithImages = materials.Select(x => (Texture2D)x.mainTexture).Where(x => x != null).Select(x => gltfTexture.Create(x, buffer)).ToArray();
+            var textureViews = textures.Select(x =>
+            {
+                var bytes = x.EncodeToPNG();
+                return gltf. AddBuffer(bytes);
+            }).ToArray();
 
-            gltf.materials = materials.Select(x => GltfMaterial.Create(x)).ToArray();
+            gltf.images = textureViews.Select(x => new gltfImage
+            {
+                bufferView = x,               
+            }).ToArray();
+
+            gltf.textures = textures.Select((x, i) => new gltfTexture
+            {
+                sampler = -1,
+                source = i
+            }).ToArray();
+
+            gltf.materials = materials.Select(x => GltfMaterial.Create(x, textures)).ToArray();
 
             gltf.meshes = meshes.Select(x => glTFMesh.Create(x, materials)).ToArray();
-            */
 
             return gltf;
         }
@@ -474,14 +541,11 @@ namespace UniGLTF
             gltf.m_accessors = parsed["accessors"].DeserializeList<glTFAccessor>();
             if (glbDataBytes.Count > 0)
             {
-                gltf.m_bytesList = new ArraySegment<Byte>[]
-                {
-                    glbDataBytes
-                };
+                gltf.m_bytesList = new[] { new ArraySegmentByteBuffer(glbDataBytes) };
             }
             else
             {
-                gltf.m_bytesList = gltf.m_buffers.Select(x => new ArraySegment<Byte>(x.GetBytes(baseDir))).ToArray();
+                gltf.m_bytesList = gltf.m_buffers.Select(x => new ArrayByteBuffer(x.GetBytes(baseDir))).ToArray();
             }
 
             // texture

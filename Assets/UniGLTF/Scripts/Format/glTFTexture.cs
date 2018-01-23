@@ -32,20 +32,6 @@ namespace UniGLTF
         public int sampler;
         public int source;
 
-        /*
-        public static gltfImage Create(Texture2D texture, GltfBuffer buffer)
-        {
-            var bytes = texture.EncodeToPNG();
-
-            var bufferViewIndex = buffer.AddBuffer(bytes);
-
-            return new gltfImage
-            {
-
-            };
-        }
-        */
-
         public TextureWithIsAsset GetTexture(string dir, glTF buffer, gltfImage[] images)
         {
             var image = images[source];

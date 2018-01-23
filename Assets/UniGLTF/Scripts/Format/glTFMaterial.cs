@@ -34,7 +34,7 @@ namespace UniGLTF
         public GltfTextureRef emissiveTexture = null;
         public float[] emissiveFactor;
 
-        public static GltfMaterial Create(Material m, List<Texture> textures)
+        public static GltfMaterial Create(Material m, List<Texture2D> textures)
         {
             var material= new GltfMaterial
             {
@@ -49,7 +49,7 @@ namespace UniGLTF
             {
                 material.pbrMetallicRoughness.baseColorTexture = new GltfTextureRef
                 {
-                    index=textures.IndexOf(m.mainTexture),
+                    index=textures.IndexOf((Texture2D)m.mainTexture),
                 };
             }
 
