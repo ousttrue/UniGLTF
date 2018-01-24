@@ -55,6 +55,8 @@
 * Humanoid
     * [x] manual avatar build
     * [ ] avatar creation parameter
+    * [ ] bone rename
+    * [ ] bind matrix
 
 * Camera
     * not implemented

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.AssetImporters;
 using UnityEngine;
@@ -64,6 +65,21 @@ namespace UniGLTF
             return Import(new gltfImporter.Context(path), bytes);
         }
 
+        public static GlbChunkType ToChunkType(string src)
+        {
+            switch(src)
+            {
+                case "BIN":
+                    return GlbChunkType.BIN;
+
+                case "JSON":
+                    return GlbChunkType.JSON;
+
+                default:
+                    throw new FormatException("unknown chunk type: " + src);
+            }
+        }
+
         public static GameObject Import(gltfImporter.Context ctx, Byte[] bytes)
         {
             var baseDir = Path.GetDirectoryName(ctx.Path);
@@ -92,12 +108,14 @@ namespace UniGLTF
                 pos += 4;
 
                 //var type = (GlbChunkType)BitConverter.ToUInt32(bytes, pos);
-                var type = Encoding.ASCII.GetString(bytes, pos, 4);
+                var chunkTypeBytes = bytes.Skip(pos).Take(4).Where(x => x != 0).ToArray();
+                var chunkTypeStr = Encoding.ASCII.GetString(chunkTypeBytes);
+                var type = ToChunkType(chunkTypeStr);
                 pos += 4;
 
                 chunks.Add(new GlbChunk
                 {
-                    ChunkType = (GlbChunkType)Enum.Parse(typeof(GlbChunkType), type),
+                    ChunkType = type,
                     Bytes = new ArraySegment<byte>(bytes, (int)pos, (int)chunkDataSize)
                 });
 
