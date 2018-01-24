@@ -38,7 +38,7 @@
 |**mesh**    |        |        |
 |positions   |o       |o       |reverse-z
 |normals     |o       |o       |reverse-z
-|uv          |o       |o       |reverse-z
+|uv          |o       |o       |reverse-y
 |tangent     |        |        |?
 |primitive   |o       |o       |todo:sharing attributes|
 |boneweight  |o       |o       |
@@ -64,3 +64,4 @@
 ## Sample Models
 
 * https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0
+
