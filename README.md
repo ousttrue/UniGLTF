@@ -19,55 +19,48 @@
 ![inspector](doc/BoneMappingInspector.png)
 ![humanoid](Recordings/humanoid.gif)
 
-## Implemented
+## Features & ToDo
 
+* [x] gltf
+* [x] glb
 * [ ] Sample scene and model
 * [ ] Unity-5.6 compatibility
+* [x] Asset Importer/Exporter
+* [x] Runtime Importer/Exporter
 
-* Importer/Exporter
-    * [x] AssetImporter
-    * [x] Runtime Loader
-    * [ ] Exporter(node rotation is cleared and avatar definition)
+|features    |importer|exporter|memo     |
+|------------|--------|--------|---------|
+|**material**|        |        |
+|color       |o       |o       |
+|color texture|o      |o       |
+|sampler     |
+|PBR         |
+|**mesh**    |        |        |
+|positions   |o       |o       |reverse-z
+|normals     |o       |o       |reverse-z
+|uv          |o       |o       |reverse-z
+|tangent     |        |        |?
+|primitive   |o       |o       |todo:sharing attributes|
+|boneweight  |o       |o       |
+|blend shape |o       |        |
+|**animation**|
+|transform    |o      |        |as generic AnimationClip
+|**node**    |
+|translation |o       |o       |reverse-z
+|rotation    |o       |o       |reverse-z
+|scale       |o       |o
+|matrix      |o       |-       |reverse-z
+|**skinning**|
+|avatar      |o       |        |
+|avatar params|       |        |
+|bone name    |       |        |rename to bone name
+|bindmatrix   |o      |        |
 
-* Format
-    * [x] gltf
-    * [x] gltf-embeded
-    * [x] glb
 
-* Coordinate
-    * [x] z-back to z-forward
-
-* Mesh
-    * [x] positions, normals, uv
-    * [ ] tangent
-    * [x] submesh(primitives)
-    * [x] skinning
-    * [x] BlendShape
-    * [ ] submesh sharing attributes
-
-* Material
-    * [x] color
-    * [ ] PBR
-    * [x] texture
-    * [ ] sampler
-
-* AnimationClip
-    * [x] transform
-
-* Humanoid
-    * [x] manual avatar build
-    * [ ] avatar creation parameter
-    * [ ] bone rename
-    * [x] import bind matrix
-    * [ ] export bind matrix
-
-* Camera
-    * not implemented
-
-* Light
-    * not implemented
+* not implemented
+    * Camera
+    * Light
 
 ## Sample Models
 
 * https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0
-
