@@ -22,6 +22,7 @@
 ## Implemented
 
 * [ ] Sample scene and model
+* [ ] Unity-5.6 compatibility
 
 * Importer/Exporter
     * [x] AssetImporter
@@ -57,7 +58,8 @@
     * [x] manual avatar build
     * [ ] avatar creation parameter
     * [ ] bone rename
-    * [ ] bind matrix
+    * [x] import bind matrix
+    * [ ] export bind matrix
 
 * Camera
     * not implemented

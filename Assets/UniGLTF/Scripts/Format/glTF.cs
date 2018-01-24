@@ -80,6 +80,12 @@ namespace UniGLTF
                         var indices = GetAttrib<Int32>(accessor, view);
                         return FlipTriangle(indices).ToArray();
                     }
+
+                case glComponentType.UNSIGNED_INT:
+                    {
+                        var indices = GetAttrib<UInt32>(accessor, view);
+                        return FlipTriangle(indices).ToArray();
+                    }
             }
 
             throw new NotImplementedException("GetIndices: unknown componenttype: " + accessor.componentType);
@@ -98,6 +104,11 @@ namespace UniGLTF
         }
 
         static IEnumerable<int> FlipTriangle(IEnumerable<UInt16> src)
+        {
+            return FlipTriangle(src.Select(x => (Int32)x));
+        }
+
+        static IEnumerable<int> FlipTriangle(IEnumerable<UInt32> src)
         {
             return FlipTriangle(src.Select(x => (Int32)x));
         }
