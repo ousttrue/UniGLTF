@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using UnityEditor;
 using UnityEditor.Experimental.AssetImporters;
 using UnityEngine;
 
@@ -13,6 +14,41 @@ namespace UniGLTF
     {
         public const string GLB_MAGIC = "glTF";
         public const float GLB_VERSION = 2.0f;
+
+#if UNITY_EDITOR
+        [MenuItem("Assets/gltf/import")]
+        public static void ImportMenu()
+        {
+            var path = UnityEditor.EditorUtility.OpenFilePanel("open gltf", "", "gltf,glb");
+            if (!string.IsNullOrEmpty(path))
+            {
+                Debug.Log(path);
+                var bytes = File.ReadAllBytes(path);
+                var ext = Path.GetExtension(path).ToLower();
+                switch (ext)
+                {
+                    case ".gltf":
+                        {
+                            var json = Encoding.UTF8.GetString(bytes);
+                            var root = gltfImporter.Import(path, json);
+                            root.name = Path.GetFileNameWithoutExtension(path);
+                        }
+                        break;
+
+                    case ".glb":
+                        {
+                            var root = glbImporter.Import(path, bytes);
+                            root.name = Path.GetFileNameWithoutExtension(path);
+                        }
+                        break;
+
+                    default:
+                        Debug.LogWarningFormat("unknown ext: {0}", path);
+                        break;
+                }
+            }
+        }
+#endif
 
         public override void OnImportAsset(AssetImportContext ctx)
         {

@@ -319,23 +319,33 @@ namespace UniGLTF
         #endregion
 
         #region Exporter
+        struct ComponentVec
+        {
+            public glComponentType ComponentType;
+            public string VectorType;
+
+            public ComponentVec(glComponentType componentType, string vectorType)
+            {
+                ComponentType = componentType;
+                VectorType = vectorType;
+            }
+        }
+
+        static Dictionary<Type, ComponentVec> ComponentTypeMap = new Dictionary<Type, ComponentVec>
+        {
+            { typeof(Vector2), new ComponentVec(glComponentType.FLOAT, "VEC2") },
+            { typeof(Vector3), new ComponentVec(glComponentType.FLOAT, "VEC3") },
+            { typeof(Vector4), new ComponentVec(glComponentType.FLOAT, "VEC4") },
+            { typeof(UShort4), new ComponentVec(glComponentType.FLOAT, "VEC4") },
+            { typeof(Matrix4x4), new ComponentVec(glComponentType.FLOAT, "MATRIX") },
+        };
+
         static glComponentType GetComponentType<T>()
         {
-            if (typeof(T) == typeof(Vector2))
+            var cv = default(ComponentVec);
+            if(ComponentTypeMap.TryGetValue(typeof(T), out cv))
             {
-                return glComponentType.FLOAT;
-            }
-            else if (typeof(T) == typeof(Vector3))
-            {
-                return glComponentType.FLOAT;
-            }
-            else if (typeof(T) == typeof(Vector4))
-            {
-                return glComponentType.FLOAT;
-            }
-            else if(typeof(T)== typeof(UShort4))
-            {
-                return glComponentType.UNSIGNED_SHORT;
+                return cv.ComponentType;
             }
             else
             {
@@ -345,21 +355,10 @@ namespace UniGLTF
 
         static string GetAccessorType<T>()
         {
-            if (typeof(T) == typeof(Vector2))
+            var cv = default(ComponentVec);
+            if (ComponentTypeMap.TryGetValue(typeof(T), out cv))
             {
-                return "VEC2";
-            }
-            else if (typeof(T)==typeof(Vector3))
-            {
-                return "VEC3";
-            }
-            else if(typeof(T)==typeof(Vector4))
-            {
-                return "VEC4";
-            }
-            else if (typeof(T) == typeof(UShort4))
-            {
-                return "VEC4";
+                return cv.VectorType;
             }
             else
             {
@@ -556,9 +555,9 @@ namespace UniGLTF
             {
                 var x = unityMeshes[i];
 
-                var positionAccessorIndex = gltf.AddBuffer(bytesBuffer, x.vertices);
-                var normalAccessorIndex = gltf.AddBuffer(bytesBuffer, x.normals);
-                var uvAccessorIndex = gltf.AddBuffer(bytesBuffer, x.uv);
+                var positionAccessorIndex = gltf.AddBuffer(bytesBuffer, x.vertices.Select(y => y.ReverseZ()).ToArray());
+                var normalAccessorIndex = gltf.AddBuffer(bytesBuffer, x.normals.Select(y => y.ReverseZ()).ToArray());
+                var uvAccessorIndex = gltf.AddBuffer(bytesBuffer, x.uv.Select(y => y.ReverseY()).ToArray());
                 var tangentAccessorIndex = gltf.AddBuffer(bytesBuffer, x.tangents);
 
                 var boneweights = x.boneWeights;
@@ -598,7 +597,7 @@ namespace UniGLTF
                     {
                         attributes.WEIGHTS_0 = weightAccessorIndex;
                     }
-                    if(jointsAccessorIndex != -1)
+                    if (jointsAccessorIndex != -1)
                     {
                         attributes.JOINTS_0 = jointsAccessorIndex;
                     }
@@ -622,6 +621,20 @@ namespace UniGLTF
                     nodes = go.transform.GetChildren().Select(x => unityNodes.IndexOf(x)).ToArray(),
                 }
             };
+
+            foreach (var x in unitySkins)
+            {
+                var matrices = x.sharedMesh.bindposes.Select(y => y.ReverseZ()).ToArray();
+                var accessor = gltf.AddBuffer(bytesBuffer, matrices);
+
+                var skin = new glTFSkin
+                {
+                    inverseBindMatrices = accessor,
+                    joints = x.bones.Select(y => unityNodes.IndexOf(y)).ToArray(),
+                };
+                var skinIndex = gltf.skins.Count;
+                gltf.skins.Add(skin);
+            }
 
             return gltf;
         }
