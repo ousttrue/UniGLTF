@@ -21,6 +21,8 @@ namespace UniGLTF
         public int indices;
         public glTFAttributes attributes;
         public int material;
+
+        public glTFAttributes[] targets;
     }
 
     [Serializable]

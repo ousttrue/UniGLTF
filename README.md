@@ -41,7 +41,8 @@
     * [ ] tangent
     * [x] submesh(primitives)
     * [x] skinning
-    * [ ] BlendShape(todo: separate mesh to with blendshape and without blendshape)
+    * [x] BlendShape
+    * [ ] submesh sharing attributes
 
 * Material
     * [x] color

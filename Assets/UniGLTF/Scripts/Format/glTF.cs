@@ -131,29 +131,18 @@ namespace UniGLTF
             }
         }
 
-        struct BlendShape
+        class BlendShape
         {
-            public Vector3[] Positions;
-            public Vector3[] Normals;
-            public Vector3[] Tangents;
-        }
+            public string Name;
 
-        BlendShape ReadBlendShape(JsonParser targetJson)
-        {
-            var blendShape = new BlendShape();
-            if (targetJson.HasKey("POSITION"))
+            public BlendShape(string name)
             {
-                blendShape.Positions = GetBuffer<Vector3>(targetJson["POSITION"].GetInt32()).Select(x => x.ReverseZ()).ToArray();
+                Name = name;
             }
-            if (targetJson.HasKey("NORMAL"))
-            {
-                blendShape.Normals = GetBuffer<Vector3>(targetJson["NORMAL"].GetInt32()).Select(x => x.ReverseZ()).ToArray();
-            }
-            if (targetJson.HasKey("TANGENT"))
-            {
-                blendShape.Tangents = GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32())/*.Select(ReverseZ).ToArray()*/;
-            }
-            return blendShape;
+
+            public List<Vector3> Positions = new List<Vector3>();
+            public List<Vector3> Normals = new List<Vector3>();
+            public List<Vector3> Tangents = new List<Vector3>();
         }
 
         [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -209,6 +198,19 @@ namespace UniGLTF
             var boneWeights = new List<BoneWeight>();
             var subMeshes = new List<int[]>();
             var materialIndices = new List<int>();
+
+            var targets = gltfMesh.primitives[0].targets;
+            for(int i=1; i<gltfMesh.primitives.Count; ++i)
+            {
+                if (gltfMesh.primitives[i].targets != targets)
+                {
+                    throw new FormatException(string.Format("diffirent targets: {0} with {1}",
+                        gltfMesh.primitives[i],
+                        targets));
+                }
+            }
+
+            BlendShape[] blendShapes = null;
             foreach (var prim in gltfMesh.primitives)
             {
                 var indexOffset = positions.Count;
@@ -255,26 +257,42 @@ namespace UniGLTF
                     }
                 }
 
+                // blendshape
+                if (prim.targets!=null && prim.targets.Length > 0)
+                {
+                    if (blendShapes == null)
+                    {
+                        blendShapes = prim.targets.Select((x, i) => new BlendShape("blendShape: "+i)).ToArray();
+                    }
+                    for (int i = 0; i < prim.targets.Length; ++i)
+                    {
+                        var name = string.Format("target{0}", i++);
+                        var primTarget = prim.targets[i];
+                        var blendShape = blendShapes[i];
+
+                        if (primTarget.POSITION != -1)
+                        {
+                            blendShape.Positions.AddRange(
+                                GetBuffer<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
+                        }
+                        if (primTarget.NORMAL!=-1)
+                        {
+                            blendShape.Normals.AddRange(
+                                GetBuffer<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
+                        }
+                        #if false
+                        if (primTarget.TANGEN!=-1)
+                        {
+                            blendShape.Tangents = GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32())/*.Select(ReverseZ).ToArray()*/;
+                        }
+                        #endif
+                    }
+                }
+
                 subMeshes.Add(GetIndices(indexBuffer).Select(x => x + indexOffset).ToArray());
 
                 // material
                 materialIndices.Add(prim.material);
-
-                /*
-                // blendshape
-                if (prim.HasKey("targets"))
-                {
-                    int j = 0;
-                    foreach (var x in prim["targets"].ListItems)
-                    {
-                        var blendShape = ReadBlendShape(x);
-
-                        var name = string.Format("target{0}", j++);
-
-                        mesh.AddBlendShapeFrame(name, 1.0f, blendShape.Positions, blendShape.Normals, blendShape.Tangents);
-                    }
-                }
-                */
             }
             if (!materialIndices.Any())
             {
@@ -314,11 +332,26 @@ namespace UniGLTF
                 Materials = materialIndices.Select(x => materials[x]).ToArray()
             };
 
+            if (blendShapes != null)
+            {
+                foreach (var blendShape in blendShapes)
+                {
+                    if (blendShape.Positions.Count > 0)
+                    {
+                        mesh.AddBlendShapeFrame(blendShape.Name, 100.0f,
+                            blendShape.Positions.ToArray(),
+                            blendShape.Normals.ToArray(),
+                            null
+                            );
+                    }
+                }
+            }
+
             return result;
         }
-        #endregion
+#endregion
 
-        #region Exporter
+#region Exporter
         struct ComponentVec
         {
             public glComponentType ComponentType;
@@ -386,10 +419,10 @@ namespace UniGLTF
             });
             return accessorIndex;
         }
-        #endregion
-        #endregion
+#endregion
+#endregion
 
-        #region Material & Texture
+#region Material & Texture
         public List<gltfTexture> textures = new List<gltfTexture>();
         public List<gltfImage> images = new List<gltfImage>();
 
@@ -441,7 +474,7 @@ namespace UniGLTF
                 });
             }
         }
-        #endregion
+#endregion
 
         public List<glTFMesh> meshes = new List<glTFMesh>();
 
@@ -511,7 +544,7 @@ namespace UniGLTF
                 .Skip(1) // exclude root object for the symmetry with the importer
                 .ToList();
 
-            #region Material
+#region Material
             var unityMaterials = unityNodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
             var unityTextures = unityMaterials.Select(x => (Texture2D)x.mainTexture).Where(x => x != null).Distinct().ToList();
 
@@ -547,9 +580,9 @@ namespace UniGLTF
             }
 
             gltf.materials = unityMaterials.Select(x => GltfMaterial.Create(x, unityTextures)).ToList();
-            #endregion
+#endregion
 
-            #region Meshes
+#region Meshes
             var unityMeshes = unityNodes.Select(x => x.GetSharedMesh()).Where(x => x != null).ToList();
             for (int i = 0; i < unityMeshes.Count; ++i)
             {
@@ -609,7 +642,7 @@ namespace UniGLTF
                     });
                 }
             }
-            #endregion
+#endregion
 
             var unitySkins = unityNodes.Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null).ToList();
             gltf.nodes = unityNodes.Select(x => glTFNode.Create(x, unityNodes, unityMeshes, unitySkins)).ToList();
