@@ -567,8 +567,7 @@ namespace UniGLTF
                 gltf.meshes.Add(new glTFMesh(x.name));
                 for (int j = 0; j < x.subMeshCount; ++j)
                 {
-                    var indices = x.GetIndices(j);
-                    var indicesView = bytesBuffer.Add(indices);
+                    var indices = FlipTriangle(x.GetIndices(j)).ToArray();                    var indicesView = bytesBuffer.Add(indices);
                     var indicesViewIndex = gltf.bufferViews.Count;
                     gltf.bufferViews.Add(indicesView);
                     var indicesAccessorIndex = gltf.accessors.Count;
