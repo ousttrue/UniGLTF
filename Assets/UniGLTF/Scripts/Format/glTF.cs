@@ -163,7 +163,16 @@ namespace UniGLTF
             public ushort y;
             public ushort z;
             public ushort w;
+
+            public UShort4(ushort _x, ushort _y, ushort _z, ushort _w)
+            {
+                x = _x;
+                y = _y;
+                z = _z;
+                w = _w;
+            }
         }
+
         [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
         struct Float4
         {
@@ -320,6 +329,14 @@ namespace UniGLTF
             {
                 return glComponentType.FLOAT;
             }
+            else if (typeof(T) == typeof(Vector4))
+            {
+                return glComponentType.FLOAT;
+            }
+            else if(typeof(T)== typeof(UShort4))
+            {
+                return glComponentType.UNSIGNED_SHORT;
+            }
             else
             {
                 throw new NotImplementedException();
@@ -335,6 +352,14 @@ namespace UniGLTF
             else if (typeof(T)==typeof(Vector3))
             {
                 return "VEC3";
+            }
+            else if(typeof(T)==typeof(Vector4))
+            {
+                return "VEC4";
+            }
+            else if (typeof(T) == typeof(UShort4))
+            {
+                return "VEC4";
             }
             else
             {
@@ -536,6 +561,10 @@ namespace UniGLTF
                 var uvAccessorIndex = gltf.AddBuffer(bytesBuffer, x.uv);
                 var tangentAccessorIndex = gltf.AddBuffer(bytesBuffer, x.tangents);
 
+                var boneweights = x.boneWeights;
+                var weightAccessorIndex = gltf.AddBuffer(bytesBuffer, boneweights.Select(y => new Vector4(y.weight0, y.weight1, y.weight2, y.weight3)).ToArray());
+                var jointsAccessorIndex = gltf.AddBuffer(bytesBuffer, boneweights.Select(y => new UShort4((ushort)y.boneIndex0, (ushort)y.boneIndex1, (ushort)y.boneIndex2, (ushort)y.boneIndex3)).ToArray());
+
                 gltf.meshes.Add(new glTFMesh(x.name));
                 for (int j = 0; j < x.subMeshCount; ++j)
                 {
@@ -564,6 +593,14 @@ namespace UniGLTF
                     if (uvAccessorIndex != -1)
                     {
                         attributes.TEXCOORD_0 = uvAccessorIndex;
+                    }
+                    if (weightAccessorIndex != -1)
+                    {
+                        attributes.WEIGHTS_0 = weightAccessorIndex;
+                    }
+                    if(jointsAccessorIndex != -1)
+                    {
+                        attributes.JOINTS_0 = jointsAccessorIndex;
                     }
 
                     gltf.meshes.Last().primitives.Add(new glTFPrimitives
