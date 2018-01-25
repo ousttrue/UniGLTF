@@ -65,10 +65,10 @@ namespace UniGLTF
                     break;
 
                 case GlbChunkType.BIN:
-                    s.WriteByte((byte)' ');
                     s.WriteByte((byte)'B');
                     s.WriteByte((byte)'I');
                     s.WriteByte((byte)'N');
+                    s.WriteByte((byte)0);
                     break;
 
                 default:

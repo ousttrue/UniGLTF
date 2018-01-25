@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -542,13 +543,27 @@ namespace UniGLTF
             }
         }
 
+        static byte[] GetPngBytes(Texture2D texture)
+        {
+            var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
+            if (String.IsNullOrEmpty(path))
+            {
+                return texture.EncodeToPNG();
+            }
+            else
+            {
+                Debug.Log(path);
+                return File.ReadAllBytes(path);
+            }
+        }
+
         static glTF _FromGameObject(GameObject go, ArrayByteBuffer bytesBuffer)
         {
             var gltf = new glTF();
             gltf.asset = new glTFAssets
             {
                 generator = "UniGLTF",
-                version = 2.0f,
+                version = "2.0",
             };
 
             var unityNodes = go.transform.Traverse()
@@ -559,16 +574,11 @@ namespace UniGLTF
             var unityMaterials = unityNodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
             var unityTextures = unityMaterials.Select(x => (Texture2D)x.mainTexture).Where(x => x != null).Distinct().ToList();
 
-            var textureViews = unityTextures.Select(x =>
-            {
-                var bytes = x.EncodeToPNG();
-                return bytesBuffer.Add(bytes);
-            }).ToList();
-
             for (int i = 0; i < unityTextures.Count; ++i)
             {
                 var texture = unityTextures[i];
-                var bytes = texture.EncodeToPNG();
+
+                var bytes = GetPngBytes(texture);;
 
                 // add view
                 var view = bytesBuffer.Add(bytes);
@@ -709,7 +719,7 @@ namespace UniGLTF
 
             // asset
             gltf.asset = JsonUtility.FromJson<glTFAssets>(parsed["asset"].Segment.ToString());
-            if (gltf.asset.version != 2.0f)
+            if (gltf.asset.version != "2.0")
             {
                 throw new NotImplementedException(string.Format("unknown version: {0}", gltf.asset.version));
             }

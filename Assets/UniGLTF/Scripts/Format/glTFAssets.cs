@@ -7,7 +7,7 @@ namespace UniGLTF
     public struct glTFAssets
     {
         public string generator;
-        public float version;
+        public string version;
 
         public override string ToString()
         {

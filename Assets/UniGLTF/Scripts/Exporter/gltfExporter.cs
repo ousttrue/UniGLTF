@@ -47,7 +47,7 @@ namespace UniGLTF
                 var pos = s.Position;
                 s.Position += 4; // skip total size
 
-                int size = 0;
+                int size = 12;
 
                 {
                     var chunk = new GlbChunk(json);
