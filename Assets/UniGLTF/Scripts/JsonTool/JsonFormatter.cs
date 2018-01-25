@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using System.Linq.Expressions;
 
 namespace UniGLTF
 {
@@ -141,6 +142,18 @@ namespace UniGLTF
         {
             m_w.Write('}');
             m_stack.Pop();
+        }
+
+        public void KeyValue<T>(Expression<Func<T>> expression)
+        {
+            var body = expression.Body as MemberExpression;
+            if (body == null)
+            {
+                body = ((UnaryExpression)expression.Body).Operand as MemberExpression;
+            }
+            Key(body.Member.Name);
+            var func = expression.Compile();
+            GetType().GetMethod("Value", new Type[] { typeof(T) }).Invoke(this, new object[] { func() });
         }
 
         public void Key(String key)

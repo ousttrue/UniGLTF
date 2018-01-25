@@ -64,7 +64,7 @@ namespace UniGLTF
     }
 
     [Serializable]
-    public struct glTFAccessor : IJsonSerializable
+    public class glTFAccessor : IJsonSerializable
     {
         public int bufferView;
         public int byteOffset;
@@ -78,12 +78,13 @@ namespace UniGLTF
         {
             var f = new JsonFormatter();
             f.BeginMap();
-            f.Key("bufferView"); f.Value(bufferView);
-            f.Key("byteOffset"); f.Value(byteOffset);
+            f.KeyValue(() => bufferView);
+            f.KeyValue(() => byteOffset);
+            f.KeyValue(() => type);
             f.Key("componentType"); f.Value((int)componentType);
-            f.Key("count"); f.Value(count);
-            f.Key("max"); f.Value(max);
-            f.Key("min"); f.Value(min);
+            f.KeyValue(() => count);
+            f.KeyValue(() => max);
+            f.KeyValue(() => min);
             f.EndMap();
             return f.ToString();
         }
