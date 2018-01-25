@@ -33,16 +33,16 @@ namespace UniGLTF
             m_bytes = bytes;
         }
 
-        public glTFBufferView Add<T>(T[] array) where T : struct
+        public glTFBufferView Add<T>(T[] array, glBufferTarget target) where T : struct
         {
             using (var pin = Pin.Create(array))
             {
                 var elementSize = Marshal.SizeOf(typeof(T));
-                return Add(pin.Ptr, array.Length * elementSize, elementSize);
+                return Add(pin.Ptr, array.Length * elementSize, elementSize, target);
             }
         }
 
-        public glTFBufferView Add(IntPtr p, int bytesLength, int stride)
+        public glTFBufferView Add(IntPtr p, int bytesLength, int stride, glBufferTarget target)
         {
             if (m_bytes == null)
             {
@@ -54,6 +54,7 @@ namespace UniGLTF
                     byteLength = bytesLength,
                     byteOffset = 0,
                     byteStride = stride,
+                    target = target,
                 };
             }
             else
@@ -68,6 +69,7 @@ namespace UniGLTF
                     byteLength = bytesLength,
                     byteOffset = tmp.Length,
                     byteStride = stride,
+                    target = target,
                 };
             }
         }

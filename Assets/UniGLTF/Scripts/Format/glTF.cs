@@ -76,11 +76,13 @@ namespace UniGLTF
                         return FlipTriangle(indices).ToArray();
                     }
 
+                    /*
                 case glComponentType.INT:
                     {
                         var indices = GetAttrib<Int32>(accessor, view);
                         return FlipTriangle(indices).ToArray();
                     }
+                    */
 
                 case glComponentType.UNSIGNED_INT:
                     {
@@ -367,22 +369,22 @@ namespace UniGLTF
         struct ComponentVec
         {
             public glComponentType ComponentType;
-            public string VectorType;
+            public int ElementCount;
 
-            public ComponentVec(glComponentType componentType, string vectorType)
+            public ComponentVec(glComponentType componentType, int elementCount)
             {
                 ComponentType = componentType;
-                VectorType = vectorType;
+                ElementCount = elementCount;
             }
         }
 
         static Dictionary<Type, ComponentVec> ComponentTypeMap = new Dictionary<Type, ComponentVec>
         {
-            { typeof(Vector2), new ComponentVec(glComponentType.FLOAT, "VEC2") },
-            { typeof(Vector3), new ComponentVec(glComponentType.FLOAT, "VEC3") },
-            { typeof(Vector4), new ComponentVec(glComponentType.FLOAT, "VEC4") },
-            { typeof(UShort4), new ComponentVec(glComponentType.FLOAT, "VEC4") },
-            { typeof(Matrix4x4), new ComponentVec(glComponentType.FLOAT, "MATRIX") },
+            { typeof(Vector2), new ComponentVec(glComponentType.FLOAT, 2) },
+            { typeof(Vector3), new ComponentVec(glComponentType.FLOAT, 3) },
+            { typeof(Vector4), new ComponentVec(glComponentType.FLOAT, 4) },
+            { typeof(UShort4), new ComponentVec(glComponentType.FLOAT, 4) },
+            { typeof(Matrix4x4), new ComponentVec(glComponentType.FLOAT, 16) },
         };
 
         static glComponentType GetComponentType<T>()
@@ -403,7 +405,14 @@ namespace UniGLTF
             var cv = default(ComponentVec);
             if (ComponentTypeMap.TryGetValue(typeof(T), out cv))
             {
-                return cv.VectorType;
+                switch (cv.ElementCount)
+                {
+                    case 2: return "VEC2";
+                    case 3: return "VEC3";
+                    case 4: return "VEC4";
+                    case 16: return "MAT4";
+                    default: throw new Exception();
+                }
             }
             else
             {
@@ -411,13 +420,26 @@ namespace UniGLTF
             }
         }
 
-        public int AddBuffer<T>(ArrayByteBuffer bytesBuffer, T[] array)where T: struct
+        static int GetAccessorElementCount<T>()
+        {
+            var cv = default(ComponentVec);
+            if (ComponentTypeMap.TryGetValue(typeof(T), out cv))
+            {
+                return cv.ElementCount;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+
+        public int AddBuffer<T>(ArrayByteBuffer bytesBuffer, T[] array, glBufferTarget target)where T: struct
         {
             if (array.Length == 0)
             {
                 return -1;
             }
-            var view = bytesBuffer.Add(array);
+            var view = bytesBuffer.Add(array, target);
             var viewIndex = bufferViews.Count;
             bufferViews.Add(view);
             var accessorIndex = accessors.Count;
@@ -425,9 +447,11 @@ namespace UniGLTF
             {
                 bufferView = viewIndex,
                 byteOffset = 0,
-                componentType =  (int)GetComponentType<T>(),
+                componentType = GetComponentType<T>(),
                 type = GetAccessorType<T>(),
                 count = array.Length,
+                min = new float[GetAccessorElementCount<T>()],
+                max = new float[GetAccessorElementCount<T>()],
             });
             return accessorIndex;
         }
@@ -581,7 +605,7 @@ namespace UniGLTF
                 var bytes = GetPngBytes(texture);;
 
                 // add view
-                var view = bytesBuffer.Add(bytes);
+                var view = bytesBuffer.Add(bytes, glBufferTarget.ARRAY_BUFFER);
                 var viewIndex = gltf.bufferViews.Count;
                 gltf.bufferViews.Add(view);
 
@@ -609,19 +633,19 @@ namespace UniGLTF
             {
                 var x = unityMeshes[i];
 
-                var positionAccessorIndex = gltf.AddBuffer(bytesBuffer, x.vertices.Select(y => y.ReverseZ()).ToArray());
-                var normalAccessorIndex = gltf.AddBuffer(bytesBuffer, x.normals.Select(y => y.ReverseZ()).ToArray());
-                var uvAccessorIndex = gltf.AddBuffer(bytesBuffer, x.uv.Select(y => y.ReverseY()).ToArray());
-                var tangentAccessorIndex = gltf.AddBuffer(bytesBuffer, x.tangents);
+                var positionAccessorIndex = gltf.AddBuffer(bytesBuffer, x.vertices.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                var normalAccessorIndex = gltf.AddBuffer(bytesBuffer, x.normals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                var uvAccessorIndex = gltf.AddBuffer(bytesBuffer, x.uv.Select(y => y.ReverseY()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                var tangentAccessorIndex = gltf.AddBuffer(bytesBuffer, x.tangents, glBufferTarget.ARRAY_BUFFER);
 
                 var boneweights = x.boneWeights;
-                var weightAccessorIndex = gltf.AddBuffer(bytesBuffer, boneweights.Select(y => new Vector4(y.weight0, y.weight1, y.weight2, y.weight3)).ToArray());
-                var jointsAccessorIndex = gltf.AddBuffer(bytesBuffer, boneweights.Select(y => new UShort4((ushort)y.boneIndex0, (ushort)y.boneIndex1, (ushort)y.boneIndex2, (ushort)y.boneIndex3)).ToArray());
-
+                var weightAccessorIndex = gltf.AddBuffer(bytesBuffer, boneweights.Select(y => new Vector4(y.weight0, y.weight1, y.weight2, y.weight3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                var jointsAccessorIndex = gltf.AddBuffer(bytesBuffer, boneweights.Select(y => new UShort4((ushort)y.boneIndex0, (ushort)y.boneIndex1, (ushort)y.boneIndex2, (ushort)y.boneIndex3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
                 gltf.meshes.Add(new glTFMesh(x.name));
                 for (int j = 0; j < x.subMeshCount; ++j)
                 {
-                    var indices = FlipTriangle(x.GetIndices(j)).ToArray();                    var indicesView = bytesBuffer.Add(indices);
+                    var indices = FlipTriangle(x.GetIndices(j)).ToArray();
+                    var indicesView = bytesBuffer.Add(indices, glBufferTarget.ELEMENT_ARRAY_BUFFER);
                     var indicesViewIndex = gltf.bufferViews.Count;
                     gltf.bufferViews.Add(indicesView);
                     var indicesAccessorIndex = gltf.accessors.Count;
@@ -629,9 +653,11 @@ namespace UniGLTF
                     {
                         bufferView = indicesViewIndex,
                         byteOffset = 0,
-                        componentType = (int)glComponentType.INT,
+                        componentType = glComponentType.UNSIGNED_INT,
                         type = "SCALAR",
                         count = indices.Length,
+                        min = new float[1],
+                        max = new float[1],
                     });
 
                     var attributes = new glTFAttributes
@@ -678,7 +704,7 @@ namespace UniGLTF
             foreach (var x in unitySkins)
             {
                 var matrices = x.sharedMesh.bindposes.Select(y => y.ReverseZ()).ToArray();
-                var accessor = gltf.AddBuffer(bytesBuffer, matrices);
+                var accessor = gltf.AddBuffer(bytesBuffer, matrices, glBufferTarget.ARRAY_BUFFER);
 
                 var skin = new glTFSkin
                 {

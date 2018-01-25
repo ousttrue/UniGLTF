@@ -34,7 +34,7 @@ namespace UniGLTF
         public int byteOffset;
         public int byteLength;
         public int byteStride;
-        public int target; // ARRAY_BUFFER
+        public glBufferTarget target;
     }
 
     [Serializable]
@@ -43,7 +43,7 @@ namespace UniGLTF
         public int bufferView;
         public int byteOffset;
         public string type;
-        public int componentType;
+        public glComponentType componentType;
         public int count;
         public float[] max;
         public float[] min;
