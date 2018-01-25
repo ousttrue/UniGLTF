@@ -48,10 +48,29 @@ namespace UniGLTF
             Bytes = bytes;
         }
 
+        byte GetPaddingByte()
+        {
+            // chunk type
+            switch (ChunkType)
+            {
+                case GlbChunkType.JSON:
+                    return 0x20;
+
+                case GlbChunkType.BIN:
+                    return 0x00;
+
+                default:
+                    throw new Exception("unknown chunk type: " + ChunkType);
+            }
+        }
+
         public int WriteTo(Stream s)
         {
+            // padding
+            var padding = 4 - Bytes.Count % 4;
+
             // size
-            var bytes = BitConverter.GetBytes((int)Bytes.Count);
+            var bytes = BitConverter.GetBytes((int)(Bytes.Count + padding));
             s.Write(bytes, 0, bytes.Length);
 
             // chunk type
@@ -78,7 +97,14 @@ namespace UniGLTF
             // body
             s.Write(Bytes.Array, Bytes.Offset, Bytes.Count);
 
-            return 4 + 4 + Bytes.Count;
+            // 4byte align
+            var pad = GetPaddingByte();
+            for(int i=0; i<padding; ++i)
+            {
+                s.WriteByte(pad);
+            }
+
+            return 4 + 4 + Bytes.Count + padding;
         }
     }
 }
