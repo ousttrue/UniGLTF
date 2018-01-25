@@ -5,7 +5,7 @@ using System.IO;
 namespace UniGLTF
 {
     [Serializable]
-    public struct glTFBuffer: IJsonSerializable
+    public struct glTFBuffer : IJsonSerializable
     {
         public string uri;
         public int byteLength;
@@ -64,7 +64,7 @@ namespace UniGLTF
     }
 
     [Serializable]
-    public struct glTFAccessor
+    public struct glTFAccessor : IJsonSerializable
     {
         public int bufferView;
         public int byteOffset;
@@ -73,5 +73,19 @@ namespace UniGLTF
         public int count;
         public float[] max;
         public float[] min;
+
+        public string ToJson()
+        {
+            var f = new JsonFormatter();
+            f.BeginMap();
+            f.Key("bufferView"); f.Value(bufferView);
+            f.Key("byteOffset"); f.Value(byteOffset);
+            f.Key("componentType"); f.Value((int)componentType);
+            f.Key("count"); f.Value(count);
+            f.Key("max"); f.Value(max);
+            f.Key("min"); f.Value(min);
+            f.EndMap();
+            return f.ToString();
+        }
     }
 }

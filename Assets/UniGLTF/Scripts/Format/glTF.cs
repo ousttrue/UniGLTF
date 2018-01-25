@@ -23,7 +23,7 @@ namespace UniGLTF
         }
     }
 
-    public class glTF: IJsonSerializable
+    public class glTF : IJsonSerializable
     {
         public string baseDir
         {
@@ -76,13 +76,13 @@ namespace UniGLTF
                         return FlipTriangle(indices).ToArray();
                     }
 
-                    /*
-                case glComponentType.INT:
-                    {
-                        var indices = GetAttrib<Int32>(accessor, view);
-                        return FlipTriangle(indices).ToArray();
-                    }
-                    */
+                /*
+            case glComponentType.INT:
+                {
+                    var indices = GetAttrib<Int32>(accessor, view);
+                    return FlipTriangle(indices).ToArray();
+                }
+                */
 
                 case glComponentType.UNSIGNED_INT:
                     {
@@ -214,7 +214,7 @@ namespace UniGLTF
             var materialIndices = new List<int>();
 
             var targets = gltfMesh.primitives[0].targets;
-            for(int i=1; i<gltfMesh.primitives.Count; ++i)
+            for (int i = 1; i < gltfMesh.primitives.Count; ++i)
             {
                 if (gltfMesh.primitives[i].targets != targets)
                 {
@@ -272,11 +272,11 @@ namespace UniGLTF
                 }
 
                 // blendshape
-                if (prim.targets!=null && prim.targets.Length > 0)
+                if (prim.targets != null && prim.targets.Length > 0)
                 {
                     if (blendShapes == null)
                     {
-                        blendShapes = prim.targets.Select((x, i) => new BlendShape("blendShape: "+i)).ToArray();
+                        blendShapes = prim.targets.Select((x, i) => new BlendShape("blendShape: " + i)).ToArray();
                     }
                     for (int i = 0; i < prim.targets.Length; ++i)
                     {
@@ -289,17 +289,17 @@ namespace UniGLTF
                             blendShape.Positions.AddRange(
                                 GetBuffer<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
                         }
-                        if (primTarget.NORMAL!=-1)
+                        if (primTarget.NORMAL != -1)
                         {
                             blendShape.Normals.AddRange(
                                 GetBuffer<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
                         }
-                        #if false
+#if false
                         if (primTarget.TANGEN!=-1)
                         {
                             blendShape.Tangents = GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32())/*.Select(ReverseZ).ToArray()*/;
                         }
-                        #endif
+#endif
                     }
                 }
 
@@ -363,9 +363,9 @@ namespace UniGLTF
 
             return result;
         }
-#endregion
+        #endregion
 
-#region Exporter
+        #region Exporter
         struct ComponentVec
         {
             public glComponentType ComponentType;
@@ -390,7 +390,7 @@ namespace UniGLTF
         static glComponentType GetComponentType<T>()
         {
             var cv = default(ComponentVec);
-            if(ComponentTypeMap.TryGetValue(typeof(T), out cv))
+            if (ComponentTypeMap.TryGetValue(typeof(T), out cv))
             {
                 return cv.ComponentType;
             }
@@ -433,7 +433,7 @@ namespace UniGLTF
             }
         }
 
-        public int AddBuffer<T>(ArrayByteBuffer bytesBuffer, T[] array, glBufferTarget target)where T: struct
+        public int AddBuffer<T>(ArrayByteBuffer bytesBuffer, T[] array, glBufferTarget target) where T : struct
         {
             if (array.Length == 0)
             {
@@ -455,10 +455,10 @@ namespace UniGLTF
             });
             return accessorIndex;
         }
-#endregion
-#endregion
+        #endregion
+        #endregion
 
-#region Material & Texture
+        #region Material & Texture
         public List<gltfTexture> textures = new List<gltfTexture>();
         public List<gltfImage> images = new List<gltfImage>();
 
@@ -510,7 +510,7 @@ namespace UniGLTF
                 });
             }
         }
-#endregion
+        #endregion
 
         public List<glTFMesh> meshes = new List<glTFMesh>();
 
@@ -594,7 +594,7 @@ namespace UniGLTF
                 .Skip(1) // exclude root object for the symmetry with the importer
                 .ToList();
 
-#region Material
+            #region Material
             var unityMaterials = unityNodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
             var unityTextures = unityMaterials.Select(x => (Texture2D)x.mainTexture).Where(x => x != null).Distinct().ToList();
 
@@ -602,7 +602,7 @@ namespace UniGLTF
             {
                 var texture = unityTextures[i];
 
-                var bytes = GetPngBytes(texture);;
+                var bytes = GetPngBytes(texture); ;
 
                 // add view
                 var view = bytesBuffer.Add(bytes, glBufferTarget.ARRAY_BUFFER);
@@ -625,9 +625,9 @@ namespace UniGLTF
             }
 
             gltf.materials = unityMaterials.Select(x => GltfMaterial.Create(x, unityTextures)).ToList();
-#endregion
+            #endregion
 
-#region Meshes
+            #region Meshes
             var unityMeshes = unityNodes.Select(x => x.GetSharedMesh()).Where(x => x != null).ToList();
             for (int i = 0; i < unityMeshes.Count; ++i)
             {
@@ -689,7 +689,7 @@ namespace UniGLTF
                     });
                 }
             }
-#endregion
+            #endregion
 
             var unitySkins = unityNodes.Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null).ToList();
             gltf.nodes = unityNodes.Select(x => glTFNode.Create(x, unityNodes, unityMeshes, unitySkins)).ToList();
@@ -788,7 +788,7 @@ namespace UniGLTF
             // scene;
             if (parsed.HasKey("scene"))
             {
-                gltf.scene=parsed["scene"].GetInt32();
+                gltf.scene = parsed["scene"].GetInt32();
             }
             gltf.scenes = parsed["scenes"].DeserializeList<gltfScene>();
 
@@ -810,13 +810,29 @@ namespace UniGLTF
             // buffer
             if (buffers.Any())
             {
-                f.Key("buffers");
-                f.ListValue(buffers);
+                f.Key("buffers"); f.Value(buffers);
             }
             if (bufferViews.Any())
             {
-                f.Key("bufferViews");
-                f.ListValue(bufferViews);
+                f.Key("bufferViews"); f.Value(bufferViews);
+            }
+            if (accessors.Any())
+            {
+                f.Key("accessors"); f.Value(accessors);
+            }
+
+            // textures
+            if (images.Any())
+            {
+                f.Key("images"); f.Value(images);
+            }
+            if (textures.Any())
+            {
+                f.Key("textures"); f.Value(textures);
+            }
+            if (materials.Any())
+            {
+                f.Key("materials"); f.Value(materials);
             }
 
             f.EndMap();

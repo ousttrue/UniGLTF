@@ -215,13 +215,23 @@ namespace UniGLTF
             m_w.Write(x.ToString());
         }
 
+        public void Value(float[] a)
+        {
+            BeginList();
+            foreach (var x in a)
+            {
+                Value(x);
+            }
+            EndList();
+        }
+
         public void Value(IJsonSerializable s)
         {
             CommaCheck();
             m_w.Write(s.ToJson());
         }
 
-        public void ListValue<T>(IEnumerable<T> values)where T: IJsonSerializable
+        public void Value<T>(IEnumerable<T> values)where T: IJsonSerializable
         {
             BeginList();
             foreach(var value in values)
