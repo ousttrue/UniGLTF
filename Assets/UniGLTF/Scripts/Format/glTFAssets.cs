@@ -4,10 +4,20 @@
 namespace UniGLTF
 {
     [Serializable]
-    public struct glTFAssets
+    public struct glTFAssets : IJsonSerializable
     {
         public string generator;
         public string version;
+
+        public string ToJson()
+        {
+            var f = new JsonFormatter();
+            f.BeginMap();
+            f.Key("generator"); f.Value(generator);
+            f.Key("version"); f.Value(version);
+            f.EndMap();
+            return f.ToString();
+        }
 
         public override string ToString()
         {

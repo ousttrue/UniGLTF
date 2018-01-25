@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using UnityEngine;
 
 namespace UniGLTF
 {
@@ -16,12 +17,12 @@ namespace UniGLTF
 
         enum Current
         {
-            NONE,
+            ROOT,
             ARRAY,
             OBJECT
         }
 
-        struct Context
+        class Context
         {
             public Current Current;
             public int Count;
@@ -42,7 +43,7 @@ namespace UniGLTF
         public JsonFormatter(IStore w)
         {
             m_w = w;
-            m_stack.Push(new Context(Current.NONE));
+            m_stack.Push(new Context(Current.ROOT));
         }
 
         public override string ToString()
@@ -60,7 +61,7 @@ namespace UniGLTF
         {
             m_w.Clear();
             m_stack.Clear();
-            m_stack.Push(new Context(Current.NONE));
+            m_stack.Push(new Context(Current.ROOT));
         }
 
         void CommaCheck(bool isKey = false)
@@ -68,7 +69,7 @@ namespace UniGLTF
             var top = m_stack.Pop();
             switch (top.Current)
             {
-                case Current.NONE:
+                case Current.ROOT:
                     {
                         if (top.Count != 0) throw new JsonFormatException("multiple root value");
                     }
@@ -101,6 +102,12 @@ namespace UniGLTF
                     break;
             }
             top.Count += 1;
+            /*
+            {
+                var debug = string.Format("{0} {1} = {2}", m_stack.Count, top.Current, top.Count);
+                Debug.Log(debug);
+            }
+            */
             m_stack.Push(top);
         }
 
@@ -108,11 +115,6 @@ namespace UniGLTF
         {
             CommaCheck();
             m_w.Write("null");
-        }
-
-        public void BeginList(int n)
-        {
-            BeginList();
         }
 
         public void BeginList()
@@ -126,11 +128,6 @@ namespace UniGLTF
         {
             m_w.Write(']');
             m_stack.Pop();
-        }
-
-        public void BeginMap(int n)
-        {
-            BeginMap();
         }
 
         public void BeginMap()
@@ -216,6 +213,22 @@ namespace UniGLTF
         {
             CommaCheck();
             m_w.Write(x.ToString());
+        }
+
+        public void Value(IJsonSerializable s)
+        {
+            CommaCheck();
+            m_w.Write(s.ToJson());
+        }
+
+        public void ListValue<T>(IEnumerable<T> values)where T: IJsonSerializable
+        {
+            BeginList();
+            foreach(var value in values)
+            {
+                Value(value);
+            }
+            EndList();
         }
 
         public void Bytes(ArraySegment<Byte> x)

@@ -36,8 +36,7 @@ namespace UniGLTF
             var buffer = new ArrayByteBuffer();
             var gltf = glTF.FromGameObject(go, buffer);
 
-            //var jsonBytes = gltf.ToJson();
-            var json = JsonUtility.ToJson(gltf);
+            var json = gltf.ToJson();
             var jsonBytes = Encoding.UTF8.GetBytes(json);
 
             using (var s = new FileStream(path, FileMode.Create))

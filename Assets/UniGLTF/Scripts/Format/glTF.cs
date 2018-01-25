@@ -23,7 +23,7 @@ namespace UniGLTF
         }
     }
 
-    public class glTF
+    public class glTF: IJsonSerializable
     {
         public string baseDir
         {
@@ -723,17 +723,6 @@ namespace UniGLTF
             return string.Format("{0}", asset);
         }
 
-        public ArraySegment<Byte> ToJson()
-        {
-            var formatter = new JsonFormatter();
-            formatter.BeginMap();
-
-
-
-            formatter.EndMap();
-            return formatter.GetStore().Bytes;
-        }
-
         public static glTF Parse(string json, string baseDir, ArraySegment<Byte> glbDataBytes)
         {
             var parsed = json.ParseAsJson();
@@ -810,6 +799,28 @@ namespace UniGLTF
             }
 
             return gltf;
+        }
+
+        public string ToJson()
+        {
+            var f = new JsonFormatter();
+            f.BeginMap();
+            f.Key("asset"); f.Value(asset);
+
+            // buffer
+            if (buffers.Any())
+            {
+                f.Key("buffers");
+                f.ListValue(buffers);
+            }
+            if (bufferViews.Any())
+            {
+                f.Key("bufferViews");
+                f.ListValue(bufferViews);
+            }
+
+            f.EndMap();
+            return f.ToString();
         }
     }
 }
