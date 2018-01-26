@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 
 
 namespace UniGLTF
@@ -56,7 +57,10 @@ namespace UniGLTF
             f.Key("buffer"); f.Value(buffer);
             f.Key("byteOffset"); f.Value(byteOffset);
             f.Key("byteLength"); f.Value(byteLength);
-            f.Key("byteStride"); f.Value(byteStride);
+            if (byteStride > 0)
+            {
+                f.Key("byteStride"); f.Value(byteStride);
+            }
             f.Key("target"); f.Value((int)target);
             f.EndMap();
             return f.ToString();
@@ -83,8 +87,14 @@ namespace UniGLTF
             f.KeyValue(() => type);
             f.Key("componentType"); f.Value((int)componentType);
             f.KeyValue(() => count);
-            f.KeyValue(() => max);
-            f.KeyValue(() => min);
+            if (max != null && max.Any())
+            {
+                f.KeyValue(() => max);
+            }
+            if (min != null && min.Any())
+            {
+                f.KeyValue(() => min);
+            }
             f.EndMap();
             return f.ToString();
         }

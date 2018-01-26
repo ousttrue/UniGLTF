@@ -499,8 +499,10 @@ namespace UniGLTF
                 componentType = GetComponentType<T>(),
                 type = GetAccessorType<T>(),
                 count = array.Length,
+                /*
                 min = Fold(array, (a, b) => (float)Math.Min(a, b)),
                 max = Fold(array, (a, b) => (float)Math.Max(a, b)),
+                */
             });
             return accessorIndex;
         }
@@ -663,6 +665,7 @@ namespace UniGLTF
 
                 // add view
                 var view = bytesBuffer.Add(bytes, glBufferTarget.ARRAY_BUFFER);
+                view.byteStride = 0;
                 var viewIndex = bufferViews.Count;
                 bufferViews.Add(view);
 
@@ -703,6 +706,7 @@ namespace UniGLTF
                 {
                     var indices = FlipTriangle(x.GetIndices(j)).ToArray();
                     var indicesView = bytesBuffer.Add(indices, glBufferTarget.ELEMENT_ARRAY_BUFFER);
+                    indicesView.byteStride = -1; //
                     var indicesViewIndex = bufferViews.Count;
                     bufferViews.Add(indicesView);
                     var indicesAccessorIndex = accessors.Count;

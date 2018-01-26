@@ -67,7 +67,8 @@ namespace UniGLTF
         public int WriteTo(Stream s)
         {
             // padding
-            var padding = 4 - Bytes.Count % 4;
+            var paddingValue = Bytes.Count % 4;
+            var padding = (paddingValue > 0) ? 4 - paddingValue : 0;
 
             // size
             var bytes = BitConverter.GetBytes((int)(Bytes.Count + padding));
