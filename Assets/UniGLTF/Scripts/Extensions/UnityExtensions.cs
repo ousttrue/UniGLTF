@@ -147,5 +147,10 @@ namespace UniGLTF
 
             return new Material[] { };
         }
+
+        public static bool Has<T>(this Transform transform, T t)where T: Component
+        {
+            return transform.GetComponent<T>() == t;
+        }
     }
 }

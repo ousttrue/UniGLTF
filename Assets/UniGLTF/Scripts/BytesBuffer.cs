@@ -9,7 +9,7 @@ namespace UniGLTF
     {
         string Uri { get; }
         ArraySegment<Byte> GetBytes();
-        glTFBufferView Extend<T>(T[] array, glBufferTarget target, bool isVertex) where T : struct;
+        glTFBufferView Extend<T>(T[] array, glBufferTarget target) where T : struct;
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ namespace UniGLTF
             }
         }
 
-        public glTFBufferView Extend<T>(T[] array, glBufferTarget target, bool isVertex) where T : struct
+        public glTFBufferView Extend<T>(T[] array, glBufferTarget target) where T : struct
         {
             throw new NotImplementedException();
         }
@@ -75,7 +75,7 @@ namespace UniGLTF
             private set;
         }
 
-        public glTFBufferView Extend<T>(T[] array, glBufferTarget target, bool isVertex) where T : struct
+        public glTFBufferView Extend<T>(T[] array, glBufferTarget target) where T : struct
         {
             throw new NotImplementedException();
         }
@@ -105,22 +105,23 @@ namespace UniGLTF
             m_bytes = bytes;
         }
 
-        public glTFBufferView Extend<T>(T[] array, glBufferTarget target, bool isVertex) where T : struct
+        public glTFBufferView Extend<T>(T[] array, glBufferTarget target) where T : struct
         {
             using (var pin = Pin.Create(array))
             {
                 var elementSize = Marshal.SizeOf(typeof(T));
                 var view=Extend(pin.Ptr, array.Length * elementSize, elementSize, target);
-                if (!isVertex)
-                {
-                    view.byteStride = 0;
-                }
                 return view;
             }
         }
 
         public glTFBufferView Extend(IntPtr p, int bytesLength, int stride, glBufferTarget target)
         {
+            if (target != glBufferTarget.ARRAY_BUFFER)
+            {
+                stride = -1;
+            }
+
             if (m_bytes == null)
             {
                 m_bytes = new byte[bytesLength];

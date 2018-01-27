@@ -122,7 +122,7 @@ namespace UniGLTF
                 var bytes = GetPngBytes(texture); ;
 
                 // add view
-                var view = gltf.buffers[bufferIndex].Storage.Extend(bytes, glBufferTarget.ARRAY_BUFFER, false);
+                var view = gltf.buffers[bufferIndex].Storage.Extend(bytes, glBufferTarget.NONE);
                 var viewIndex = gltf.AddBufferView(view);
 
                 // add image
@@ -149,7 +149,11 @@ namespace UniGLTF
             {
                 var x = unityMeshes[i];
 
-                var positionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, x.vertices.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                var positions = x.vertices.Select(y => y.ReverseZ()).ToArray();
+                var positionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, positions, glBufferTarget.ARRAY_BUFFER);
+                gltf.accessors[positionAccessorIndex].min = positions.Aggregate(positions[0], (a, b) => new Vector3(Mathf.Min(a.x, b.x), Math.Min(a.y, b.y), Mathf.Min(a.z, b.z))).ToArray();
+                gltf.accessors[positionAccessorIndex].max = positions.Aggregate(positions[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
+
                 var normalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, x.normals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
                 var uvAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, x.uv.Select(y => y.ReverseY()).ToArray(), glBufferTarget.ARRAY_BUFFER);
                 var tangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, x.tangents, glBufferTarget.ARRAY_BUFFER);
@@ -209,7 +213,7 @@ namespace UniGLTF
             foreach (var x in unitySkins)
             {
                 var matrices = x.sharedMesh.bindposes.Select(y => y.ReverseZ()).ToArray();
-                var accessor = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, matrices, glBufferTarget.ARRAY_BUFFER);
+                var accessor = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, matrices, glBufferTarget.NONE);
 
                 var skin = new glTFSkin
                 {
@@ -218,6 +222,12 @@ namespace UniGLTF
                 };
                 var skinIndex = gltf.skins.Count;
                 gltf.skins.Add(skin);
+
+                foreach(var z in unityNodes.Where(y => y.Has(x)))
+                {
+                    var nodeIndex = unityNodes.IndexOf(z);
+                    gltf.nodes[nodeIndex].skin = skinIndex;
+                }
             }
 
             // glb buffer

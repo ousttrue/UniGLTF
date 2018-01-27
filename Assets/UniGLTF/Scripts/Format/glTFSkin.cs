@@ -1,12 +1,22 @@
 ﻿using System;
-using UnityEngine;
+
 
 namespace UniGLTF
 {
     [Serializable]
-    public struct glTFSkin
+    public class glTFSkin : IJsonSerializable
     {
-        public int inverseBindMatrices;
+        public int inverseBindMatrices = -1;
         public int[] joints;
+
+        public string ToJson()
+        {
+            var f = new JsonFormatter();
+            f.BeginMap();
+            f.KeyValue(() => inverseBindMatrices);
+            f.KeyValue(() => joints);
+            f.EndMap();
+            return f.ToString();
+        }
     }
 }

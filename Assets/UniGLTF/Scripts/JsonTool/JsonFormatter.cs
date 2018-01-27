@@ -146,6 +146,7 @@ namespace UniGLTF
 
         public void KeyValue<T>(Expression<Func<T>> expression)
         {
+            var t = typeof(T);
             var body = expression.Body as MemberExpression;
             if (body == null)
             {
@@ -153,7 +154,18 @@ namespace UniGLTF
             }
             Key(body.Member.Name);
             var func = expression.Compile();
-            GetType().GetMethod("Value", new Type[] { typeof(T) }).Invoke(this, new object[] { func() });
+
+            var formatterType = GetType();
+            var method = formatterType.GetMethod("Value", new Type[] { typeof(T) });
+            if (method == null)
+            {
+                // try IEnumerable<T>
+                var generic_method = formatterType.GetMethods().First(x => x.Name == "Value" && x.IsGenericMethod);
+                var g = t.GetGenericArguments()[0];
+                method = generic_method.MakeGenericMethod(g);
+            }
+
+            method.Invoke(this, new object[] { func() });
         }
 
         public void Key(String key)
@@ -229,6 +241,16 @@ namespace UniGLTF
         }
 
         public void Value(float[] a)
+        {
+            BeginList();
+            foreach (var x in a)
+            {
+                Value(x);
+            }
+            EndList();
+        }
+
+        public void Value(int[] a)
         {
             BeginList();
             foreach (var x in a)

@@ -70,7 +70,10 @@ namespace UniGLTF
             {
                 f.KeyValue(() => byteStride);
             }
-            f.Key("target"); f.Value((int)target);
+            if (target != glBufferTarget.NONE)
+            {
+                f.Key("target"); f.Value((int)target);
+            }
             f.EndMap();
             return f.ToString();
         }

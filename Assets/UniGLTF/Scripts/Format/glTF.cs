@@ -8,9 +8,18 @@ using UnityEngine;
 namespace UniGLTF
 {
     [Serializable]
-    public struct gltfScene
+    public class gltfScene : IJsonSerializable
     {
         public int[] nodes;
+
+        public string ToJson()
+        {
+            var f = new JsonFormatter();
+            f.BeginMap();
+            f.KeyValue(() => nodes);
+            f.EndMap();
+            return f.ToString();
+        }
     }
 
     public struct PosRot
@@ -516,7 +525,7 @@ namespace UniGLTF
                 return -1;
             }
 
-            var view = buffers[bufferIndex].Storage.Extend(array, target, target==glBufferTarget.ARRAY_BUFFER);
+            var view = buffers[bufferIndex].Storage.Extend(array, target);
             var viewIndex = bufferViews.Count;
             bufferViews.Add(view);
             var accessorIndex = accessors.Count;
@@ -599,7 +608,7 @@ namespace UniGLTF
 
         public int scene;
 
-        public List<gltfScene> scenes;
+        public List<gltfScene> scenes = new List<gltfScene>();
 
         public int[] rootnodes
         {
@@ -647,7 +656,7 @@ namespace UniGLTF
             gltf.buffers = parsed["buffers"].DeserializeList<glTFBuffer>();
             gltf.bufferViews = parsed["bufferViews"].DeserializeList<glTFBufferView>();
             gltf.accessors = parsed["accessors"].DeserializeList<glTFAccessor>();
-            foreach(var buffer in gltf.buffers)
+            foreach (var buffer in gltf.buffers)
             {
                 buffer.OpenStorage(baseDir, glbBinChunk);
             }
@@ -704,12 +713,12 @@ namespace UniGLTF
         {
             var f = new JsonFormatter();
             f.BeginMap();
-            f.Key("asset"); f.Value(asset);
+            f.KeyValue(() => asset);
 
             // buffer
             if (buffers.Any())
             {
-                f.Key("buffers"); f.Value(buffers);
+                f.KeyValue(() => buffers);
             }
             if (bufferViews.Any())
             {
@@ -720,7 +729,7 @@ namespace UniGLTF
                 f.Key("accessors"); f.Value(accessors);
             }
 
-            // textures
+            // materials
             if (images.Any())
             {
                 f.Key("images"); f.Value(images);
@@ -732,6 +741,26 @@ namespace UniGLTF
             if (materials.Any())
             {
                 f.Key("materials"); f.Value(materials);
+            }
+
+            // meshes
+            if (meshes.Any())
+            {
+                f.Key("meshes"); f.Value(meshes);
+            }
+            if (skins.Any())
+            {
+                f.KeyValue(() => skins);
+            }
+
+            // scene
+            if (nodes.Any())
+            {
+                f.Key("nodes"); f.Value(nodes);
+            }
+            if (scenes.Any())
+            {
+                f.KeyValue(() => scenes);
             }
 
             f.EndMap();
