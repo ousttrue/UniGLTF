@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using UnityEngine;
+
 
 namespace UniGLTF
 {
@@ -98,28 +97,6 @@ namespace UniGLTF
             }
             f.EndMap();
             return f.ToString();
-        }
-
-        public static GltfMaterial Create(Material m, List<Texture2D> textures)
-        {
-            var material= new GltfMaterial
-            {
-                name=m.name,
-                pbrMetallicRoughness=new GltfPbrMetallicRoughness
-                {
-                    baseColorFactor=m.color.ToArray(),
-                }
-            };
-
-            if (m.mainTexture!=null)
-            {
-                material.pbrMetallicRoughness.baseColorTexture = new GltfTextureRef
-                {
-                    index=textures.IndexOf((Texture2D)m.mainTexture),
-                };
-            }
-
-            return material;
         }
     }
 }

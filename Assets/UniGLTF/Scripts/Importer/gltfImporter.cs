@@ -92,7 +92,7 @@ namespace UniGLTF
             Debug.Log(gltf);
 
             // textures
-            var textures = ReadTextures(gltf)
+            var textures = ImportTextures(gltf)
                     .Select(x =>
                     {
                         if (!x.IsAsset)
@@ -104,7 +104,7 @@ namespace UniGLTF
                     .ToArray();
 
             // materials
-            var materials = ReadMaterials(gltf, textures).ToArray();
+            var materials = ImportMaterials(gltf, textures).ToArray();
             foreach (var material in materials)
             {
                 ctx.AddObjectToAsset(material.name, material);
@@ -113,7 +113,7 @@ namespace UniGLTF
             // meshes
             var meshes = gltf.meshes.Select((x, i) =>
             {
-                var meshWithMaterials = ReadMesh(gltf, x, materials);
+                var meshWithMaterials = ImportMesh(gltf, x, materials);
                 var mesh = meshWithMaterials.Mesh;
                 if (string.IsNullOrEmpty(mesh.name))
                 {
@@ -271,12 +271,12 @@ namespace UniGLTF
             if (gltf.animations != null)
             {
                 var clip = new AnimationClip();
-                clip.name = GltfAnimation.ANIMATION_NAME;
+                clip.name = ANIMATION_NAME;
                 clip.ClearCurves();
 
-                GltfAnimation.ReadAnimation(clip, gltf.animations, nodes.Select(x => x.Transform).ToArray(), gltf);
+                ImportAnimation(clip, gltf.animations, nodes.Select(x => x.Transform).ToArray(), gltf);
 
-                ctx.AddObjectToAsset(GltfAnimation.ANIMATION_NAME, clip);
+                ctx.AddObjectToAsset(ANIMATION_NAME, clip);
             }
 
             Debug.LogFormat("Import completed");
@@ -285,7 +285,7 @@ namespace UniGLTF
         }
 
         #region Import
-        static IEnumerable<TextureWithIsAsset> ReadTextures(glTF gltf)
+        static IEnumerable<TextureWithIsAsset> ImportTextures(glTF gltf)
         {
             if (gltf.textures == null)
             {
@@ -293,7 +293,7 @@ namespace UniGLTF
             }
             else
             {
-                return gltf.textures.Select(x => GetTexture(gltf, x));
+                return gltf.textures.Select(x => ImportTexture(gltf, x));
             }
         }
 
@@ -303,7 +303,7 @@ namespace UniGLTF
             public bool IsAsset;
         }
 
-        static TextureWithIsAsset GetTexture(glTF gltf, gltfTexture t)
+        static TextureWithIsAsset ImportTexture(glTF gltf, gltfTexture t)
         {
             var image = gltf.images[t.source];
             if (string.IsNullOrEmpty(image.uri))
@@ -337,7 +337,7 @@ namespace UniGLTF
             }
         }
 
-        static IEnumerable<Material> ReadMaterials(glTF gltf, Texture2D[] textures)
+        static IEnumerable<Material> ImportMaterials(glTF gltf, Texture2D[] textures)
         {
             var shader = Shader.Find("Standard");
             if (gltf.materials == null)
@@ -394,7 +394,7 @@ namespace UniGLTF
             }
         }
 
-        static MeshWithMaterials ReadMesh(glTF gltf, glTFMesh gltfMesh, Material[] materials)
+        static MeshWithMaterials ImportMesh(glTF gltf, glTFMesh gltfMesh, Material[] materials)
         {
             var positions = new List<Vector3>();
             var normals = new List<Vector3>();
@@ -598,6 +598,108 @@ namespace UniGLTF
             return go;
         }
 
+        public static string ANIMATION_NAME = "animation";
+
+        public static T GetOrCreate<T>(UnityEngine.Object[] assets, string name, Func<T> create) where T : UnityEngine.Object
+        {
+            var found = assets.FirstOrDefault(x => x.name == name);
+            if (found != null)
+            {
+                return found as T;
+            }
+            return create();
+        }
+
+        public static void ImportAnimation(AnimationClip clip, List<GltfAnimation> animations, Transform[] nodes, glTF buffer)
+        {
+            foreach (var x in animations)
+            {
+                foreach (var y in x.channels)
+                {
+                    var node = nodes[y.target.node];
+                    switch (y.target.path)
+                    {
+                        case "translation":
+                            {
+                                var curveX = new AnimationCurve();
+                                var curveY = new AnimationCurve();
+                                var curveZ = new AnimationCurve();
+
+                                var sampler = x.samplers[y.sampler];
+                                var input = buffer.GetBuffer<float>(sampler.input);
+                                var output = buffer.GetBuffer<Vector3>(sampler.output);
+                                for (int i = 0; i < input.Length; ++i)
+                                {
+                                    var time = input[i];
+                                    var pos = output[i].ReverseZ();
+                                    curveX.AddKey(time, pos.x);
+                                    curveY.AddKey(time, pos.y);
+                                    curveZ.AddKey(time, pos.z);
+                                }
+
+                                var relativePath = node.RelativePathFrom(nodes[0]);
+                                clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
+                                clip.SetCurve(relativePath, typeof(Transform), "localPosition.y", curveY);
+                                clip.SetCurve(relativePath, typeof(Transform), "localPosition.z", curveZ);
+                            }
+                            break;
+
+                        case "rotation":
+                            {
+                                var curveX = new AnimationCurve();
+                                var curveY = new AnimationCurve();
+                                var curveZ = new AnimationCurve();
+                                var curveW = new AnimationCurve();
+
+                                var sampler = x.samplers[y.sampler];
+                                var input = buffer.GetBuffer<float>(sampler.input);
+                                var output = buffer.GetBuffer<Quaternion>(sampler.output);
+                                for (int i = 0; i < input.Length; ++i)
+                                {
+                                    var time = input[i];
+                                    var rot = output[i].ReverseZ();
+                                    curveX.AddKey(time, rot.x);
+                                    curveY.AddKey(time, rot.y);
+                                    curveZ.AddKey(time, rot.z);
+                                    curveW.AddKey(time, rot.w);
+                                }
+
+                                var relativePath = node.RelativePathFrom(nodes[0]);
+                                clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
+                                clip.SetCurve(relativePath, typeof(Transform), "localRotation.y", curveY);
+                                clip.SetCurve(relativePath, typeof(Transform), "localRotation.z", curveZ);
+                                clip.SetCurve(relativePath, typeof(Transform), "localRotation.w", curveW);
+                            }
+                            break;
+
+                        case "scale":
+                            {
+                                var curveX = new AnimationCurve();
+                                var curveY = new AnimationCurve();
+                                var curveZ = new AnimationCurve();
+
+                                var sampler = x.samplers[y.sampler];
+                                var input = buffer.GetBuffer<float>(sampler.input);
+                                var output = buffer.GetBuffer<Vector3>(sampler.output);
+                                for (int i = 0; i < input.Length; ++i)
+                                {
+                                    var time = input[i];
+                                    var scale = output[i];
+                                    curveX.AddKey(time, scale.x);
+                                    curveY.AddKey(time, scale.y);
+                                    curveZ.AddKey(time, scale.z);
+                                }
+
+                                var relativePath = node.RelativePathFrom(nodes[0]);
+                                clip.SetCurve(relativePath, typeof(Transform), "localScale.x", curveX);
+                                clip.SetCurve(relativePath, typeof(Transform), "localScale.y", curveY);
+                                clip.SetCurve(relativePath, typeof(Transform), "localScale.z", curveZ);
+                            }
+                            break;
+                    }
+                }
+            }
+        }
         #endregion
     }
 }

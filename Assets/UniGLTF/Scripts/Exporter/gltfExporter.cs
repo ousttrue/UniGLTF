@@ -102,6 +102,28 @@ namespace UniGLTF
             }
         }
 
+        public static GltfMaterial ExportMaterial(Material m, List<Texture2D> textures)
+        {
+            var material = new GltfMaterial
+            {
+                name = m.name,
+                pbrMetallicRoughness = new GltfPbrMetallicRoughness
+                {
+                    baseColorFactor = m.color.ToArray(),
+                }
+            };
+
+            if (m.mainTexture != null)
+            {
+                material.pbrMetallicRoughness.baseColorTexture = new GltfTextureRef
+                {
+                    index = textures.IndexOf((Texture2D)m.mainTexture),
+                };
+            }
+
+            return material;
+        }
+
         static glTFNode ExportNode(Transform x, List<Transform> nodes, List<Mesh> meshes, List<SkinnedMeshRenderer> skins)
         {
             var node = new glTFNode
@@ -167,7 +189,7 @@ namespace UniGLTF
                 });
             }
 
-            gltf.materials = unityMaterials.Select(x => GltfMaterial.Create(x, unityTextures)).ToList();
+            gltf.materials = unityMaterials.Select(x => ExportMaterial(x, unityTextures)).ToList();
             #endregion
 
             #region Meshes
