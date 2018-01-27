@@ -102,6 +102,33 @@ namespace UniGLTF
             }
         }
 
+        static glTFNode ExportNode(Transform x, List<Transform> nodes, List<Mesh> meshes, List<SkinnedMeshRenderer> skins)
+        {
+            var node = new glTFNode
+            {
+                name = x.name,
+                children = x.transform.GetChildren().Select(y => nodes.IndexOf(y)).ToArray(),
+                rotation = x.transform.localRotation.ToArray(),
+                translation = x.transform.localPosition.ToArray(),
+                scale = x.transform.localScale.ToArray(),
+            };
+
+            var meshFilter = x.GetComponent<MeshFilter>();
+            if (meshFilter != null)
+            {
+                node.mesh = meshes.IndexOf(meshFilter.sharedMesh);
+            }
+
+            var skinnredMeshRenderer = x.GetComponent<SkinnedMeshRenderer>();
+            if (skinnredMeshRenderer != null)
+            {
+                node.mesh = meshes.IndexOf(skinnredMeshRenderer.sharedMesh);
+                node.skin = skins.IndexOf(skinnredMeshRenderer);
+            }
+
+            return node;
+        }
+
         public static void FromGameObject(this glTF gltf, GameObject go)
         {
             var bytesBuffer = new ArrayByteBuffer();
@@ -187,7 +214,7 @@ namespace UniGLTF
 
                 for (int j = 0; j < x.subMeshCount; ++j)
                 {
-                    var indices = glTF.FlipTriangle(x.GetIndices(j)).Select(y => (uint)y).ToArray();
+                    var indices = TriangleUtil.FlipTriangle(x.GetIndices(j)).Select(y => (uint)y).ToArray();
                     var indicesAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, indices, glBufferTarget.ELEMENT_ARRAY_BUFFER);
 
                     gltf.meshes.Last().primitives.Add(new glTFPrimitives
@@ -201,7 +228,7 @@ namespace UniGLTF
             #endregion
 
             var unitySkins = unityNodes.Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null).ToList();
-            gltf.nodes = unityNodes.Select(x => glTFNode.Create(x, unityNodes, unityMeshes, unitySkins)).ToList();
+            gltf.nodes = unityNodes.Select(x => ExportNode(x, unityNodes, unityMeshes, unitySkins)).ToList();
             gltf.scenes = new List<gltfScene>
             {
                 new gltfScene

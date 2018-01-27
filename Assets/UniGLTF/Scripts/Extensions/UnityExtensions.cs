@@ -6,6 +6,41 @@ using UnityEngine;
 
 namespace UniGLTF
 {
+    public struct PosRot
+    {
+        public Vector3 Position;
+        public Quaternion Rotation;
+
+        public static PosRot FromGlobalTransform(Transform t)
+        {
+            return new PosRot
+            {
+                Position = t.position,
+                Rotation = t.rotation,
+            };
+        }
+    }
+
+    public struct MeshWithMaterials
+    {
+        public Mesh Mesh;
+        public Material[] Materials;
+    }
+
+    class BlendShape
+    {
+        public string Name;
+
+        public BlendShape(string name)
+        {
+            Name = name;
+        }
+
+        public List<Vector3> Positions = new List<Vector3>();
+        public List<Vector3> Normals = new List<Vector3>();
+        public List<Vector3> Tangents = new List<Vector3>();
+    }
+
     public static class UnityExtensions
     {
         public static Vector4 ReverseZ(this Vector4 v)

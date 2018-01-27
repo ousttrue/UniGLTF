@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using UnityEngine;
 
 
 namespace UniGLTF
@@ -19,60 +17,6 @@ namespace UniGLTF
             f.KeyValue(() => nodes);
             f.EndMap();
             return f.ToString();
-        }
-    }
-
-    public struct PosRot
-    {
-        public Vector3 Position;
-        public Quaternion Rotation;
-
-        public static PosRot FromGlobalTransform(Transform t)
-        {
-            return new PosRot
-            {
-                Position = t.position,
-                Rotation = t.rotation,
-            };
-        }
-    }
-
-    [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
-    struct UShort4
-    {
-        public ushort x;
-        public ushort y;
-        public ushort z;
-        public ushort w;
-
-        public UShort4(ushort _x, ushort _y, ushort _z, ushort _w)
-        {
-            x = _x;
-            y = _y;
-            z = _z;
-            w = _w;
-        }
-    }
-
-    [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
-    struct Float4
-    {
-        public float x;
-        public float y;
-        public float z;
-        public float w;
-
-        public Float4 One()
-        {
-            var sum = x + y + z + w;
-            var f = 1.0f / sum;
-            return new Float4
-            {
-                x = x * f,
-                y = y * f,
-                z = z * f,
-                w = w * f,
-            };
         }
     }
 
@@ -109,7 +53,6 @@ namespace UniGLTF
 
         public List<glTFAccessor> accessors = new List<glTFAccessor>();
 
-        #region Importer
         T[] GetAttrib<T>(glTFAccessor accessor, glTFBufferView view) where T : struct
         {
             var attrib = new T[accessor.count];
@@ -136,13 +79,13 @@ namespace UniGLTF
                 case glComponentType.UNSIGNED_BYTE:
                     {
                         var indices = GetAttrib<Byte>(accessor, view);
-                        return FlipTriangle(indices).ToArray();
+                        return TriangleUtil.FlipTriangle(indices).ToArray();
                     }
 
                 case glComponentType.UNSIGNED_SHORT:
                     {
                         var indices = GetAttrib<UInt16>(accessor, view);
-                        return FlipTriangle(indices).ToArray();
+                        return TriangleUtil.FlipTriangle(indices).ToArray();
                     }
 
                 /*
@@ -156,7 +99,7 @@ namespace UniGLTF
                 case glComponentType.UNSIGNED_INT:
                     {
                         var indices = GetAttrib<UInt32>(accessor, view);
-                        return FlipTriangle(indices).ToArray();
+                        return TriangleUtil.FlipTriangle(indices).ToArray();
                     }
             }
 
@@ -169,447 +112,16 @@ namespace UniGLTF
             var view = bufferViews[vertexAccessor.bufferView];
             return GetAttrib<T>(vertexAccessor, view);
         }
-
-        public static IEnumerable<int> FlipTriangle(IEnumerable<Byte> src)
-        {
-            return FlipTriangle(src.Select(x => (Int32)x));
-        }
-
-        public static IEnumerable<int> FlipTriangle(IEnumerable<UInt16> src)
-        {
-            return FlipTriangle(src.Select(x => (Int32)x));
-        }
-
-        public static IEnumerable<int> FlipTriangle(IEnumerable<UInt32> src)
-        {
-            return FlipTriangle(src.Select(x => (Int32)x));
-        }
-
-        public static IEnumerable<int> FlipTriangle(IEnumerable<Int32> src)
-        {
-            var it = src.GetEnumerator();
-            while (true)
-            {
-                if (!it.MoveNext())
-                {
-                    yield break;
-                }
-                var i0 = it.Current;
-
-                if (!it.MoveNext())
-                {
-                    yield break;
-                }
-                var i1 = it.Current;
-
-                if (!it.MoveNext())
-                {
-                    yield break;
-                }
-                var i2 = it.Current;
-
-                yield return i2;
-                yield return i1;
-                yield return i0;
-            }
-        }
-
-        class BlendShape
-        {
-            public string Name;
-
-            public BlendShape(string name)
-            {
-                Name = name;
-            }
-
-            public List<Vector3> Positions = new List<Vector3>();
-            public List<Vector3> Normals = new List<Vector3>();
-            public List<Vector3> Tangents = new List<Vector3>();
-        }
-
-
-
-        public struct MeshWithMaterials
-        {
-            public Mesh Mesh;
-            public Material[] Materials;
-        }
-
-        public MeshWithMaterials ReadMesh(glTFMesh gltfMesh, Material[] materials)
-        {
-            var positions = new List<Vector3>();
-            var normals = new List<Vector3>();
-            var uv = new List<Vector2>();
-            var boneWeights = new List<BoneWeight>();
-            var subMeshes = new List<int[]>();
-            var materialIndices = new List<int>();
-
-            var targets = gltfMesh.primitives[0].targets;
-            for (int i = 1; i < gltfMesh.primitives.Count; ++i)
-            {
-                if (gltfMesh.primitives[i].targets != targets)
-                {
-                    throw new FormatException(string.Format("diffirent targets: {0} with {1}",
-                        gltfMesh.primitives[i],
-                        targets));
-                }
-            }
-
-            BlendShape[] blendShapes = null;
-            foreach (var prim in gltfMesh.primitives)
-            {
-                var indexOffset = positions.Count;
-                var indexBuffer = prim.indices;
-
-                positions.AddRange(GetBuffer<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
-
-                // normal
-                if (prim.attributes.NORMAL != -1)
-                {
-                    normals.AddRange(GetBuffer<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
-                }
-                // uv
-                if (prim.attributes.TEXCOORD_0 != -1)
-                {
-                    uv.AddRange(GetBuffer<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
-                }
-
-                // skin
-                if (prim.attributes.JOINTS_0 != -1 && prim.attributes.WEIGHTS_0 != -1)
-                {
-                    var joints0 = GetBuffer<UShort4>(prim.attributes.JOINTS_0); // uint4
-                    var weights0 = GetBuffer<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
-
-                    var weightNorms = weights0.Select(x => x.x + x.y + x.z + x.w).ToArray();
-
-                    for (int j = 0; j < joints0.Length; ++j)
-                    {
-                        var bw = new BoneWeight();
-
-                        bw.boneIndex0 = joints0[j].x;
-                        bw.weight0 = weights0[j].x;
-
-                        bw.boneIndex1 = joints0[j].y;
-                        bw.weight1 = weights0[j].y;
-
-                        bw.boneIndex2 = joints0[j].z;
-                        bw.weight2 = weights0[j].z;
-
-                        bw.boneIndex3 = joints0[j].w;
-                        bw.weight3 = weights0[j].w;
-
-                        boneWeights.Add(bw);
-                    }
-                }
-
-                // blendshape
-                if (prim.targets != null && prim.targets.Length > 0)
-                {
-                    if (blendShapes == null)
-                    {
-                        blendShapes = prim.targets.Select((x, i) => new BlendShape("blendShape: " + i)).ToArray();
-                    }
-                    for (int i = 0; i < prim.targets.Length; ++i)
-                    {
-                        var name = string.Format("target{0}", i++);
-                        var primTarget = prim.targets[i];
-                        var blendShape = blendShapes[i];
-
-                        if (primTarget.POSITION != -1)
-                        {
-                            blendShape.Positions.AddRange(
-                                GetBuffer<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
-                        }
-                        if (primTarget.NORMAL != -1)
-                        {
-                            blendShape.Normals.AddRange(
-                                GetBuffer<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
-                        }
-#if false
-                        if (primTarget.TANGEN!=-1)
-                        {
-                            blendShape.Tangents = GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32())/*.Select(ReverseZ).ToArray()*/;
-                        }
-#endif
-                    }
-                }
-
-                subMeshes.Add(GetIndices(indexBuffer).Select(x => x + indexOffset).ToArray());
-
-                // material
-                materialIndices.Add(prim.material);
-            }
-            if (!materialIndices.Any())
-            {
-                materialIndices.Add(0);
-            }
-
-            //Debug.Log(prims.ToJson());
-            var mesh = new Mesh();
-            mesh.name = gltfMesh.name;
-
-            mesh.vertices = positions.ToArray();
-            if (normals.Any())
-            {
-                mesh.normals = normals.ToArray();
-            }
-            else
-            {
-                mesh.RecalculateNormals();
-            }
-            if (uv.Any())
-            {
-                mesh.uv = uv.ToArray();
-            }
-            if (boneWeights.Any())
-            {
-                mesh.boneWeights = boneWeights.ToArray();
-            }
-            mesh.subMeshCount = subMeshes.Count;
-            for (int i = 0; i < subMeshes.Count; ++i)
-            {
-                mesh.SetTriangles(subMeshes[i], i);
-            }
-            mesh.RecalculateNormals();
-            var result = new MeshWithMaterials
-            {
-                Mesh = mesh,
-                Materials = materialIndices.Select(x => materials[x]).ToArray()
-            };
-
-            if (blendShapes != null)
-            {
-                foreach (var blendShape in blendShapes)
-                {
-                    if (blendShape.Positions.Count > 0)
-                    {
-                        mesh.AddBlendShapeFrame(blendShape.Name, 100.0f,
-                            blendShape.Positions.ToArray(),
-                            blendShape.Normals.ToArray(),
-                            null
-                            );
-                    }
-                }
-            }
-
-            return result;
-        }
         #endregion
 
-        #region Exporter
-        struct ComponentVec
-        {
-            public glComponentType ComponentType;
-            public int ElementCount;
-
-            public ComponentVec(glComponentType componentType, int elementCount)
-            {
-                ComponentType = componentType;
-                ElementCount = elementCount;
-            }
-        }
-
-        static Dictionary<Type, ComponentVec> ComponentTypeMap = new Dictionary<Type, ComponentVec>
-        {
-            { typeof(Vector2), new ComponentVec(glComponentType.FLOAT, 2) },
-            { typeof(Vector3), new ComponentVec(glComponentType.FLOAT, 3) },
-            { typeof(Vector4), new ComponentVec(glComponentType.FLOAT, 4) },
-            { typeof(UShort4), new ComponentVec(glComponentType.UNSIGNED_SHORT, 4) },
-            { typeof(Matrix4x4), new ComponentVec(glComponentType.FLOAT, 16) },
-        };
-
-        static glComponentType GetComponentType<T>()
-        {
-            var cv = default(ComponentVec);
-            if (ComponentTypeMap.TryGetValue(typeof(T), out cv))
-            {
-                return cv.ComponentType;
-            }
-            else if (typeof(T) == typeof(uint))
-            {
-                return glComponentType.UNSIGNED_INT;
-            }
-            else
-            {
-                throw new NotImplementedException(typeof(T).Name);
-            }
-        }
-
-        static string GetAccessorType<T>()
-        {
-            var cv = default(ComponentVec);
-            if (ComponentTypeMap.TryGetValue(typeof(T), out cv))
-            {
-                switch (cv.ElementCount)
-                {
-                    case 2: return "VEC2";
-                    case 3: return "VEC3";
-                    case 4: return "VEC4";
-                    case 16: return "MAT4";
-                    default: throw new Exception();
-                }
-            }
-            else
-            {
-                return "SCALAR";
-            }
-        }
-
-        static int GetAccessorElementCount<T>()
-        {
-            var cv = default(ComponentVec);
-            if (ComponentTypeMap.TryGetValue(typeof(T), out cv))
-            {
-                return cv.ElementCount;
-            }
-            else
-            {
-                return 1;
-            }
-        }
-
-        static Vector4 Each(Vector4 a, Vector4 b, Func<float, float, float> pred)
-        {
-            return new Vector4(pred(a.x, b.x), pred(a.y, b.y), pred(a.z, b.z), pred(a.w, b.w));
-        }
-
-        static float[] Fold<T>(T[] t, Func<float, float, float> Pred) where T : struct
-        {
-            if (typeof(T) == typeof(Vector2))
-            {
-                var v = ((Vector2[])(object)t).Aggregate((a, b) => new Vector2(Pred(a.x, b.x), Pred(a.y, b.y)));
-                return new float[] { v.x, v.y };
-            }
-            else if (typeof(T) == typeof(Vector3))
-            {
-                var v = ((Vector3[])(object)t).Aggregate((a, b) => new Vector3(Pred(a.x, b.x), Pred(a.y, b.y), Pred(a.z, b.z)));
-                return new float[] { v.x, v.y, v.z };
-            }
-            else if (typeof(T) == typeof(Vector4))
-            {
-                var v = ((Vector4[])(object)t).Aggregate((a, b) => new Vector4(Pred(a.x, b.x), Pred(a.y, b.y), Pred(a.z, b.z), Pred(a.w, b.w)));
-                return new float[] { v.x, v.y, v.z, v.w };
-            }
-            else if (typeof(T) == typeof(UShort4))
-            {
-                var v = ((UShort4[])(object)t).Aggregate((a, b) => new UShort4((ushort)Pred(a.x, b.x), (ushort)Pred(a.y, b.y), (ushort)Pred(a.z, b.z), (ushort)Pred(a.w, b.w)));
-                return new float[] { v.x, v.y, v.z, v.w };
-            }
-            else if (typeof(T) == typeof(Matrix4x4))
-            {
-                var tt = (Matrix4x4[])(object)t;
-                var v = tt.Skip(1).Aggregate(tt[0], (a, b) => new Matrix4x4(
-                    Each(a.GetColumn(0), b.GetColumn(0), Pred),
-                    Each(a.GetColumn(1), b.GetColumn(1), Pred),
-                    Each(a.GetColumn(2), b.GetColumn(2), Pred),
-                    Each(a.GetColumn(3), b.GetColumn(3), Pred)
-                    ));
-                return new float[] {
-                    v.m00, v.m10, v.m20, v.m30,
-                    v.m01, v.m11, v.m21, v.m31,
-                    v.m02, v.m12, v.m22, v.m32,
-                    v.m03, v.m13, v.m23, v.m33,
-                };
-            }
-            else
-            {
-                throw new NotImplementedException("not implemened: " + typeof(T));
-            }
-        }
-
-        public int ExtendBufferAndGetAccessorIndex<T>(int bufferIndex, T[] array, glBufferTarget target) where T : struct
-        {
-            if (array.Length == 0)
-            {
-                return -1;
-            }
-
-            var view = buffers[bufferIndex].Storage.Extend(array, target);
-            var viewIndex = bufferViews.Count;
-            bufferViews.Add(view);
-            var accessorIndex = accessors.Count;
-            accessors.Add(new glTFAccessor
-            {
-                bufferView = viewIndex,
-                byteOffset = 0,
-                componentType = GetComponentType<T>(),
-                type = GetAccessorType<T>(),
-                count = array.Length,
-                /*
-                min = Fold(array, (a, b) => (float)Math.Min(a, b)),
-                max = Fold(array, (a, b) => (float)Math.Max(a, b)),
-                */
-            });
-            return accessorIndex;
-        }
-        #endregion
-        #endregion
-
-        #region Material & Texture
         public List<gltfTexture> textures = new List<gltfTexture>();
         public List<gltfImage> images = new List<gltfImage>();
-
-        public IEnumerable<TextureWithIsAsset> ReadTextures()
-        {
-            if (textures == null)
-            {
-                return new TextureWithIsAsset[] { };
-            }
-            else
-            {
-                return textures.Select(x => x.GetTexture(baseDir, this, images));
-            }
-        }
-
-        public List<GltfMaterial> materials;
-
-        public IEnumerable<Material> ReadMaterials(Texture2D[] textures)
-        {
-            var shader = Shader.Find("Standard");
-            if (materials == null)
-            {
-                var material = new Material(shader);
-                return new Material[] { material };
-            }
-            else
-            {
-                return materials.Select(x =>
-                {
-                    var material = new Material(shader);
-
-                    material.name = x.name;
-
-                    if (x.pbrMetallicRoughness != null)
-                    {
-                        if (x.pbrMetallicRoughness.baseColorFactor != null)
-                        {
-                            var color = x.pbrMetallicRoughness.baseColorFactor;
-                            material.color = new Color(color[0], color[1], color[2], color[3]);
-                        }
-
-                        if (x.pbrMetallicRoughness.baseColorTexture.index != -1)
-                        {
-                            material.mainTexture = textures[x.pbrMetallicRoughness.baseColorTexture.index];
-                        }
-                    }
-
-                    return material;
-                });
-            }
-        }
-        #endregion
-
+        public List<GltfMaterial> materials = new List<GltfMaterial>();
         public List<glTFMesh> meshes = new List<glTFMesh>();
-
         public List<glTFNode> nodes = new List<glTFNode>();
-
         public List<glTFSkin> skins = new List<glTFSkin>();
-
         public int scene;
-
         public List<gltfScene> scenes = new List<gltfScene>();
-
         public int[] rootnodes
         {
             get
@@ -617,96 +129,11 @@ namespace UniGLTF
                 return scenes[scene].nodes;
             }
         }
-
         public List<GltfAnimation> animations;
-
-        struct MeshView
-        {
-            public glTFBufferView[] Indices;
-            public Dictionary<String, glTFBufferView> Attributes;
-        }
-
-
-
-
 
         public override string ToString()
         {
             return string.Format("{0}", asset);
-        }
-
-        public static glTF Parse(string json, string baseDir, ArraySegment<Byte> glbBinChunk)
-        {
-            var parsed = json.ParseAsJson();
-
-            var gltf = new glTF
-            {
-                baseDir = baseDir,
-            };
-
-            // asset
-            gltf.asset = JsonUtility.FromJson<glTFAssets>(parsed["asset"].Segment.ToString());
-            if (gltf.asset.version != "2.0")
-            {
-                throw new NotImplementedException(string.Format("unknown version: {0}", gltf.asset.version));
-            }
-
-            // buffer
-            //gltf.buffer = new GltfBuffer(parsed, baseDir, bytes);
-            gltf.buffers = parsed["buffers"].DeserializeList<glTFBuffer>();
-            gltf.bufferViews = parsed["bufferViews"].DeserializeList<glTFBufferView>();
-            gltf.accessors = parsed["accessors"].DeserializeList<glTFAccessor>();
-            foreach (var buffer in gltf.buffers)
-            {
-                buffer.OpenStorage(baseDir, glbBinChunk);
-            }
-
-            // texture
-            if (parsed.HasKey("textures"))
-            {
-                gltf.textures = parsed["textures"].DeserializeList<gltfTexture>();
-            }
-
-            if (parsed.HasKey("images"))
-            {
-                gltf.images = parsed["images"].DeserializeList<gltfImage>();
-            }
-
-            // material
-            if (parsed.HasKey("materials"))
-            {
-                gltf.materials = parsed["materials"].DeserializeList<GltfMaterial>();
-            }
-
-            // mesh
-            if (parsed.HasKey("meshes"))
-            {
-                gltf.meshes = parsed["meshes"].DeserializeList<glTFMesh>();
-            }
-
-            // nodes
-            gltf.nodes = parsed["nodes"].DeserializeList<glTFNode>();
-
-            // skins
-            if (parsed.HasKey("skins"))
-            {
-                gltf.skins = parsed["skins"].DeserializeList<glTFSkin>();
-            }
-
-            // scene;
-            if (parsed.HasKey("scene"))
-            {
-                gltf.scene = parsed["scene"].GetInt32();
-            }
-            gltf.scenes = parsed["scenes"].DeserializeList<gltfScene>();
-
-            // animations
-            if (parsed.HasKey("animations"))
-            {
-                gltf.animations = parsed["animations"].DeserializeList<GltfAnimation>();
-            }
-
-            return gltf;
         }
 
         public string ToJson()

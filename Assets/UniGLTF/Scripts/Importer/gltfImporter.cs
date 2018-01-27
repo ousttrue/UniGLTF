@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using UnityEditor.Experimental.AssetImporters;
 using UnityEngine;
@@ -76,15 +78,21 @@ namespace UniGLTF
             }
         }
 
+        public struct TransformWithSkin
+        {
+            public Transform Transform;
+            public int? SkinIndex;
+        }
+
         public static GameObject Import(Context ctx, string json, ArraySegment<Byte> bytes)
         {
             var baseDir = Path.GetDirectoryName(ctx.Path);
 
-            var gltf = glTF.Parse(json, baseDir, bytes);
+            var gltf = glTFExtensions.Parse(json, baseDir, bytes);
             Debug.Log(gltf);
 
             // textures
-            var textures = gltf.ReadTextures()
+            var textures = ReadTextures(gltf)
                     .Select(x =>
                     {
                         if (!x.IsAsset)
@@ -96,7 +104,7 @@ namespace UniGLTF
                     .ToArray();
 
             // materials
-            var materials = gltf.ReadMaterials(textures).ToArray();
+            var materials = ReadMaterials(gltf, textures).ToArray();
             foreach (var material in materials)
             {
                 ctx.AddObjectToAsset(material.name, material);
@@ -105,7 +113,7 @@ namespace UniGLTF
             // meshes
             var meshes = gltf.meshes.Select((x, i) =>
             {
-                var meshWithMaterials = gltf.ReadMesh(x, materials);
+                var meshWithMaterials = ReadMesh(gltf, x, materials);
                 var mesh = meshWithMaterials.Mesh;
                 if (string.IsNullOrEmpty(mesh.name))
                 {
@@ -120,7 +128,7 @@ namespace UniGLTF
             var root = new GameObject("_root_");
 
             // nodes
-            var _nodes = gltf.nodes.Select(x => x.ToGameObject()).ToArray();
+            var _nodes = gltf.nodes.Select(x => ImportNode(x)).ToArray();
 
             var nodes = _nodes.Select((go, i) =>
             {
@@ -275,5 +283,321 @@ namespace UniGLTF
 
             return root;
         }
+
+        #region Import
+        static IEnumerable<TextureWithIsAsset> ReadTextures(glTF gltf)
+        {
+            if (gltf.textures == null)
+            {
+                return new TextureWithIsAsset[] { };
+            }
+            else
+            {
+                return gltf.textures.Select(x => GetTexture(gltf, x));
+            }
+        }
+
+        public struct TextureWithIsAsset
+        {
+            public Texture2D Texture;
+            public bool IsAsset;
+        }
+
+        static TextureWithIsAsset GetTexture(glTF gltf, gltfTexture t)
+        {
+            var image = gltf.images[t.source];
+            if (string.IsNullOrEmpty(image.uri))
+            {
+                // use buffer view
+                var texture = new Texture2D(2, 2);
+                //texture.name = string.Format("texture#{0:00}", i++);
+                var byteSegment = gltf.GetViewBytes(image.bufferView);
+                var bytes = byteSegment.Array.Skip(byteSegment.Offset).Take(byteSegment.Count).ToArray();
+                texture.LoadImage(bytes, true);
+                return new TextureWithIsAsset { Texture = texture, IsAsset = false };
+            }
+            else if (gltf.baseDir.StartsWith("Assets/"))
+            {
+                // local folder
+                var path = Path.Combine(gltf.baseDir, image.uri);
+                Debug.LogFormat("load texture: {0}", path);
+
+                var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                return new TextureWithIsAsset { Texture = texture, IsAsset = true };
+            }
+            else
+            {
+                // external
+                var path = Path.Combine(gltf.baseDir, image.uri);
+                var bytes = File.ReadAllBytes(path);
+
+                var texture = new Texture2D(2, 2);
+                texture.LoadImage(bytes);
+                return new TextureWithIsAsset { Texture = texture, IsAsset = true };
+            }
+        }
+
+        static IEnumerable<Material> ReadMaterials(glTF gltf, Texture2D[] textures)
+        {
+            var shader = Shader.Find("Standard");
+            if (gltf.materials == null)
+            {
+                var material = new Material(shader);
+                return new Material[] { material };
+            }
+            else
+            {
+                return gltf.materials.Select(x =>
+                {
+                    var material = new Material(shader);
+
+                    material.name = x.name;
+
+                    if (x.pbrMetallicRoughness != null)
+                    {
+                        if (x.pbrMetallicRoughness.baseColorFactor != null)
+                        {
+                            var color = x.pbrMetallicRoughness.baseColorFactor;
+                            material.color = new Color(color[0], color[1], color[2], color[3]);
+                        }
+
+                        if (x.pbrMetallicRoughness.baseColorTexture.index != -1)
+                        {
+                            material.mainTexture = textures[x.pbrMetallicRoughness.baseColorTexture.index];
+                        }
+                    }
+
+                    return material;
+                });
+            }
+        }
+
+        [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
+        struct Float4
+        {
+            public float x;
+            public float y;
+            public float z;
+            public float w;
+
+            public Float4 One()
+            {
+                var sum = x + y + z + w;
+                var f = 1.0f / sum;
+                return new Float4
+                {
+                    x = x * f,
+                    y = y * f,
+                    z = z * f,
+                    w = w * f,
+                };
+            }
+        }
+
+        static MeshWithMaterials ReadMesh(glTF gltf, glTFMesh gltfMesh, Material[] materials)
+        {
+            var positions = new List<Vector3>();
+            var normals = new List<Vector3>();
+            var uv = new List<Vector2>();
+            var boneWeights = new List<BoneWeight>();
+            var subMeshes = new List<int[]>();
+            var materialIndices = new List<int>();
+
+            var targets = gltfMesh.primitives[0].targets;
+            for (int i = 1; i < gltfMesh.primitives.Count; ++i)
+            {
+                if (gltfMesh.primitives[i].targets != targets)
+                {
+                    throw new FormatException(string.Format("diffirent targets: {0} with {1}",
+                        gltfMesh.primitives[i],
+                        targets));
+                }
+            }
+
+            BlendShape[] blendShapes = null;
+            foreach (var prim in gltfMesh.primitives)
+            {
+                var indexOffset = positions.Count;
+                var indexBuffer = prim.indices;
+
+                positions.AddRange(gltf.GetBuffer<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
+
+                // normal
+                if (prim.attributes.NORMAL != -1)
+                {
+                    normals.AddRange(gltf.GetBuffer<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
+                }
+                // uv
+                if (prim.attributes.TEXCOORD_0 != -1)
+                {
+                    uv.AddRange(gltf.GetBuffer<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
+                }
+
+                // skin
+                if (prim.attributes.JOINTS_0 != -1 && prim.attributes.WEIGHTS_0 != -1)
+                {
+                    var joints0 = gltf.GetBuffer<UShort4>(prim.attributes.JOINTS_0); // uint4
+                    var weights0 = gltf.GetBuffer<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
+
+                    var weightNorms = weights0.Select(x => x.x + x.y + x.z + x.w).ToArray();
+
+                    for (int j = 0; j < joints0.Length; ++j)
+                    {
+                        var bw = new BoneWeight();
+
+                        bw.boneIndex0 = joints0[j].x;
+                        bw.weight0 = weights0[j].x;
+
+                        bw.boneIndex1 = joints0[j].y;
+                        bw.weight1 = weights0[j].y;
+
+                        bw.boneIndex2 = joints0[j].z;
+                        bw.weight2 = weights0[j].z;
+
+                        bw.boneIndex3 = joints0[j].w;
+                        bw.weight3 = weights0[j].w;
+
+                        boneWeights.Add(bw);
+                    }
+                }
+
+                // blendshape
+                if (prim.targets != null && prim.targets.Length > 0)
+                {
+                    if (blendShapes == null)
+                    {
+                        blendShapes = prim.targets.Select((x, i) => new BlendShape("blendShape: " + i)).ToArray();
+                    }
+                    for (int i = 0; i < prim.targets.Length; ++i)
+                    {
+                        var name = string.Format("target{0}", i++);
+                        var primTarget = prim.targets[i];
+                        var blendShape = blendShapes[i];
+
+                        if (primTarget.POSITION != -1)
+                        {
+                            blendShape.Positions.AddRange(
+                                gltf.GetBuffer<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
+                        }
+                        if (primTarget.NORMAL != -1)
+                        {
+                            blendShape.Normals.AddRange(
+                                gltf.GetBuffer<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
+                        }
+#if false
+                        if (primTarget.TANGEN!=-1)
+                        {
+                            blendShape.Tangents = GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32())/*.Select(ReverseZ).ToArray()*/;
+                        }
+#endif
+                    }
+                }
+
+                subMeshes.Add(gltf.GetIndices(indexBuffer).Select(x => x + indexOffset).ToArray());
+
+                // material
+                materialIndices.Add(prim.material);
+            }
+            if (!materialIndices.Any())
+            {
+                materialIndices.Add(0);
+            }
+
+            //Debug.Log(prims.ToJson());
+            var mesh = new Mesh();
+            mesh.name = gltfMesh.name;
+
+            mesh.vertices = positions.ToArray();
+            if (normals.Any())
+            {
+                mesh.normals = normals.ToArray();
+            }
+            else
+            {
+                mesh.RecalculateNormals();
+            }
+            if (uv.Any())
+            {
+                mesh.uv = uv.ToArray();
+            }
+            if (boneWeights.Any())
+            {
+                mesh.boneWeights = boneWeights.ToArray();
+            }
+            mesh.subMeshCount = subMeshes.Count;
+            for (int i = 0; i < subMeshes.Count; ++i)
+            {
+                mesh.SetTriangles(subMeshes[i], i);
+            }
+            mesh.RecalculateNormals();
+            var result = new MeshWithMaterials
+            {
+                Mesh = mesh,
+                Materials = materialIndices.Select(x => materials[x]).ToArray()
+            };
+
+            if (blendShapes != null)
+            {
+                foreach (var blendShape in blendShapes)
+                {
+                    if (blendShape.Positions.Count > 0)
+                    {
+                        mesh.AddBlendShapeFrame(blendShape.Name, 100.0f,
+                            blendShape.Positions.ToArray(),
+                            blendShape.Normals.ToArray(),
+                            null
+                            );
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        static GameObject ImportNode(glTFNode node)
+        {
+            var go = new GameObject(node.name);
+
+            //
+            // transform
+            //
+            if (node.translation != null && node.translation.Length > 0)
+            {
+                go.transform.localPosition = new Vector3(
+                    node.translation[0],
+                    node.translation[1],
+                    node.translation[2]);
+            }
+            if (node.rotation != null && node.rotation.Length > 0)
+            {
+                go.transform.localRotation = new Quaternion(
+                    node.rotation[0],
+                    node.rotation[1],
+                    node.rotation[2],
+                    node.rotation[3]);
+            }
+            if (node.scale != null && node.scale.Length > 0)
+            {
+                go.transform.localScale = new Vector3(
+                    node.scale[0],
+                    node.scale[1],
+                    node.scale[2]);
+            }
+            if (node.matrix != null && node.matrix.Length > 0)
+            {
+                var values = node.matrix;
+                var col0 = new Vector4(values[0], values[1], values[2], values[3]);
+                var col1 = new Vector4(values[4], values[5], values[6], values[7]);
+                var col2 = new Vector4(values[8], values[9], values[10], values[11]);
+                var col3 = new Vector4(values[12], values[13], values[14], values[15]);
+                var m = new Matrix4x4(col0, col1, col2, col3);
+                go.transform.localRotation = m.rotation;
+                go.transform.localPosition = m.GetColumn(3);
+            }
+
+            return go;
+        }
+
+        #endregion
     }
 }
