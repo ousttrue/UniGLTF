@@ -1,6 +1,9 @@
-﻿namespace UniGLTF
+﻿/// <summary>
+/// https://gist.github.com/szimek/763999
+/// </summary>
+namespace UniGLTF
 {
-    public enum glComponentType: int
+    public enum glComponentType : int
     {
         BYTE = 5120, // signed ?
         UNSIGNED_BYTE = 5121,
@@ -16,8 +19,30 @@
 
     public enum glBufferTarget : int
     {
-        NONE=0,
+        NONE = 0,
         ARRAY_BUFFER = 34962,
         ELEMENT_ARRAY_BUFFER = 34963,
+    }
+
+    public enum glFilter : int
+    {
+        NONE = 0,
+        NEAREST = 9728,
+        LINEAR = 9729,
+
+        #region for minFilter only
+        NEAREST_MIPMAP_NEAREST = 9984,
+        LINEAR_MIPMAP_NEAREST = 9985,
+        NEAREST_MIPMAP_LINEAR = 9986,
+        LINEAR_MIPMAP_LINEAR = 9987,
+        #endregion
+    }
+
+    public enum glWrap : int
+    {
+        NONE = 0,
+        CLAMP_TO_EDGE = 33071,
+        REPEAT = 10497,
+        MIRRORED_REPEAT = 33648,
     }
 }

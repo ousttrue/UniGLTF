@@ -187,6 +187,13 @@ namespace UniGLTF
             m_w.Write(x ? "true" : "false");
         }
 
+        /*
+        public void Value<T>(T x) where T : struct, IConvertible
+        {
+            Value(Convert.ToInt32(x));
+        }
+        */
+
         public void Value(SByte x)
         {
             CommaCheck();

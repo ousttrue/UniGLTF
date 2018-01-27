@@ -13,14 +13,24 @@
 
 * crash unity when reimport. workaround, move target file to out of Assets. Launch unity, then move the file to Assets folder.
 
+## Importer
+
+* asset(ScriptedImporter)
+* runtime [Assets] - [gltf] - [import]
+* todo: asset(AssetPostprocessor.OnPostprocessAllAssets)
+
+## Exporter
+
+* asset([right click] - [gltf] - [export]
+* runtime
+* [validation](http://github.khronos.org/glTF-Validator/)
+
 ## Features & ToDo
 
 * [x] gltf
 * [x] glb
 * [ ] Sample scene and model
 * [ ] Unity-5.6 compatibility
-* [x] Asset Importer/Exporter
-* [x] Runtime Importer/Exporter
 
 ### material & texture
 
@@ -28,9 +38,22 @@
 |-------------|--------|--------|---------|
 |color        |o       |o       |/materials/#/pbrMetallicRoughness/baseColorFactor
 |color texture|o       |o       |/materials/#/pbrMetallicRoughness/baseColorTexture
-|sampler      |
+|sampler      |o       |o       |/samplers
 |multi uv     |
 |PBR          |
+
+```cs
+var texture=new Texture2D(2, 2);
+texture.LoadImage(bytes, true);
+texture.wrapModeU = TextureWrapMode.Clamp;
+texture.wrapModeV = TextureWrapMode.Clamp;
+texture.filterMode = FilterMode.Point;
+
+var shader=Shader.Find("Standard");
+var material=new Material(shader);
+material.color = pbrMetallicRoughness.baseColorFactor;
+material.mainTexture = texture;
+```
 
 ### mesh
 
@@ -46,12 +69,12 @@
 var mesh=new Mesh();
 mesh.vertices = positions;
 mesh.normals = normals;
-mesh.uvs = uv;
+mesh.uv = uv;
 
-mesh.submeshCount=primitiveCount;
+mesh.subMeshCount=primitiveCount;
 for(int i=0; i<primitiveCount; ++i)
 {
-    mesh.setSubmesh(i, primitive[i].indices);
+    mesh.setTriangles(primitive[i].indices, i);
 }    
 ```
 
@@ -62,7 +85,10 @@ for(int i=0; i<primitiveCount; ++i)
 |blend shape  |o       |        |/meshes/#/primitives/#/targets
 
 ```cs
-mesh.setBlendShape
+foreach(var target in targets)
+{
+    mesh.addBlendSapeFrame(target.name, 100.0f, target.POSITION, target.NORMAL, target.TEXCOORD_0);
+}
 ```
 
 #### skin
@@ -71,16 +97,16 @@ mesh.setBlendShape
 |-------------|--------|--------|---------|
 |boneweight   |o       |o       |/meshes/#/primitives/#/attributes/(JOINTS_0|WEIGHTS_0)
 |bindmatrix   |o       |        |/skins/#/inverseBindMatrices
-|skeleton     |        |        |/skins/#/skeleton
+|skeleton     |o       |        |/skins/#/skeleton
 |joints       |o       |        |/skins/#/joints
 
 ```cs
 mesh.boneWeights=boneWeights;
-mesh.binds=inverseBindMatrices
+mesh.bindposes=inverseBindMatrices
 
-skin=go.addCompoenent<SkinnedMeshRenderer>();
-skin.bones
-skin.root
+var skin=go.addCompoenent<SkinnedMeshRenderer>();
+skin.bones=joints;
+skin.rootBone=skeleton;
 ```
 
 ### node

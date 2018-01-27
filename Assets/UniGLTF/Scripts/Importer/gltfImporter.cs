@@ -84,6 +84,66 @@ namespace UniGLTF
             public int? SkinIndex;
         }
 
+        static void SetSampler(Texture2D texture, glTFSampler sampler)
+        {
+            switch (sampler.wrapS)
+            {
+                case glWrap.CLAMP_TO_EDGE:
+                    texture.wrapModeU = TextureWrapMode.Clamp;
+                    break;
+
+                case glWrap.REPEAT:
+                    texture.wrapModeU = TextureWrapMode.Repeat;
+                    break;
+
+                case glWrap.MIRRORED_REPEAT:
+                    texture.wrapModeU = TextureWrapMode.Mirror;
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
+
+            switch (sampler.wrapT)
+            {
+                case glWrap.CLAMP_TO_EDGE:
+                    texture.wrapModeV = TextureWrapMode.Clamp;
+                    break;
+
+                case glWrap.REPEAT:
+                    texture.wrapModeV = TextureWrapMode.Repeat;
+                    break;
+
+                case glWrap.MIRRORED_REPEAT:
+                    texture.wrapModeV = TextureWrapMode.Mirror;
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
+
+            /*
+            if (sampler.minFilter != sampler.magFilter)
+            {
+                throw new NotImplementedException();
+            }
+            */
+
+            switch (sampler.magFilter)
+            {
+                case glFilter.NEAREST:
+                    texture.filterMode = FilterMode.Point;
+                    break;
+
+                case glFilter.LINEAR:
+                    texture.filterMode = FilterMode.Bilinear;
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
         public static GameObject Import(Context ctx, string json, ArraySegment<Byte> bytes)
         {
             var baseDir = Path.GetDirectoryName(ctx.Path);
@@ -95,6 +155,11 @@ namespace UniGLTF
             var textures = ImportTextures(gltf)
                     .Select(x =>
                     {
+                        var samplerIndex = gltf.textures[x.TextureIndex].sampler;
+                        var sampler = gltf.samplers[samplerIndex];
+
+                        SetSampler(x.Texture, sampler);
+
                         if (!x.IsAsset)
                         {
                             ctx.AddObjectToAsset(x.Texture.name, x.Texture);
@@ -231,14 +296,14 @@ namespace UniGLTF
 
                             var joints = skin.joints.Select(y => nodes[y].Transform).ToArray();
                             skinnedMeshRenderer.bones = joints;
-                            skinnedMeshRenderer.rootBone = nodes[0].Transform;
+                            skinnedMeshRenderer.rootBone = nodes[skin.skeleton].Transform;
 
 #if false
                             // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
                             var _b = joints.Select(y => y.worldToLocalMatrix * nodes[0].Transform.localToWorldMatrix).ToArray();
                             mesh.bindposes = _b;
 #else
-                            var bindPoses = gltf.GetBuffer<Matrix4x4>(skin.inverseBindMatrices).ToArray();
+                            var bindPoses = gltf.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices).ToArray();
                             var bindPosesR = bindPoses
                                 .Select(y => y.ReverseZ())
                                 //.Select(y => y * nodes[0].Transform.localToWorldMatrix)
@@ -297,19 +362,20 @@ namespace UniGLTF
             }
             else
             {
-                return gltf.textures.Select(x => ImportTexture(gltf, x));
+                return gltf.textures.Select(x => ImportTexture(gltf, x.source));
             }
         }
 
         public struct TextureWithIsAsset
         {
+            public int TextureIndex;
             public Texture2D Texture;
             public bool IsAsset;
         }
 
-        static TextureWithIsAsset ImportTexture(glTF gltf, gltfTexture t)
+        static TextureWithIsAsset ImportTexture(glTF gltf, int index)
         {
-            var image = gltf.images[t.source];
+            var image = gltf.images[index];
             if (string.IsNullOrEmpty(image.uri))
             {
                 // use buffer view
@@ -318,7 +384,7 @@ namespace UniGLTF
                 var byteSegment = gltf.GetViewBytes(image.bufferView);
                 var bytes = byteSegment.Array.Skip(byteSegment.Offset).Take(byteSegment.Count).ToArray();
                 texture.LoadImage(bytes, true);
-                return new TextureWithIsAsset { Texture = texture, IsAsset = false };
+                return new TextureWithIsAsset { TextureIndex = index, Texture = texture, IsAsset = false };
             }
             else if (gltf.baseDir.StartsWith("Assets/"))
             {
@@ -327,7 +393,7 @@ namespace UniGLTF
                 Debug.LogFormat("load texture: {0}", path);
 
                 var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                return new TextureWithIsAsset { Texture = texture, IsAsset = true };
+                return new TextureWithIsAsset { TextureIndex = index, Texture = texture, IsAsset = true };
             }
             else
             {
@@ -337,7 +403,7 @@ namespace UniGLTF
 
                 var texture = new Texture2D(2, 2);
                 texture.LoadImage(bytes);
-                return new TextureWithIsAsset { Texture = texture, IsAsset = true };
+                return new TextureWithIsAsset { TextureIndex = index, Texture = texture, IsAsset = true };
             }
         }
 
@@ -424,24 +490,24 @@ namespace UniGLTF
                 var indexOffset = positions.Count;
                 var indexBuffer = prim.indices;
 
-                positions.AddRange(gltf.GetBuffer<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
+                positions.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
 
                 // normal
                 if (prim.attributes.NORMAL != -1)
                 {
-                    normals.AddRange(gltf.GetBuffer<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
+                    normals.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
                 }
                 // uv
                 if (prim.attributes.TEXCOORD_0 != -1)
                 {
-                    uv.AddRange(gltf.GetBuffer<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
+                    uv.AddRange(gltf.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
                 }
 
                 // skin
                 if (prim.attributes.JOINTS_0 != -1 && prim.attributes.WEIGHTS_0 != -1)
                 {
-                    var joints0 = gltf.GetBuffer<UShort4>(prim.attributes.JOINTS_0); // uint4
-                    var weights0 = gltf.GetBuffer<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
+                    var joints0 = gltf.GetArrayFromAccessor<UShort4>(prim.attributes.JOINTS_0); // uint4
+                    var weights0 = gltf.GetArrayFromAccessor<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
 
                     var weightNorms = weights0.Select(x => x.x + x.y + x.z + x.w).ToArray();
 
@@ -481,12 +547,12 @@ namespace UniGLTF
                         if (primTarget.POSITION != -1)
                         {
                             blendShape.Positions.AddRange(
-                                gltf.GetBuffer<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
+                                gltf.GetArrayFromAccessor<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
                         }
                         if (primTarget.NORMAL != -1)
                         {
                             blendShape.Normals.AddRange(
-                                gltf.GetBuffer<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
+                                gltf.GetArrayFromAccessor<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
                         }
 #if false
                         if (primTarget.TANGEN!=-1)
@@ -631,8 +697,8 @@ namespace UniGLTF
                                 var curveZ = new AnimationCurve();
 
                                 var sampler = x.samplers[y.sampler];
-                                var input = buffer.GetBuffer<float>(sampler.input);
-                                var output = buffer.GetBuffer<Vector3>(sampler.output);
+                                var input = buffer.GetArrayFromAccessor<float>(sampler.input);
+                                var output = buffer.GetArrayFromAccessor<Vector3>(sampler.output);
                                 for (int i = 0; i < input.Length; ++i)
                                 {
                                     var time = input[i];
@@ -656,8 +722,8 @@ namespace UniGLTF
                                 var curveW = new AnimationCurve();
 
                                 var sampler = x.samplers[y.sampler];
-                                var input = buffer.GetBuffer<float>(sampler.input);
-                                var output = buffer.GetBuffer<Quaternion>(sampler.output);
+                                var input = buffer.GetArrayFromAccessor<float>(sampler.input);
+                                var output = buffer.GetArrayFromAccessor<Quaternion>(sampler.output);
                                 for (int i = 0; i < input.Length; ++i)
                                 {
                                     var time = input[i];
@@ -682,8 +748,8 @@ namespace UniGLTF
                                 var curveZ = new AnimationCurve();
 
                                 var sampler = x.samplers[y.sampler];
-                                var input = buffer.GetBuffer<float>(sampler.input);
-                                var output = buffer.GetBuffer<Vector3>(sampler.output);
+                                var input = buffer.GetArrayFromAccessor<float>(sampler.input);
+                                var output = buffer.GetArrayFromAccessor<Vector3>(sampler.output);
                                 for (int i = 0; i < input.Length; ++i)
                                 {
                                     var time = input[i];

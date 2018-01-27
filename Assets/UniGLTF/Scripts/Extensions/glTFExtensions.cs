@@ -135,7 +135,6 @@ namespace UniGLTF
             }
 
             // buffer
-            //gltf.buffer = new GltfBuffer(parsed, baseDir, bytes);
             gltf.buffers = parsed["buffers"].DeserializeList<glTFBuffer>();
             gltf.bufferViews = parsed["bufferViews"].DeserializeList<glTFBufferView>();
             gltf.accessors = parsed["accessors"].DeserializeList<glTFAccessor>();
@@ -147,18 +146,21 @@ namespace UniGLTF
             // texture
             if (parsed.HasKey("textures"))
             {
-                gltf.textures = parsed["textures"].DeserializeList<gltfTexture>();
+                gltf.textures = parsed["textures"].DeserializeList<glTFTexture>();
             }
-
+            if (parsed.HasKey("samplers"))
+            {
+                gltf.samplers = parsed["samplers"].DeserializeList<glTFSampler>();
+            }
             if (parsed.HasKey("images"))
             {
-                gltf.images = parsed["images"].DeserializeList<gltfImage>();
+                gltf.images = parsed["images"].DeserializeList<glTFImage>();
             }
 
             // material
             if (parsed.HasKey("materials"))
             {
-                gltf.materials = parsed["materials"].DeserializeList<GltfMaterial>();
+                gltf.materials = parsed["materials"].DeserializeList<glTFMaterial>();
             }
 
             // mesh

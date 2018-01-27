@@ -106,7 +106,7 @@ namespace UniGLTF
             throw new NotImplementedException("GetIndices: unknown componenttype: " + accessor.componentType);
         }
 
-        public T[] GetBuffer<T>(int index) where T : struct
+        public T[] GetArrayFromAccessor<T>(int index) where T : struct
         {
             var vertexAccessor = accessors[index];
             var view = bufferViews[vertexAccessor.bufferView];
@@ -114,9 +114,10 @@ namespace UniGLTF
         }
         #endregion
 
-        public List<gltfTexture> textures = new List<gltfTexture>();
-        public List<gltfImage> images = new List<gltfImage>();
-        public List<GltfMaterial> materials = new List<GltfMaterial>();
+        public List<glTFTexture> textures = new List<glTFTexture>();
+        public List<glTFSampler> samplers = new List<glTFSampler>();
+        public List<glTFImage> images = new List<glTFImage>();
+        public List<glTFMaterial> materials = new List<glTFMaterial>();
         public List<glTFMesh> meshes = new List<glTFMesh>();
         public List<glTFNode> nodes = new List<glTFNode>();
         public List<glTFSkin> skins = new List<glTFSkin>();
@@ -160,6 +161,10 @@ namespace UniGLTF
             if (images.Any())
             {
                 f.Key("images"); f.Value(images);
+            }
+            if (samplers.Any())
+            {
+                f.Key("samplers"); f.Value(samplers);
             }
             if (textures.Any())
             {

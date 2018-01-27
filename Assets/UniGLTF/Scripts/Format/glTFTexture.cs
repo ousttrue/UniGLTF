@@ -4,10 +4,33 @@
 namespace UniGLTF
 {
     [Serializable]
-    public struct gltfImage : IJsonSerializable
+    public class glTFSampler : IJsonSerializable
+    {
+        public glFilter magFilter;
+        public glFilter minFilter;
+        public glWrap wrapS;
+        public glWrap wrapT;
+
+        public string ToJson()
+        {
+            var f = new JsonFormatter();
+            f.BeginMap();
+            f.Key("magFilter"); f.Value((int)magFilter);
+            f.Key("minFilter"); f.Value((int)minFilter);
+            f.Key("wrapS"); f.Value((int)wrapS);
+            f.Key("wrapT"); f.Value((int)wrapT);
+            f.EndMap();
+            return f.ToString();
+        }
+    }
+
+    [Serializable]
+    public class glTFImage : IJsonSerializable
     {
         public string uri;
+
         public int bufferView;
+        public string mimeType;
 
         public string ToJson()
         {
@@ -15,22 +38,20 @@ namespace UniGLTF
             f.BeginMap();
             if (!string.IsNullOrEmpty(uri))
             {
-                f.Key("uri"); f.Value(uri);
+                f.KeyValue(() => uri);
             }
-            f.Key("bufferView"); f.Value(bufferView);
+            else
+            {
+                f.KeyValue(() => bufferView);
+                f.KeyValue(() => mimeType);
+            }
             f.EndMap();
             return f.ToString();
         }
     }
 
-    public struct TextureWithImage
-    {
-        public gltfTexture Texture;
-        public gltfTexture Image;
-    }
-
     [Serializable]
-    public struct gltfTexture : IJsonSerializable
+    public class glTFTexture : IJsonSerializable
     {
         public int sampler;
         public int source;
@@ -39,8 +60,8 @@ namespace UniGLTF
         {
             var f = new JsonFormatter();
             f.BeginMap();
-            f.Key("sampler"); f.Value(sampler);
-            f.Key("source"); f.Value(source);
+            f.KeyValue(() => sampler);
+            f.KeyValue(() => source);
             f.EndMap();
             return f.ToString();
         }

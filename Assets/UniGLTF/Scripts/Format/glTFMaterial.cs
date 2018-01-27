@@ -18,8 +18,8 @@ namespace UniGLTF
             f.BeginMap();
             f.Key("index"); f.Value(index);
             f.Key("texCoord"); f.Value(texCoord);
-            f.Key("scale"); f.Value(scale);
-            f.Key("strength"); f.Value(strength);
+            //f.Key("scale"); f.Value(scale);
+            //f.Key("strength"); f.Value(strength);
             f.EndMap();
             return f.ToString();
         }
@@ -58,7 +58,7 @@ namespace UniGLTF
     }
 
     [Serializable]
-    public class GltfMaterial: IJsonSerializable
+    public class glTFMaterial: IJsonSerializable
     {
         public string name;
         public GltfPbrMetallicRoughness pbrMetallicRoughness;

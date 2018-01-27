@@ -88,23 +88,52 @@ namespace UniGLTF
         }
 
         #region Export
-        static byte[] GetPngBytes(Texture2D texture)
+        struct BytesWithPath
+        {
+            public Byte[] Bytes;
+            public string Path;
+
+            public string Mime
+            {
+                get
+                {
+                    if (Path.ToLower().EndsWith(".png"))
+                    {
+                        return "image/png";
+                    }
+                    if (Path.ToLower().EndsWith(".jpg"))
+                    {
+                        return "image/jpeg";
+                    }
+
+                    throw new NotImplementedException();
+                }
+            }
+        }
+        static BytesWithPath GetPngBytes(Texture2D texture)
         {
             var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
             if (String.IsNullOrEmpty(path))
             {
-                return texture.EncodeToPNG();
+                return new BytesWithPath
+                {
+                    Bytes = texture.EncodeToPNG(),
+                };
+
             }
             else
             {
-                Debug.Log(path);
-                return File.ReadAllBytes(path);
+                return new BytesWithPath
+                {
+                    Bytes = File.ReadAllBytes(path),
+                    Path = path,
+                };
             }
         }
 
-        public static GltfMaterial ExportMaterial(Material m, List<Texture2D> textures)
+        public static glTFMaterial ExportMaterial(Material m, List<Texture2D> textures)
         {
-            var material = new GltfMaterial
+            var material = new glTFMaterial
             {
                 name = m.name,
                 pbrMetallicRoughness = new GltfPbrMetallicRoughness
@@ -168,23 +197,66 @@ namespace UniGLTF
             {
                 var texture = unityTextures[i];
 
-                var bytes = GetPngBytes(texture); ;
+                var bytesWithPath = GetPngBytes(texture); ;
 
                 // add view
-                var view = gltf.buffers[bufferIndex].Storage.Extend(bytes, glBufferTarget.NONE);
+                var view = gltf.buffers[bufferIndex].Storage.Extend(bytesWithPath.Bytes, glBufferTarget.NONE);
                 var viewIndex = gltf.AddBufferView(view);
 
                 // add image
                 var imageIndex = gltf.images.Count;
-                gltf.images.Add(new gltfImage
+                gltf.images.Add(new glTFImage
                 {
                     bufferView = viewIndex,
+                    mimeType = bytesWithPath.Mime,
+                });
+
+                // add sampler
+                var filter = default(glFilter);
+                switch (texture.filterMode)
+                {
+                    case FilterMode.Point:
+                        filter = glFilter.NEAREST;
+                        break;
+
+                    default:
+                        filter = glFilter.LINEAR;
+                        break;
+                }
+                var wrap = default(glWrap);
+
+                switch (texture.wrapMode)
+                {
+                    case TextureWrapMode.Clamp:
+                        wrap = glWrap.CLAMP_TO_EDGE;
+                        break;
+
+                    case TextureWrapMode.Repeat:
+                        wrap = glWrap.REPEAT;
+                        break;
+
+                    case TextureWrapMode.Mirror:
+                        wrap = glWrap.MIRRORED_REPEAT;
+                        break;
+
+                    default:
+                        throw new NotImplementedException();
+                }
+
+                var samplerIndex = gltf.samplers.Count;
+                gltf.samplers.Add(new glTFSampler
+                {
+                    magFilter = filter,
+                    minFilter = filter,
+                    wrapS = wrap,
+                    wrapT = wrap,
+
                 });
 
                 // add texture
-                gltf.textures.Add(new gltfTexture
+                gltf.textures.Add(new glTFTexture
                 {
-                    //sampler = -1, ToDo
+                    sampler = samplerIndex,
                     source = imageIndex,
                 });
             }
@@ -268,6 +340,7 @@ namespace UniGLTF
                 {
                     inverseBindMatrices = accessor,
                     joints = x.bones.Select(y => unityNodes.IndexOf(y)).ToArray(),
+                    skeleton = unityNodes.IndexOf(x.rootBone),
                 };
                 var skinIndex = gltf.skins.Count;
                 gltf.skins.Add(skin);
