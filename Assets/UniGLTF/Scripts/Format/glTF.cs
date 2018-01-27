@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -8,6 +7,12 @@ using UnityEngine;
 
 namespace UniGLTF
 {
+    [Serializable]
+    public struct gltfScene
+    {
+        public int[] nodes;
+    }
+
     public struct PosRot
     {
         public Vector3 Position;
@@ -23,6 +28,45 @@ namespace UniGLTF
         }
     }
 
+    [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
+    struct UShort4
+    {
+        public ushort x;
+        public ushort y;
+        public ushort z;
+        public ushort w;
+
+        public UShort4(ushort _x, ushort _y, ushort _z, ushort _w)
+        {
+            x = _x;
+            y = _y;
+            z = _z;
+            w = _w;
+        }
+    }
+
+    [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
+    struct Float4
+    {
+        public float x;
+        public float y;
+        public float z;
+        public float w;
+
+        public Float4 One()
+        {
+            var sum = x + y + z + w;
+            var f = 1.0f / sum;
+            return new Float4
+            {
+                x = x * f,
+                y = y * f,
+                z = z * f,
+                w = w * f,
+            };
+        }
+    }
+
     public class glTF : IJsonSerializable
     {
         public string baseDir
@@ -31,21 +75,37 @@ namespace UniGLTF
             set;
         }
 
-        public glTFAssets asset;
+        public glTFAssets asset = new glTFAssets
+        {
+            generator = "UniGLTF",
+            version = "2.0",
+        };
 
         #region Buffer      
         public List<glTFBuffer> buffers = new List<glTFBuffer>();
-        public List<glTFBufferView> bufferViews = new List<glTFBufferView>();
-        public List<glTFAccessor> accessors = new List<glTFAccessor>();
+        public int AddBuffer(IBytesBuffer bytesBuffer)
+        {
+            var index = buffers.Count;
+            buffers.Add(new glTFBuffer(bytesBuffer));
+            return index;
+        }
 
-        IBytesBuffer[] m_bytesList;
+        public List<glTFBufferView> bufferViews = new List<glTFBufferView>();
+        public int AddBufferView(glTFBufferView view)
+        {
+            var index = bufferViews.Count;
+            bufferViews.Add(view);
+            return index;
+        }
+
+        public List<glTFAccessor> accessors = new List<glTFAccessor>();
 
         #region Importer
         T[] GetAttrib<T>(glTFAccessor accessor, glTFBufferView view) where T : struct
         {
             var attrib = new T[accessor.count];
             //
-            var segment = m_bytesList[view.buffer].GetBytes();
+            var segment = buffers[view.buffer].Storage.GetBytes();
             var bytes = new ArraySegment<Byte>(segment.Array, segment.Offset + view.byteOffset + accessor.byteOffset, accessor.count * view.byteStride);
             bytes.MarshalCoyTo(attrib);
             return attrib;
@@ -54,7 +114,7 @@ namespace UniGLTF
         public ArraySegment<Byte> GetViewBytes(int bufferView)
         {
             var view = bufferViews[bufferView];
-            var segment = m_bytesList[view.buffer].GetBytes();
+            var segment = buffers[view.buffer].Storage.GetBytes();
             return new ArraySegment<byte>(segment.Array, segment.Offset + view.byteOffset, view.byteLength);
         }
 
@@ -101,22 +161,22 @@ namespace UniGLTF
             return GetAttrib<T>(vertexAccessor, view);
         }
 
-        static IEnumerable<int> FlipTriangle(IEnumerable<Byte> src)
+        public static IEnumerable<int> FlipTriangle(IEnumerable<Byte> src)
         {
             return FlipTriangle(src.Select(x => (Int32)x));
         }
 
-        static IEnumerable<int> FlipTriangle(IEnumerable<UInt16> src)
+        public static IEnumerable<int> FlipTriangle(IEnumerable<UInt16> src)
         {
             return FlipTriangle(src.Select(x => (Int32)x));
         }
 
-        static IEnumerable<int> FlipTriangle(IEnumerable<UInt32> src)
+        public static IEnumerable<int> FlipTriangle(IEnumerable<UInt32> src)
         {
             return FlipTriangle(src.Select(x => (Int32)x));
         }
 
-        static IEnumerable<int> FlipTriangle(IEnumerable<Int32> src)
+        public static IEnumerable<int> FlipTriangle(IEnumerable<Int32> src)
         {
             var it = src.GetEnumerator();
             while (true)
@@ -159,44 +219,7 @@ namespace UniGLTF
             public List<Vector3> Tangents = new List<Vector3>();
         }
 
-        [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
-        struct UShort4
-        {
-            public ushort x;
-            public ushort y;
-            public ushort z;
-            public ushort w;
 
-            public UShort4(ushort _x, ushort _y, ushort _z, ushort _w)
-            {
-                x = _x;
-                y = _y;
-                z = _z;
-                w = _w;
-            }
-        }
-
-        [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
-        struct Float4
-        {
-            public float x;
-            public float y;
-            public float z;
-            public float w;
-
-            public Float4 One()
-            {
-                var sum = x + y + z + w;
-                var f = 1.0f / sum;
-                return new Float4
-                {
-                    x = x * f,
-                    y = y * f,
-                    z = z * f,
-                    w = w * f,
-                };
-            }
-        }
 
         public struct MeshWithMaterials
         {
@@ -394,9 +417,13 @@ namespace UniGLTF
             {
                 return cv.ComponentType;
             }
+            else if (typeof(T) == typeof(uint))
+            {
+                return glComponentType.UNSIGNED_INT;
+            }
             else
             {
-                throw new NotImplementedException();
+                throw new NotImplementedException(typeof(T).Name);
             }
         }
 
@@ -482,13 +509,14 @@ namespace UniGLTF
             }
         }
 
-        public int AddBuffer<T>(ArrayByteBuffer bytesBuffer, T[] array, glBufferTarget target) where T : struct
+        public int ExtendBufferAndGetAccessorIndex<T>(int bufferIndex, T[] array, glBufferTarget target) where T : struct
         {
             if (array.Length == 0)
             {
                 return -1;
             }
-            var view = bytesBuffer.Add(array, target);
+
+            var view = buffers[bufferIndex].Storage.Extend(array, target, target==glBufferTarget.ARRAY_BUFFER);
             var viewIndex = bufferViews.Count;
             bufferViews.Add(view);
             var accessorIndex = accessors.Count;
@@ -571,12 +599,6 @@ namespace UniGLTF
 
         public int scene;
 
-        [Serializable]
-        public struct gltfScene
-        {
-            public int[] nodes;
-        }
-
         public List<gltfScene> scenes;
 
         public int[] rootnodes
@@ -595,194 +617,16 @@ namespace UniGLTF
             public Dictionary<String, glTFBufferView> Attributes;
         }
 
-        public static glTF FromGameObject(GameObject go, ArrayByteBuffer bytesBuffer)
-        {            
-            var copy = GameObject.Instantiate(go);
-            try
-            {
-                // Left handed to Right handed
-                copy.transform.ReverseZ();
 
-                var gltf = new glTF();
-                gltf.asset = new glTFAssets
-                {
-                    generator = "UniGLTF",
-                    version = "2.0",
-                };
 
-                gltf._FromGameObject(copy, bytesBuffer);
 
-                // glb buffer
-                gltf.buffers.Add(new glTFBuffer
-                {
-                    byteLength=bytesBuffer.GetBytes().Count,
-                });
-
-                return gltf;
-            }
-            finally
-            {
-                if (Application.isEditor)
-                {
-                    GameObject.DestroyImmediate(copy);
-                }
-                else
-                {
-                    GameObject.Destroy(copy);
-                }
-            }
-        }
-
-        static byte[] GetPngBytes(Texture2D texture)
-        {
-            var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
-            if (String.IsNullOrEmpty(path))
-            {
-                return texture.EncodeToPNG();
-            }
-            else
-            {
-                Debug.Log(path);
-                return File.ReadAllBytes(path);
-            }
-        }
-
-        void _FromGameObject(GameObject go, ArrayByteBuffer bytesBuffer)
-        {
-            var unityNodes = go.transform.Traverse()
-                .Skip(1) // exclude root object for the symmetry with the importer
-                .ToList();
-
-            #region Material
-            var unityMaterials = unityNodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
-            var unityTextures = unityMaterials.Select(x => (Texture2D)x.mainTexture).Where(x => x != null).Distinct().ToList();
-
-            for (int i = 0; i < unityTextures.Count; ++i)
-            {
-                var texture = unityTextures[i];
-
-                var bytes = GetPngBytes(texture); ;
-
-                // add view
-                var view = bytesBuffer.Add(bytes, glBufferTarget.ARRAY_BUFFER);
-                view.byteStride = 0;
-                var viewIndex = bufferViews.Count;
-                bufferViews.Add(view);
-
-                // add image
-                var imageIndex = images.Count;
-                images.Add(new gltfImage
-                {
-                    bufferView = viewIndex,
-                });
-
-                // add texture
-                textures.Add(new gltfTexture
-                {
-                    //sampler = -1, ToDo
-                    source = imageIndex,
-                });
-            }
-
-            materials = unityMaterials.Select(x => GltfMaterial.Create(x, unityTextures)).ToList();
-            #endregion
-
-            #region Meshes
-            var unityMeshes = unityNodes.Select(x => x.GetSharedMesh()).Where(x => x != null).ToList();
-            for (int i = 0; i < unityMeshes.Count; ++i)
-            {
-                var x = unityMeshes[i];
-
-                var positionAccessorIndex = AddBuffer(bytesBuffer, x.vertices.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                var normalAccessorIndex = AddBuffer(bytesBuffer, x.normals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                var uvAccessorIndex = AddBuffer(bytesBuffer, x.uv.Select(y => y.ReverseY()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                var tangentAccessorIndex = AddBuffer(bytesBuffer, x.tangents, glBufferTarget.ARRAY_BUFFER);
-
-                var boneweights = x.boneWeights;
-                var weightAccessorIndex = AddBuffer(bytesBuffer, boneweights.Select(y => new Vector4(y.weight0, y.weight1, y.weight2, y.weight3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                var jointsAccessorIndex = AddBuffer(bytesBuffer, boneweights.Select(y => new UShort4((ushort)y.boneIndex0, (ushort)y.boneIndex1, (ushort)y.boneIndex2, (ushort)y.boneIndex3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                meshes.Add(new glTFMesh(x.name));
-                for (int j = 0; j < x.subMeshCount; ++j)
-                {
-                    var indices = FlipTriangle(x.GetIndices(j)).ToArray();
-                    var indicesView = bytesBuffer.Add(indices, glBufferTarget.ELEMENT_ARRAY_BUFFER);
-                    indicesView.byteStride = -1; //
-                    var indicesViewIndex = bufferViews.Count;
-                    bufferViews.Add(indicesView);
-                    var indicesAccessorIndex = accessors.Count;
-                    accessors.Add(new glTFAccessor
-                    {
-                        bufferView = indicesViewIndex,
-                        byteOffset = 0,
-                        componentType = glComponentType.UNSIGNED_INT,
-                        type = "SCALAR",
-                        count = indices.Length,
-                        min = new[] { (float)indices.Min() },
-                        max = new[] { (float)indices.Max() },
-                    });
-
-                    var attributes = new glTFAttributes
-                    {
-                        POSITION = positionAccessorIndex,
-                    };
-                    if (normalAccessorIndex != -1)
-                    {
-                        attributes.NORMAL = normalAccessorIndex;
-                    }
-                    if (uvAccessorIndex != -1)
-                    {
-                        attributes.TEXCOORD_0 = uvAccessorIndex;
-                    }
-                    if (weightAccessorIndex != -1)
-                    {
-                        attributes.WEIGHTS_0 = weightAccessorIndex;
-                    }
-                    if (jointsAccessorIndex != -1)
-                    {
-                        attributes.JOINTS_0 = jointsAccessorIndex;
-                    }
-
-                    meshes.Last().primitives.Add(new glTFPrimitives
-                    {
-                        attributes = attributes,
-                        indices = indicesAccessorIndex,
-                        mode = 4 // triangels ?
-                    });
-                }
-            }
-            #endregion
-
-            var unitySkins = unityNodes.Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null).ToList();
-            nodes = unityNodes.Select(x => glTFNode.Create(x, unityNodes, unityMeshes, unitySkins)).ToList();
-            scenes = new List<gltfScene>
-            {
-                new gltfScene
-                {
-                    nodes = go.transform.GetChildren().Select(x => unityNodes.IndexOf(x)).ToArray(),
-                }
-            };
-
-            foreach (var x in unitySkins)
-            {
-                var matrices = x.sharedMesh.bindposes.Select(y => y.ReverseZ()).ToArray();
-                var accessor = AddBuffer(bytesBuffer, matrices, glBufferTarget.ARRAY_BUFFER);
-
-                var skin = new glTFSkin
-                {
-                    inverseBindMatrices = accessor,
-                    joints = x.bones.Select(y => unityNodes.IndexOf(y)).ToArray(),
-                };
-                var skinIndex = skins.Count;
-                skins.Add(skin);
-            }
-        }
 
         public override string ToString()
         {
             return string.Format("{0}", asset);
         }
 
-        public static glTF Parse(string json, string baseDir, ArraySegment<Byte> glbDataBytes)
+        public static glTF Parse(string json, string baseDir, ArraySegment<Byte> glbBinChunk)
         {
             var parsed = json.ParseAsJson();
 
@@ -803,13 +647,9 @@ namespace UniGLTF
             gltf.buffers = parsed["buffers"].DeserializeList<glTFBuffer>();
             gltf.bufferViews = parsed["bufferViews"].DeserializeList<glTFBufferView>();
             gltf.accessors = parsed["accessors"].DeserializeList<glTFAccessor>();
-            if (glbDataBytes.Count > 0)
+            foreach(var buffer in gltf.buffers)
             {
-                gltf.m_bytesList = new[] { new ArraySegmentByteBuffer(glbDataBytes) };
-            }
-            else
-            {
-                gltf.m_bytesList = gltf.buffers.Select(x => new ArrayByteBuffer(x.GetBytes(baseDir))).ToArray();
+                buffer.OpenStorage(baseDir, glbBinChunk);
             }
 
             // texture

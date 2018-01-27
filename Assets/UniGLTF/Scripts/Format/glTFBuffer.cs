@@ -1,30 +1,39 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 
 
 namespace UniGLTF
 {
     [Serializable]
-    public struct glTFBuffer : IJsonSerializable
+    public class glTFBuffer : IJsonSerializable
     {
-        public string uri;
-        public int byteLength;
-
-        const string DataPrefix = "data:application/octet-stream;base64,";
-
-        public Byte[] GetBytes(string baseDir)
+        public IBytesBuffer Storage
         {
-            if (uri.StartsWith(DataPrefix))
+            get;
+            private set;
+        }
+        public void OpenStorage(string baseDir, ArraySegment<Byte> glbDataBytes)
+        {
+            if (string.IsNullOrEmpty(uri))
             {
-                // embeded
-                return Convert.FromBase64String(uri.Substring(DataPrefix.Length));
+                Storage = new ArraySegmentByteBuffer(glbDataBytes);
             }
             else
             {
-                // as local file path
-                return File.ReadAllBytes(Path.Combine(baseDir, uri));
+                Storage = new UriByteBuffer(baseDir, uri);
             }
+        }
+
+        public glTFBuffer(IBytesBuffer storage)
+        {
+            Storage = storage;
+        }
+
+        public string uri;
+        public int byteLength;
+        public void UpdateByteLength()
+        {
+            byteLength = Storage.GetBytes().Count;
         }
 
         public string ToJson()
@@ -33,16 +42,16 @@ namespace UniGLTF
             f.BeginMap();
             if (!string.IsNullOrEmpty(uri))
             {
-                f.Key("uri"); f.Value(uri);
+                f.KeyValue(() => uri);
             }
-            f.Key("byteLength"); f.Value(byteLength);
+            f.KeyValue(() => byteLength);
             f.EndMap();
             return f.ToString();
         }
     }
 
     [Serializable]
-    public struct glTFBufferView : IJsonSerializable
+    public class glTFBufferView : IJsonSerializable
     {
         public int buffer;
         public int byteOffset;
@@ -54,12 +63,12 @@ namespace UniGLTF
         {
             var f = new JsonFormatter();
             f.BeginMap();
-            f.Key("buffer"); f.Value(buffer);
-            f.Key("byteOffset"); f.Value(byteOffset);
-            f.Key("byteLength"); f.Value(byteLength);
+            f.KeyValue(() => buffer);
+            f.KeyValue(() => byteOffset);
+            f.KeyValue(() => byteLength);
             if (byteStride > 0)
             {
-                f.Key("byteStride"); f.Value(byteStride);
+                f.KeyValue(() => byteStride);
             }
             f.Key("target"); f.Value((int)target);
             f.EndMap();
