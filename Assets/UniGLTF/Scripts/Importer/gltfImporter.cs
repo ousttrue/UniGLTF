@@ -84,7 +84,7 @@ namespace UniGLTF
             public int? SkinIndex;
         }
 
-        static void SetSampler(Texture2D texture, glTFSampler sampler)
+        static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
         {
             switch (sampler.wrapS)
             {
@@ -680,7 +680,7 @@ namespace UniGLTF
             return create();
         }
 
-        public static void ImportAnimation(Transform root, AnimationClip clip, List<GltfAnimation> animations, Transform[] nodes, glTF buffer)
+        public static void ImportAnimation(Transform root, AnimationClip clip, List<glTFAnimation> animations, Transform[] nodes, glTF buffer)
         {
             foreach (var x in animations)
             {
@@ -690,7 +690,7 @@ namespace UniGLTF
                     var relativePath = node.RelativePathFrom(root);
                     switch (y.target.path)
                     {
-                        case "translation":
+                        case glTFAnimationTarget.PATH_TRANSLATION:
                             {
                                 var curveX = new AnimationCurve();
                                 var curveY = new AnimationCurve();
@@ -714,7 +714,7 @@ namespace UniGLTF
                             }
                             break;
 
-                        case "rotation":
+                        case glTFAnimationTarget.PATH_ROTATION:
                             {
                                 var curveX = new AnimationCurve();
                                 var curveY = new AnimationCurve();
@@ -741,7 +741,7 @@ namespace UniGLTF
                             }
                             break;
 
-                        case "scale":
+                        case glTFAnimationTarget.PATH_SCALE:
                             {
                                 var curveX = new AnimationCurve();
                                 var curveY = new AnimationCurve();

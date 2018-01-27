@@ -115,7 +115,7 @@ namespace UniGLTF
         #endregion
 
         public List<glTFTexture> textures = new List<glTFTexture>();
-        public List<glTFSampler> samplers = new List<glTFSampler>();
+        public List<glTFTextureSampler> samplers = new List<glTFTextureSampler>();
         public List<glTFImage> images = new List<glTFImage>();
         public List<glTFMaterial> materials = new List<glTFMaterial>();
         public List<glTFMesh> meshes = new List<glTFMesh>();
@@ -130,7 +130,7 @@ namespace UniGLTF
                 return scenes[scene].nodes;
             }
         }
-        public List<GltfAnimation> animations;
+        public List<glTFAnimation> animations = new List<glTFAnimation>();
 
         public override string ToString()
         {
@@ -178,7 +178,7 @@ namespace UniGLTF
             // meshes
             if (meshes.Any())
             {
-                f.Key("meshes"); f.Value(meshes);
+                f.KeyValue(() => meshes);
             }
             if (skins.Any())
             {
@@ -188,11 +188,17 @@ namespace UniGLTF
             // scene
             if (nodes.Any())
             {
-                f.Key("nodes"); f.Value(nodes);
+                f.KeyValue(() => nodes);
             }
             if (scenes.Any())
             {
                 f.KeyValue(() => scenes);
+            }
+
+            // animations
+            if (animations.Any())
+            {
+                f.Key("animations"); f.Value(animations);
             }
 
             f.EndMap();

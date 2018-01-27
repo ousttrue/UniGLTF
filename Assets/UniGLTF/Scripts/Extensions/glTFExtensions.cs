@@ -57,6 +57,10 @@ namespace UniGLTF
             {
                 return glComponentType.UNSIGNED_INT;
             }
+            else if (typeof(T) == typeof(float))
+            {
+                return glComponentType.FLOAT;
+            }
             else
             {
                 throw new NotImplementedException(typeof(T).Name);
@@ -96,7 +100,7 @@ namespace UniGLTF
             }
         }
 
-        public static int ExtendBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex, T[] array, glBufferTarget target) where T : struct
+        public static int ExtendBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex, T[] array, glBufferTarget target=glBufferTarget.NONE) where T : struct
         {
             if (array.Length == 0)
             {
@@ -150,7 +154,7 @@ namespace UniGLTF
             }
             if (parsed.HasKey("samplers"))
             {
-                gltf.samplers = parsed["samplers"].DeserializeList<glTFSampler>();
+                gltf.samplers = parsed["samplers"].DeserializeList<glTFTextureSampler>();
             }
             if (parsed.HasKey("images"))
             {
@@ -188,7 +192,7 @@ namespace UniGLTF
             // animations
             if (parsed.HasKey("animations"))
             {
-                gltf.animations = parsed["animations"].DeserializeList<GltfAnimation>();
+                gltf.animations = parsed["animations"].DeserializeList<glTFAnimation>();
             }
 
             return gltf;

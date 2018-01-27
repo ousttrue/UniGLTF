@@ -117,11 +117,6 @@ namespace UniGLTF
 
         public glTFBufferView Extend(IntPtr p, int bytesLength, int stride, glBufferTarget target)
         {
-            if (target != glBufferTarget.ARRAY_BUFFER)
-            {
-                stride = -1;
-            }
-
             if (m_bytes == null)
             {
                 m_bytes = new byte[bytesLength];
@@ -140,6 +135,10 @@ namespace UniGLTF
                 var tmp = m_bytes;
                 m_bytes = new Byte[m_bytes.Length + bytesLength];
                 Buffer.BlockCopy(tmp, 0, m_bytes, 0, tmp.Length);
+                if(tmp.Length + bytesLength > m_bytes.Length)
+                {
+                    throw new ArgumentOutOfRangeException();
+                }
                 Marshal.Copy(p, m_bytes, tmp.Length, bytesLength);
                 return new glTFBufferView
                 {

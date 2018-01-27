@@ -4,7 +4,7 @@
 namespace UniGLTF
 {
     [Serializable]
-    public class glTFSampler : IJsonSerializable
+    public class glTFTextureSampler : IJsonSerializable
     {
         public glFilter magFilter;
         public glFilter minFilter;

@@ -92,6 +92,33 @@ namespace UniGLTF
             throw new Exception("no RelativePath");
         }
 
+        public static Transform GetChildByName(this Transform self, string childName)
+        {
+            foreach(Transform child in self)
+            {
+                if (child.name == childName)
+                {
+                    return child;
+                }
+            }
+
+            throw new KeyNotFoundException();
+        }
+
+        public static Transform GetFromPath(this Transform self, string path)
+        {
+            var current = self;
+
+            var splited = path.Split('/');
+
+            foreach(var childName in splited)
+            {
+                current=current.GetChildByName(childName);
+            }
+
+            return current;
+        }
+
         public static IEnumerable<Transform> GetChildren(this Transform self)
         {
             foreach (Transform child in self)

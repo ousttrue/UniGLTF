@@ -120,7 +120,24 @@ skin.rootBone=skeleton;
 
 ### animation
 
-* reverse-z
+* reverse-z. May be in global coordinate...
+* AnimationUtility.GetCurveBindings
+
+|features     |importer|exporter|memo     |
+|-------------|--------|--------|---------|
+|TRS          |o       |WIP     |/anmations
+|interpolation|
+
+```cs
+foreach (var binding in AnimationUtility.GetCurveBindings(clip))
+{
+    var curve = AnimationUtility.GetEditorCurve(clip, binding);
+    foreach(var key in curve.keys)
+    {
+
+    }
+}
+```
 
 #### legacy
 

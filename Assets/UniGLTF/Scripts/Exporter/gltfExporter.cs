@@ -44,16 +44,18 @@ namespace UniGLTF
 
                 gltf.FromGameObject(copy);
             }
-            finally
+            catch(Exception ex)
             {
-                if (Application.isEditor)
-                {
-                    GameObject.DestroyImmediate(copy);
-                }
-                else
-                {
-                    GameObject.Destroy(copy);
-                }
+                Debug.LogError(ex);
+            }
+
+            if (Application.isEditor)
+            {
+                GameObject.DestroyImmediate(copy);
+            }
+            else
+            {
+                GameObject.Destroy(copy);
             }
 
             var buffer = gltf.buffers[0].Storage;
@@ -180,6 +182,106 @@ namespace UniGLTF
             return node;
         }
 
+        static int GetNodeIndex(Transform root, List<Transform> nodes, string path)
+        {
+            var descendant = root.GetFromPath(path);
+            return nodes.IndexOf(descendant);
+        }
+
+        static string PropertyToTarget(string property)
+        {
+            if (property.StartsWith("m_LocalPosition."))
+            {
+                return glTFAnimationTarget.PATH_TRANSLATION;
+            }
+            else if (property.StartsWith("m_LocalRotation."))
+            {
+                return glTFAnimationTarget.PATH_ROTATION;
+            }
+            else if (property.StartsWith("m_LocalScale."))
+            {
+                return glTFAnimationTarget.PATH_SCALE;
+            }
+            else
+            {
+                throw new NotImplementedException(property);
+            }
+        }
+
+        static int GetElementOffset(string property)
+        {
+            if (property.EndsWith(".x"))
+            {
+                return 0;
+            }
+            if (property.EndsWith(".y"))
+            {
+                return 1;
+            }
+            if (property.EndsWith(".z"))
+            {
+                return 2;
+            }
+            if (property.EndsWith(".w"))
+            {
+                return 3;
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        class InputOutputValues
+        {
+            public float[] Input;
+            public float[] Output;
+        }
+
+        class AnimationWithSampleCurves
+        {
+            public glTFAnimation Animation;
+            public Dictionary<int, InputOutputValues> SamplerMap = new Dictionary<int, InputOutputValues>();
+        }
+
+        static AnimationWithSampleCurves ExportAnimation(AnimationClip clip, Transform root, List<Transform> nodes)
+        {
+            var animation = new AnimationWithSampleCurves
+            {
+                Animation = new glTFAnimation(),
+            };
+
+            foreach (var binding in AnimationUtility.GetCurveBindings(clip))
+            {
+                var curve = AnimationUtility.GetEditorCurve(clip, binding);
+
+                var nodeIndex = GetNodeIndex(root, nodes, binding.path);
+                var target = PropertyToTarget(binding.propertyName);
+                var samplerIndex = animation.Animation.AddChannelAndGetSampler(nodeIndex, target);
+                var sampler = animation.Animation.samplers[samplerIndex];
+
+                var keys = curve.keys;
+                var elementCount = glTFAnimationTarget.GetElementCount(target);
+                var values = default(InputOutputValues);
+                if (!animation.SamplerMap.TryGetValue(samplerIndex, out values))
+                {
+                    values = new InputOutputValues();
+                    values.Input = new float[keys.Length];
+                    values.Output = new float[keys.Length * elementCount];
+                    animation.SamplerMap[samplerIndex] = values;
+                }
+
+                var j = GetElementOffset(binding.propertyName);
+                for (int i = 0; i < keys.Length; ++i, j += elementCount)
+                {
+                    values.Input[i] = keys[i].time;
+                    values.Output[j] = keys[i].value;
+                }
+            }
+
+            return animation;
+        }
+
         public static void FromGameObject(this glTF gltf, GameObject go)
         {
             var bytesBuffer = new ArrayByteBuffer();
@@ -244,7 +346,7 @@ namespace UniGLTF
                 }
 
                 var samplerIndex = gltf.samplers.Count;
-                gltf.samplers.Add(new glTFSampler
+                gltf.samplers.Add(new glTFTextureSampler
                 {
                     magFilter = filter,
                     minFilter = filter,
@@ -321,6 +423,7 @@ namespace UniGLTF
             }
             #endregion
 
+            #region Skins
             var unitySkins = unityNodes.Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null).ToList();
             gltf.nodes = unityNodes.Select(x => ExportNode(x, unityNodes, unityMeshes, unitySkins)).ToList();
             gltf.scenes = new List<gltfScene>
@@ -345,12 +448,56 @@ namespace UniGLTF
                 var skinIndex = gltf.skins.Count;
                 gltf.skins.Add(skin);
 
-                foreach(var z in unityNodes.Where(y => y.Has(x)))
+                foreach (var z in unityNodes.Where(y => y.Has(x)))
                 {
                     var nodeIndex = unityNodes.IndexOf(z);
                     gltf.nodes[nodeIndex].skin = skinIndex;
                 }
             }
+            #endregion
+
+            #region Animations
+            var animation = go.GetComponent<Animation>();
+            if (animation != null)
+            {
+                foreach (AnimationState state in animation)
+                {
+                    var animationWithCurve = ExportAnimation(state.clip, go.transform, unityNodes);
+
+                    foreach (var kv in animationWithCurve.SamplerMap)
+                    {
+                        var sampler = animationWithCurve.Animation.samplers[kv.Key];
+
+                        var inputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.Input);
+                        sampler.input = inputAccessorIndex;
+
+                        var outputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.Output);
+                        sampler.output = outputAccessorIndex;
+
+                        // modify accessors
+                        var outputAccessor = gltf.accessors[outputAccessorIndex];
+                        var channel = animationWithCurve.Animation.channels.First(x => x.sampler == kv.Key);
+                        switch (glTFAnimationTarget.GetElementCount(channel.target.path))
+                        {
+                            case 3:
+                                outputAccessor.type = "VEC3";
+                                outputAccessor.count /= 3;
+                                break;
+
+                            case 4:
+                                outputAccessor.type = "VEC4";
+                                outputAccessor.count /= 4;
+                                break;
+
+                            default:
+                                throw new NotImplementedException();
+                        }
+                    }
+
+                    gltf.animations.Add(animationWithCurve.Animation);
+                }
+            }
+            #endregion
 
             // glb buffer
             gltf.buffers[bufferIndex].UpdateByteLength();
