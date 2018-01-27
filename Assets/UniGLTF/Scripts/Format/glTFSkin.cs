@@ -8,6 +8,7 @@ namespace UniGLTF
     {
         public int inverseBindMatrices = -1;
         public int[] joints;
+        public int skeleton;
 
         public string ToJson()
         {

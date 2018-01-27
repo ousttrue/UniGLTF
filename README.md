@@ -9,6 +9,10 @@
 ![duck_assets](doc/duck_assets.png)
 ![animation](Recordings/animation.gif)
 
+## Issues
+
+* crash unity when reimport. workaround, move target file to out of Assets. Launch unity, then move the file to Assets folder.
+
 ## Features & ToDo
 
 * [x] gltf
@@ -90,9 +94,28 @@ skin.root
 
 ### animation
 
-|features     |importer|exporter|memo     |
-|-------------|--------|--------|---------|
-|transform    |o       |        |/animations/#/channels/#/target/path/(tlanslation,rotation,scale), as generic AnimationClip
+* reverse-z
+
+#### legacy
+
+for Animation component.
+
+```
+var clip=new AnimationClip();
+clip.legacy=true;
+```
+
+#### generic
+
+for Animator component.
+
+```
+var clip=new AnimationClip();
+```
+
+#### humanoid
+
+for Animator component. require humanoid avatar.
 
 ### not implemented
 

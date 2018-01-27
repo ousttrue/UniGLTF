@@ -211,8 +211,6 @@ namespace UniGLTF
                 });
             }
 
-            var animator = root.AddComponent<Animator>();
-
             // skinning
             foreach (var x in nodes)
             {
@@ -274,7 +272,13 @@ namespace UniGLTF
                 clip.name = ANIMATION_NAME;
                 clip.ClearCurves();
 
-                ImportAnimation(clip, gltf.animations, nodes.Select(x => x.Transform).ToArray(), gltf);
+                ImportAnimation(root.transform, clip, gltf.animations, nodes.Select(x => x.Transform).ToArray(), gltf);
+
+                clip.legacy = true;
+                clip.name = "legacy";
+                clip.wrapMode = WrapMode.Loop;
+                var animation = root.AddComponent<Animation>();
+                animation.clip = clip;
 
                 ctx.AddObjectToAsset(ANIMATION_NAME, clip);
             }
@@ -610,13 +614,14 @@ namespace UniGLTF
             return create();
         }
 
-        public static void ImportAnimation(AnimationClip clip, List<GltfAnimation> animations, Transform[] nodes, glTF buffer)
+        public static void ImportAnimation(Transform root, AnimationClip clip, List<GltfAnimation> animations, Transform[] nodes, glTF buffer)
         {
             foreach (var x in animations)
             {
                 foreach (var y in x.channels)
                 {
                     var node = nodes[y.target.node];
+                    var relativePath = node.RelativePathFrom(root);
                     switch (y.target.path)
                     {
                         case "translation":
@@ -637,7 +642,6 @@ namespace UniGLTF
                                     curveZ.AddKey(time, pos.z);
                                 }
 
-                                var relativePath = node.RelativePathFrom(nodes[0]);
                                 clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
                                 clip.SetCurve(relativePath, typeof(Transform), "localPosition.y", curveY);
                                 clip.SetCurve(relativePath, typeof(Transform), "localPosition.z", curveZ);
@@ -664,7 +668,6 @@ namespace UniGLTF
                                     curveW.AddKey(time, rot.w);
                                 }
 
-                                var relativePath = node.RelativePathFrom(nodes[0]);
                                 clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
                                 clip.SetCurve(relativePath, typeof(Transform), "localRotation.y", curveY);
                                 clip.SetCurve(relativePath, typeof(Transform), "localRotation.z", curveZ);
@@ -690,7 +693,6 @@ namespace UniGLTF
                                     curveZ.AddKey(time, scale.z);
                                 }
 
-                                var relativePath = node.RelativePathFrom(nodes[0]);
                                 clip.SetCurve(relativePath, typeof(Transform), "localScale.x", curveX);
                                 clip.SetCurve(relativePath, typeof(Transform), "localScale.y", curveY);
                                 clip.SetCurve(relativePath, typeof(Transform), "localScale.z", curveZ);
