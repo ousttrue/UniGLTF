@@ -9,6 +9,96 @@
 ![duck_assets](doc/duck_assets.png)
 ![animation](Recordings/animation.gif)
 
+## Features & ToDo
+
+* [x] gltf
+* [x] glb
+* [ ] Sample scene and model
+* [ ] Unity-5.6 compatibility
+* [x] Asset Importer/Exporter
+* [x] Runtime Importer/Exporter
+
+### material & texture
+
+|features     |importer|exporter|memo     |
+|-------------|--------|--------|---------|
+|color        |o       |o       |/materials/#/pbrMetallicRoughness/baseColorFactor
+|color texture|o       |o       |/materials/#/pbrMetallicRoughness/baseColorTexture
+|sampler      |
+|multi uv     |
+|PBR          |
+
+### mesh
+
+|features     |importer|exporter|memo     |
+|-------------|--------|--------|---------|
+|positions    |o       |o       |/meshes/#/primitives/#/attributes/POSITION, reverse-z
+|normals      |o       |o       |/meshes/#/primitives/#/attributes/NORMAL, reverse-z
+|uv           |o       |o       |/meshes/#/primitives/#/attributes/TEXCOORD_0, reverse-y
+|tangent      |        |        |/meshes/#/primitives/#/attributes/TANGENT, ?
+|primitive    |o       |o       |todo:sharing attributes|
+
+```cs
+var mesh=new Mesh();
+mesh.vertices = positions;
+mesh.normals = normals;
+mesh.uvs = uv;
+
+mesh.submeshCount=primitiveCount;
+for(int i=0; i<primitiveCount; ++i)
+{
+    mesh.setSubmesh(i, primitive[i].indices);
+}    
+```
+
+#### morph
+
+|features     |importer|exporter|memo     |
+|-------------|--------|--------|---------|
+|blend shape  |o       |        |/meshes/#/primitives/#/targets
+
+```cs
+mesh.setBlendShape
+```
+
+#### skin
+
+|features     |importer|exporter|memo     |
+|-------------|--------|--------|---------|
+|boneweight   |o       |o       |/meshes/#/primitives/#/attributes/(JOINTS_0|WEIGHTS_0)
+|bindmatrix   |o       |        |/skins/#/inverseBindMatrices
+|skeleton     |        |        |/skins/#/skeleton
+|joints       |o       |        |/skins/#/joints
+
+```cs
+mesh.boneWeights=boneWeights;
+mesh.binds=inverseBindMatrices
+
+skin=go.addCompoenent<SkinnedMeshRenderer>();
+skin.bones
+skin.root
+```
+
+### node
+
+|features     |importer|exporter|memo     |
+|-------------|--------|--------|---------|
+|translation  |o       |o       |/nodes/#/tlanslation, reverse-z
+|rotation     |o       |o       |/nodes/#/rotation, reverse-z
+|scale        |o       |o       |/nodes/#/scale
+|matrix       |o       |-       |/nodes/#/matrix, reverse-z
+
+### animation
+
+|features     |importer|exporter|memo     |
+|-------------|--------|--------|---------|
+|transform    |o       |        |/animations/#/channels/#/target/path/(tlanslation,rotation,scale), as generic AnimationClip
+
+### not implemented
+
+* Camera
+* Light
+
 ## Humanoid Helper
 
 * model position is origin
@@ -19,47 +109,11 @@
 ![inspector](doc/BoneMappingInspector.png)
 ![humanoid](Recordings/humanoid.gif)
 
-## Features & ToDo
-
-* [x] gltf
-* [x] glb
-* [ ] Sample scene and model
-* [ ] Unity-5.6 compatibility
-* [x] Asset Importer/Exporter
-* [x] Runtime Importer/Exporter
-
-|features    |importer|exporter|memo     |
-|------------|--------|--------|---------|
-|**material**|        |        |
-|color       |o       |o       |
-|color texture|o      |o       |
-|sampler     |
-|PBR         |
-|**mesh**    |        |        |
-|positions   |o       |o       |reverse-z
-|normals     |o       |o       |reverse-z
-|uv          |o       |o       |reverse-y
-|tangent     |        |        |?
-|primitive   |o       |o       |todo:sharing attributes|
-|boneweight  |o       |o       |
-|blend shape |o       |        |
-|**animation**|
-|transform    |o      |        |as generic AnimationClip
-|**node**    |
-|translation |o       |o       |reverse-z
-|rotation    |o       |o       |reverse-z
-|scale       |o       |o
-|matrix      |o       |-       |reverse-z
-|**skinning**|
-|avatar      |o       |        |
-|avatar params|       |        |
-|bone name    |       |        |rename to bone name
-|bindmatrix   |o      |        |
-
-
-* not implemented
-    * Camera
-    * Light
+|features     |importer|exporter|memo     |
+|-------------|--------|--------|---------|
+|avatar       |o       |        |
+|avatar params|        |        |
+|bone name    |        |        |rename to bone name
 
 ## Sample Models
 
