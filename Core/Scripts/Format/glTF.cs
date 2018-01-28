@@ -28,11 +28,7 @@ namespace UniGLTF
             set;
         }
 
-        public glTFAssets asset = new glTFAssets
-        {
-            generator = "UniGLTF",
-            version = "2.0",
-        };
+        public glTFAssets asset;
 
         #region Buffer      
         public List<glTFBuffer> buffers = new List<glTFBuffer>();

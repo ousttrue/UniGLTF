@@ -35,7 +35,15 @@ namespace UniGLTF
                 return;
             }
 
-            var gltf = new glTF();
+            var gltf = new glTF
+            {
+                asset = new glTFAssets
+                {
+                    generator = "UniGLTF",
+                    version = "2.0",
+                }
+            };
+
             var copy = GameObject.Instantiate(go);
             try
             {

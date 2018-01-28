@@ -3,169 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using UnityEditor;
 using UnityEngine;
-#if UNITY_2017_OR_NEWER
-using UnityEditor.Experimental.AssetImporters;
-#endif
 
 
 namespace UniGLTF
 {
-#if UNITY_2017_OR_NEWER && USE_UNIGLTF_SCRIPTEDIMPORTER
-    [ScriptedImporter(1, "gltf")]
-#endif
-    public class gltfImporter
-#if UNITY_2017_OR_NEWER
-        : ScriptedImporter
-#endif
+    public static class gltfImporter
     {
-#if UNITY_2017_OR_NEWER
-        public override void OnImportAsset(AssetImportContext ctx)
-        {
-            Debug.LogFormat("## Importer ##: {0}", ctx.assetPath);
-
-            var json = File.ReadAllText(ctx.assetPath, Encoding.UTF8);
-
-            Import(ctx, json, new ArraySegment<byte>());
-        }
-
-        class ScriptedImporterContext : IImporterContext
-        {
-            public string Path
-            {
-                get;
-                private set;
-            }
-
-            public void Dispose()
-            {
-            }
-
-            public AssetImportContext AssetImportContext;
-
-            public ScriptedImporterContext(ScriptedImporterContext assetImportContext)
-            {
-                AssetImportContext = assetImportContext;
-                Path = assetImportContext.assetPath;
-            }
-
-            public void AddObjectToAsset(string key, UnityEngine.Object o)
-            {
-                if (AssetImportContext == null)
-                {
-                    return;
-                }
-                AssetImportContext.AddObjectToAsset(key, o);
-            }
-
-            public void SetMainGameObject(string key, UnityEngine.GameObject go)
-            {
-                if (AssetImportContext == null)
-                {
-                    return;
-                }
-                AssetImportContext.SetMainObject(key, go);
-            }
-        }
-
-        public static GameObject Import(AssetImportContext ctx, string json, ArraySegment<Byte> bytes = default(ArraySegment<Byte>))
-        {
-            return Import(new Context(ctx), json, bytes);
-        }
-#endif
-
         const float FRAME_WEIGHT = 1.0f;
-
-        class PrefabContext : IImporterContext
-        {
-            public string Path
-            {
-                get;
-                private set;
-            }
-
-            string m_prefabPath;
-
-            IEnumerable<UnityEngine.Object> GetSubAssets()
-            {
-                return UnityEditor.AssetDatabase.LoadAllAssetsAtPath(m_prefabPath)
-                    ;
-            }
-
-            public PrefabContext(String path)
-            {
-                Path = path;
-
-                var dir = System.IO.Path.GetDirectoryName(Path);
-                var name = System.IO.Path.GetFileNameWithoutExtension(Path);
-                m_prefabPath = string.Format("{0}/{1}.prefab", dir, name);
-
-                if (File.Exists(m_prefabPath))
-                {
-                    //Debug.LogFormat("Exist: {0}", m_prefabPath);
-
-                    // clear subassets
-                    foreach (var x in GetSubAssets())
-                    {
-                        if (x is Transform
-                            || x is GameObject)
-                        {
-                            continue;
-                        }
-                        GameObject.DestroyImmediate(x, true);
-                    }
-                }
-            }
-
-            GameObject m_go;
-            public void SetMainGameObject(string key, GameObject go)
-            {
-                m_go = go;
-            }
-
-            public void AddObjectToAsset(string key, UnityEngine.Object o)
-            {
-                AssetDatabase.AddObjectToAsset(o, m_prefabPath);
-            }
-
-            public void Dispose()
-            {
-                ///
-                /// create prefab, after subasset AssetDatabase.AddObjectToAsset
-                ///
-                if (File.Exists(m_prefabPath))
-                {
-                    //Debug.LogFormat("ReplacePrefab: {0}", m_prefabPath);
-                    var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(m_prefabPath);
-                    PrefabUtility.ReplacePrefab(m_go, prefab, ReplacePrefabOptions.ConnectToPrefab);
-                }
-                else
-                {
-                    //Debug.LogFormat("CreatePrefab: {0}", m_prefabPath);
-                    PrefabUtility.CreatePrefab(m_prefabPath, m_go, ReplacePrefabOptions.ConnectToPrefab);
-                }
-
-                GameObject.DestroyImmediate(m_go);
-            }
-        }
-
-        static void TraverseTransform(Transform t, Action<Transform> pred)
-        {
-            pred(t);
-
-            foreach (Transform child in t)
-            {
-                TraverseTransform(child, pred);
-            }
-        }
-
-        public struct TransformWithSkin
-        {
-            public Transform Transform;
-            public int? SkinIndex;
-        }
 
         static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
         {
@@ -223,13 +68,6 @@ namespace UniGLTF
             }
 #endif
 
-            /*
-            if (sampler.minFilter != sampler.magFilter)
-            {
-                throw new NotImplementedException();
-            }
-            */
-
             switch (sampler.magFilter)
             {
                 case glFilter.NEAREST:
@@ -245,35 +83,53 @@ namespace UniGLTF
             }
         }
 
-        public static GameObject Import(string path, string json, ArraySegment<Byte> bytes, bool isPrefab)
+        public struct TransformWithSkin
         {
-            if (isPrefab)
-            {
-                using (var context = new PrefabContext(path))
-                {
-                    return Import(context, json, bytes);
-                }
-            }
-            else
-            {
-                using (var context = new RuntimeContext(path))
-                {
-                    return Import(context, json, bytes);
-                }
-            }
+            public Transform Transform;
+            public int? SkinIndex;
         }
 
-        static GameObject Import(IImporterContext ctx, string json, ArraySegment<Byte> glbBinChunk)
+        public static GameObject Import(IImporterContext ctx, string json, ArraySegment<Byte> glbBinChunk)
         {
-            var root = new GameObject("_root_");
-            ctx.SetMainGameObject("root", root);
+            // exclude not gltf-2.0
+            var parsed = json.ParseAsJson();
+            try
+            {
+                if (parsed["asset"]["version"].GetString() != "2.0")
+                {
+                    Debug.LogWarningFormat("is not gltf-2.0: {0}", ctx.Path);
+                    return null;
+                }
+            }
+            catch (Exception)
+            {
+                Debug.LogWarningFormat("{0}: fail to parse json", ctx.Path);
+                return null;
+            }
 
-            var gltf = JsonUtility.FromJson<glTF>(json);
+            // parse json
+            glTF gltf = null;
+            try
+            {
+                gltf = JsonUtility.FromJson<glTF>(json);
+            }
+            catch (Exception)
+            {
+                Debug.LogWarningFormat("{0}: fail to parse json", ctx.Path);
+                return null;
+            }
             if (gltf == null)
             {
                 Debug.LogWarningFormat("{0}: fail to parse json", ctx.Path);
                 return null;
             }
+
+            if (gltf.asset.version != "2.0")
+            {
+                Debug.LogWarningFormat("unknown gltf version {0}", gltf.asset.version);
+                return null;
+            }
+
             gltf.baseDir = Path.GetDirectoryName(ctx.Path);
             Debug.LogFormat("{0}: {1}", ctx.Path, gltf);
 
@@ -404,12 +260,12 @@ namespace UniGLTF
                 var t = nodes[x].Transform;
                 //t.SetParent(root.transform, false);
 
-                TraverseTransform(t, transform =>
-                {
+                foreach(var transform in t.Traverse())
+                { 
                     var g = globalTransformMap[transform];
                     transform.position = g.Position.ReverseZ();
                     transform.rotation = g.Rotation.ReverseZ();
-                });
+                }
             }
 
             // skinning
@@ -456,6 +312,9 @@ namespace UniGLTF
                     }
                 }
             }
+
+            var root = new GameObject("_root_");
+            ctx.SetMainGameObject("root", root);
 
             foreach (var x in gltf.rootnodes)
             {

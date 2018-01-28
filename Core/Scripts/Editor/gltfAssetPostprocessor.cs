@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using UnityEditor;
-using UnityEngine;
 
 
 namespace UniGLTF
@@ -17,7 +16,7 @@ namespace UniGLTF
                 {
                     ImportGltf(path, false);
                 }
-                else if(ext == ".glb")
+                else if (ext == ".glb")
                 {
                     ImportGltf(path, true);
                 }
@@ -26,23 +25,15 @@ namespace UniGLTF
 
         static void ImportGltf(string srcPath, bool isGlb)
         {
-            GameObject go = null;
-            try
+            using (var context = new PrefabContext(srcPath))
             {
                 if (isGlb)
                 {
-                    go = glbImporter.Import(srcPath, File.ReadAllBytes(srcPath), true);
+                    glbImporter.Import(context, File.ReadAllBytes(srcPath));
                 }
                 else
                 {
-                    go = gltfImporter.Import(srcPath, File.ReadAllText(srcPath, System.Text.Encoding.UTF8), new ArraySegment<byte>(), true);
-                }
-            }
-            finally
-            {
-                if (go != null)
-                {
-                    GameObject.DestroyImmediate(go);
+                    gltfImporter.Import(context, File.ReadAllText(srcPath, System.Text.Encoding.UTF8), new ArraySegment<byte>());
                 }
             }
         }

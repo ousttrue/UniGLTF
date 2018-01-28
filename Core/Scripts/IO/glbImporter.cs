@@ -1,80 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Linq;
-using UnityEditor;
+using System.Text;
 using UnityEngine;
-#if UNITY_2017_OR_NEWER
-using UnityEditor.Experimental.AssetImporters;
-#endif
+
 
 namespace UniGLTF
 {
-#if UNITY_2017_OR_NEWER && USE_UNIGLTF_SCRIPTEDIMPORTER
-    [ScriptedImporter(1, "glb")]
-#endif
-    public class glbImporter
-#if UNITY_2017_OR_NEWER
-        : ScriptedImporter
-#endif
+    public static class glbImporter
     {
         public const string GLB_MAGIC = "glTF";
         public const float GLB_VERSION = 2.0f;
-
-#if UNITY_EDITOR
-        [MenuItem("Assets/gltf/import")]
-        public static void ImportMenu()
-        {
-            var path = UnityEditor.EditorUtility.OpenFilePanel("open gltf", "", "gltf,glb");
-            if (!string.IsNullOrEmpty(path))
-            {
-                Debug.Log(path);
-                var bytes = File.ReadAllBytes(path);
-                var ext = Path.GetExtension(path).ToLower();
-                switch (ext)
-                {
-                    case ".gltf":
-                        {
-                            var json = Encoding.UTF8.GetString(bytes);
-                            var root = gltfImporter.Import(path, json, new ArraySegment<byte>(), false);
-                            if (root == null)
-                            {
-                                return;
-                            }
-                            root.name = Path.GetFileNameWithoutExtension(path);
-                        }
-                        break;
-
-                    case ".glb":
-                        {
-                            var root = glbImporter.Import(path, bytes, false);
-                            if (root == null)
-                            {
-                                return;
-                            }
-                            root.name = Path.GetFileNameWithoutExtension(path);
-                        }
-                        break;
-
-                    default:
-                        Debug.LogWarningFormat("unknown ext: {0}", path);
-                        break;
-                }
-            }
-        }
-#endif
-
-#if UNITY_2017_OR_NEWER
-        public override void OnImportAsset(AssetImportContext ctx)
-        {
-            Debug.LogFormat("## glbImporter ##: {0}", ctx.assetPath);
-
-            var bytes = File.ReadAllBytes(ctx.assetPath);
-
-            Import(new gltfImporter.Context(ctx), bytes);
-        }
-#endif
 
         public static GlbChunkType ToChunkType(string src)
         {
@@ -91,7 +27,7 @@ namespace UniGLTF
             }
         }
 
-        public static GameObject Import(string path, Byte[] bytes, bool isPrefab)
+        public static GameObject Import(IImporterContext context, Byte[] bytes)
         {
             int pos = 0;
             if(Encoding.ASCII.GetString(bytes, 0, 4) != GLB_MAGIC)
@@ -103,7 +39,7 @@ namespace UniGLTF
             var version = BitConverter.ToUInt32(bytes, pos);
             if (version != GLB_VERSION)
             {
-                Debug.LogWarningFormat("{0}: unknown version: {1}", path, version);
+                Debug.LogWarningFormat("{0}: unknown version: {1}", context.Path, version);
                 return null;
             }
             pos += 4;
@@ -150,10 +86,9 @@ namespace UniGLTF
             var jsonBytes = chunks[0].Bytes;
             var json = Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count);
 
-            return gltfImporter.Import(path,
+            return gltfImporter.Import(context,
                 json, 
-                chunks[1].Bytes,
-                isPrefab);
+                chunks[1].Bytes);
         }
     }
 }

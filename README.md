@@ -96,6 +96,8 @@ Exclude SciFiHelmet(70074vertices), all model can import.
 
 [Mesh.IndexFormat(from 2017.3)](https://docs.unity3d.com/ScriptReference/Mesh-indexFormat.html) allows a huge mesh, Otherwise mesh division required.
 
+![SciFiHelmet](doc/SciFiHelmet.png)
+
 ## Exporter
 
 * asset([right click] - [gltf] - [export]

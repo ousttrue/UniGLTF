@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using UnityEngine;
 
 
@@ -12,7 +11,7 @@ namespace UniGLTF
         void AddObjectToAsset(string key, UnityEngine.Object o);
     }
 
-    class RuntimeContext : IImporterContext
+    public class RuntimeContext : IImporterContext
     {
         public string Path
         {
