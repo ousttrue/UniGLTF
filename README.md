@@ -22,7 +22,7 @@
 
 ## Usage
 
-* drop gltf folder or glb file int Assets folder
+* drop gltf folder or glb file into Assets folder
 
 or
 
@@ -240,7 +240,7 @@ foreach (var binding in AnimationUtility.GetCurveBindings(clip))
 
 for Animation component.
 
-```
+```cs
 var clip=new AnimationClip();
 clip.legacy=true;
 
