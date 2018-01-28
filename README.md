@@ -7,7 +7,7 @@
 
 ![duck](doc/duck.png)
 ![duck_prefab](doc/duck_prefab.png)
-![animation](Recordings/animation.gif)
+![animation](doc/animation.gif)
 
 * [license](LICENSE)
 
@@ -255,7 +255,7 @@ AssetPostprocessor version is more stable.
 
 ![gizmo](doc/BoneMappingGizmo.png)
 ![inspector](doc/BoneMappingInspector.png)
-![humanoid](Recordings/humanoid.gif)
+![humanoid](doc/humanoid.gif)
 
 |features     |importer|exporter|memo     |
 |-------------|--------|--------|---------|
