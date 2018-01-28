@@ -182,12 +182,13 @@ skin.rootBone=skeleton;
 
 |features     |importer|exporter|memo     |
 |-------------|--------|--------|---------|
-|TRS          |o       |WIP     |/anmations
+|TRS          |o       |o       |/anmations
 |interpolation|
 
 ```cs
 foreach (var binding in AnimationUtility.GetCurveBindings(clip))
 {
+    // Curve binding acquisition is possible only in editor mode
     var curve = AnimationUtility.GetEditorCurve(clip, binding);
     foreach(var key in curve.keys)
     {
@@ -203,15 +204,14 @@ for Animation component.
 ```
 var clip=new AnimationClip();
 clip.legacy=true;
+
+var animation = go.AddComponent<Animation>();
+animation.clip = clip;
 ```
 
 #### generic
 
 for Animator component.
-
-```
-var clip=new AnimationClip();
-```
 
 #### humanoid
 
