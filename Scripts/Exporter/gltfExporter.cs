@@ -61,7 +61,6 @@ namespace UniGLTF
             var buffer = gltf.buffers[0].Storage;
 
             var json = gltf.ToJson();
-            var jsonBytes = Encoding.UTF8.GetBytes(json);
 
             using (var s = new FileStream(path, FileMode.Create))
             {

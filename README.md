@@ -9,6 +9,21 @@
 ![duck_prefab](doc/duck_prefab.png)
 ![animation](Recordings/animation.gif)
 
+* [license](LICENSE)
+
+## Install
+
+* create Unity new project
+* clone UniGLTF repose in Assets folder
+
+## Usage
+
+* drop gltf folder or glb file int Assets folder
+
+or
+
+* use [Assets] - [gltf] - [import] menu
+
 ## Coordinate(Right-handed and Left-handed)
 
 * Both GLTF and Unity is, x-right and y-up.

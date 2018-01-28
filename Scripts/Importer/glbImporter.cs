@@ -85,8 +85,6 @@ namespace UniGLTF
 
         public static GameObject Import(string path, Byte[] bytes, bool isPrefab)
         {
-            var baseDir = Path.GetDirectoryName(path);
-
             int pos = 0;
             if(Encoding.ASCII.GetString(bytes, 0, 4) != GLB_MAGIC)
             {
@@ -101,7 +99,7 @@ namespace UniGLTF
             }
             pos += 4;
 
-            var totalLength = BitConverter.ToUInt32(bytes, pos);
+            //var totalLength = BitConverter.ToUInt32(bytes, pos);
             pos += 4;
 
             var chunks = new List<GlbChunk>();

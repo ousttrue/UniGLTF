@@ -620,8 +620,6 @@ namespace UniGLTF
                     var joints0 = gltf.GetArrayFromAccessor<UShort4>(prim.attributes.JOINTS_0); // uint4
                     var weights0 = gltf.GetArrayFromAccessor<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
 
-                    var weightNorms = weights0.Select(x => x.x + x.y + x.z + x.w).ToArray();
-
                     for (int j = 0; j < joints0.Length; ++j)
                     {
                         var bw = new BoneWeight();
@@ -651,7 +649,7 @@ namespace UniGLTF
                     }
                     for (int i = 0; i < prim.targets.Length; ++i)
                     {
-                        var name = string.Format("target{0}", i++);
+                        //var name = string.Format("target{0}", i++);
                         var primTarget = prim.targets[i];
                         var blendShape = blendShapes[i];
 

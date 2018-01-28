@@ -47,8 +47,8 @@ namespace UniHumanoid
                 */
             }
 
-            var muscles = HumanTrait.MuscleName.Select((x, i) => string.Format("[{0}]{1}", i, x)).ToArray();
-            var str = string.Join("\n", muscles);
+            //var muscles = HumanTrait.MuscleName.Select((x, i) => string.Format("[{0}]{1}", i, x)).ToArray();
+            //var str = string.Join("\n", muscles);
 
             var dst = new AnimationClip();
             {
