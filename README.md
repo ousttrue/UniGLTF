@@ -1,13 +1,12 @@
 # UniGLTF
 
-[glTF](https://github.com/KhronosGroup/glTF) importer for Unity using [ScriptedImporter](https://docs.unity3d.com/ScriptReference/Experimental.AssetImporters.ScriptedImporter.html)
+[glTF](https://github.com/KhronosGroup/glTF) importer
 
 * Unityt5.6.3
-* Unity2017.3.0f3
 * glTF-2.0
 
 ![duck](doc/duck.png)
-![duck_assets](doc/duck_assets.png)
+![duck_prefab](doc/duck_prefab.png)
 ![animation](Recordings/animation.gif)
 
 ## Coordinate(Right-handed and Left-handed)
@@ -60,8 +59,6 @@ This should be done in global coordinate, but animation curve contains local coo
 
 * [x] asset(ScriptedImporter) (Unity-2017 or new)
 * [x] asset(AssetPostprocessor.OnPostprocessAllAssets) (Unity-5.6)
-* [ ] separate Unity-2017's ScriptedImporter
-* [ ] crash in unity2017's ScriptedImporter when reimport. workaround, move target file to out of Assets. Launch unity, then move the file to Assets folder.
 
 * runtime [Assets] - [gltf] - [import]
 
@@ -221,6 +218,19 @@ for Animator component. require humanoid avatar.
 
 * Camera
 * Light
+
+## Experimental
+
+[ScriptedImporter](https://docs.unity3d.com/ScriptReference/Experimental.AssetImporters.ScriptedImporter.html)
+
+* Unity2017.3.0f3
+
+![duck_assets](doc/duck_assets.png)
+
+* [ ] separate Unity-2017's ScriptedImporter
+* [ ] crash in unity2017's ScriptedImporter when reimport. workaround, move target file to out of Assets. Launch unity, then move the file to Assets folder.
+
+AssetPostprocessor version is more stable.
 
 ## Humanoid Helper
 
