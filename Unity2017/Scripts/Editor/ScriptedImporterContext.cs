@@ -1,4 +1,5 @@
-﻿using UnityEditor.Experimental.AssetImporters;
+﻿#if UNITY_2017_3_OR_NEWER
+using UnityEditor.Experimental.AssetImporters;
 
 
 namespace UniGLTF
@@ -42,3 +43,4 @@ namespace UniGLTF
         }
     }
 }
+#endif
