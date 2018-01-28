@@ -115,7 +115,10 @@ namespace UniGLTF
         #endregion
 
         public List<glTFTexture> textures = new List<glTFTexture>();
-        public List<glTFTextureSampler> samplers = new List<glTFTextureSampler>();
+        public List<glTFTextureSampler> samplers = new List<glTFTextureSampler>()
+        {
+            new glTFTextureSampler(),
+        };
         public List<glTFImage> images = new List<glTFImage>();
         public List<glTFMaterial> materials = new List<glTFMaterial>();
         public List<glTFMesh> meshes = new List<glTFMesh>();

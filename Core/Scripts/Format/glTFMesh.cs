@@ -31,7 +31,7 @@ namespace UniGLTF
     public class glTFPrimitives: IJsonSerializable
     {
         public int mode;
-        public int indices;
+        public int indices = -1;
         public glTFAttributes attributes;
         public int material;
 

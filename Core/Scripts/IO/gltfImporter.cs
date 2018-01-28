@@ -101,7 +101,7 @@ namespace UniGLTF
 
                 if (File.Exists(m_prefabPath))
                 {
-                    Debug.LogFormat("Exist: {0}", m_prefabPath);
+                    //Debug.LogFormat("Exist: {0}", m_prefabPath);
 
                     // clear subassets
                     foreach (var x in GetSubAssets())
@@ -166,6 +166,11 @@ namespace UniGLTF
 
         static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
         {
+            if (texture == null)
+            {
+                return;
+            }
+
             switch (sampler.wrapS)
             {
 #if UNITY_2017_OR_NEWER
@@ -260,20 +265,19 @@ namespace UniGLTF
             var root = new GameObject("_root_");
             ctx.SetMainGameObject("root", root);
 
-            var baseDir = Path.GetDirectoryName(ctx.Path);
-
             var gltf=JsonUtility.FromJson<glTF>(json);
             if (gltf == null)
             {
                 Debug.LogWarningFormat("{0}: fail to parse json", ctx.Path);
                 return null;
             }
+            gltf.baseDir = Path.GetDirectoryName(ctx.Path);
+            Debug.LogFormat("{0}: {1}", ctx.Path, gltf);
 
             foreach (var buffer in gltf.buffers)
             {
-                buffer.OpenStorage(baseDir, glbBinChunk);
+                buffer.OpenStorage(gltf.baseDir, glbBinChunk);
             }
-            Debug.LogFormat("{0}: {1}", ctx.Path, gltf);
 
             // textures
             var textures = ImportTextures(gltf)
@@ -282,11 +286,18 @@ namespace UniGLTF
                         var samplerIndex = gltf.textures[x.TextureIndex].sampler;
                         var sampler = gltf.samplers[samplerIndex];
 
-                        SetSampler(x.Texture, sampler);
-
-                        if (!x.IsAsset)
+                        if (x.Texture == null)
                         {
-                            ctx.AddObjectToAsset(x.Texture.name, x.Texture);
+                            Debug.LogWarningFormat("May be import order, not yet texture is not imported. Later, manualy reimport {0}", ctx.Path);
+                        }
+                        else
+                        {
+                            SetSampler(x.Texture, sampler);
+
+                            if (!x.IsAsset)
+                            {
+                                ctx.AddObjectToAsset(x.Texture.name, x.Texture);
+                            }
                         }
                         return x.Texture;
                     })
@@ -511,7 +522,7 @@ namespace UniGLTF
             {
                 // local folder
                 var path = Path.Combine(gltf.baseDir, image.uri);
-                Debug.LogFormat("load texture: {0}", path);
+                //Debug.LogFormat("load texture: {0}", path);
 
                 var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 return new TextureWithIsAsset { TextureIndex = index, Texture = texture, IsAsset = true };
@@ -531,7 +542,7 @@ namespace UniGLTF
         static IEnumerable<Material> ImportMaterials(glTF gltf, Texture2D[] textures)
         {
             var shader = Shader.Find("Standard");
-            if (gltf.materials == null)
+            if (gltf.materials == null || !gltf.materials.Any())
             {
                 var material = new Material(shader);
                 return new Material[] { material };
@@ -611,17 +622,25 @@ namespace UniGLTF
                 var indexOffset = positions.Count;
                 var indexBuffer = prim.indices;
 
+                var positionCount = positions.Count;
                 positions.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
+                positionCount = positions.Count - positionCount;
 
                 // normal
                 if (prim.attributes.NORMAL != -1)
                 {
                     normals.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
                 }
+
                 // uv
                 if (prim.attributes.TEXCOORD_0 != -1)
                 {
                     uv.AddRange(gltf.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
+                }
+                else
+                {
+                    // for inconsistent attributes in primitives
+                    uv.AddRange(new Vector2[positionCount]);
                 }
 
                 // skin
@@ -682,7 +701,12 @@ namespace UniGLTF
                     }
                 }
 
-                subMeshes.Add(gltf.GetIndices(indexBuffer).Select(x => x + indexOffset).ToArray());
+                var indices =
+                 (indexBuffer >= 0)
+                 ? gltf.GetIndices(indexBuffer).Select(x => x + indexOffset).ToArray()
+                 : TriangleUtil.FlipTriangle(Enumerable.Range(0, positions.Count)).ToArray() // without index array
+                 ;
+                subMeshes.Add(indices);
 
                 // material
                 materialIndices.Add(prim.material);
@@ -731,11 +755,18 @@ namespace UniGLTF
                 {
                     if (blendShape.Positions.Count > 0)
                     {
-                        mesh.AddBlendShapeFrame(blendShape.Name, 100.0f,
-                            blendShape.Positions.ToArray(),
-                            blendShape.Normals.ToArray(),
-                            null
-                            );
+                        if (blendShape.Positions.Count == mesh.vertexCount)
+                        {
+                            mesh.AddBlendShapeFrame(blendShape.Name, 100.0f,
+                                blendShape.Positions.ToArray(),
+                                normals.Count == mesh.vertexCount ? blendShape.Normals.ToArray() : null,
+                                null
+                                );
+                        }
+                        else
+                        {
+                            Debug.LogWarningFormat("May be partial primitive has blendShape. Rquire separete mesh or extend blend shape, but not implemented: {0}", blendShape.Name);
+                        }
                     }
                 }
             }

@@ -88,6 +88,10 @@ This should be done in global coordinate, but animation curve contains local coo
 
 * runtime [Assets] - [gltf] - [import]
 
+### Sample Models
+
+* https://github.com/KhronosGroup/glTF-Sample-Models
+
 ## Exporter
 
 * asset([right click] - [gltf] - [export]
@@ -205,7 +209,8 @@ skin.rootBone=skeleton;
 
 |features     |importer|exporter|memo     |
 |-------------|--------|--------|---------|
-|TRS          |o       |o       |/anmations
+|TRS          |o       |o       |/anmations/#/channels/#/target/path == translation|rotation|scale
+|blendshape   |        |        |/animation/#/channels/#/target/path == weight
 |interpolation|
 
 ```cs
@@ -273,8 +278,4 @@ AssetPostprocessor version is more stable.
 |avatar       |o       |        |
 |avatar params|        |        |
 |bone name    |        |        |rename to bone name
-
-## Sample Models
-
-* https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0
 

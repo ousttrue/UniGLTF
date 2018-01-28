@@ -37,12 +37,19 @@ namespace UniGLTF
 
         const string DataPrefix = "data:application/octet-stream;base64,";
 
+        const string DataPrefix2 = "data:application/gltf-buffer;base64,";
+        
         Byte[] ReadFromUri(string baseDir, string uri)
         {
             if (uri.StartsWith(DataPrefix))
             {
                 // embeded
                 return Convert.FromBase64String(uri.Substring(DataPrefix.Length));
+            }
+            else if (uri.StartsWith(DataPrefix2))
+            {
+                // embeded
+                return Convert.FromBase64String(uri.Substring(DataPrefix2.Length));
             }
             else
             {
