@@ -4,14 +4,20 @@ using System.IO;
 using System.Text;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.Experimental.AssetImporters;
 using UnityEngine;
-
+#if UNITY_2017_OR_NEWER
+using UnityEditor.Experimental.AssetImporters;
+#endif
 
 namespace UniGLTF
 {
+#if UNITY_2017_OR_NEWER
     [ScriptedImporter(1, "glb")]
-    public class glbImporter : ScriptedImporter
+#endif
+    public class glbImporter
+#if UNITY_2017_OR_NEWER
+        : ScriptedImporter
+#endif
     {
         public const string GLB_MAGIC = "glTF";
         public const float GLB_VERSION = 2.0f;
@@ -51,6 +57,7 @@ namespace UniGLTF
         }
 #endif
 
+#if UNITY_2017_OR_NEWER
         public override void OnImportAsset(AssetImportContext ctx)
         {
             Debug.LogFormat("## glbImporter ##: {0}", ctx.assetPath);
@@ -59,6 +66,7 @@ namespace UniGLTF
 
             Import(new gltfImporter.Context(ctx), bytes);
         }
+#endif
 
         public static GameObject Import(string path, Byte[] bytes)
         {

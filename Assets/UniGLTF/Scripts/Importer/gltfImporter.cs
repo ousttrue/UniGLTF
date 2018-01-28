@@ -4,15 +4,23 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using UnityEditor.Experimental.AssetImporters;
 using UnityEngine;
+#if UNITY_2017_OR_NEWER
+using UnityEditor.Experimental.AssetImporters;
+#endif
 
 
 namespace UniGLTF
 {
+#if UNITY_2017_OR_NEWER
     [ScriptedImporter(1, "gltf")]
-    public class gltfImporter : ScriptedImporter
+#endif
+    public class gltfImporter
+#if UNITY_2017_OR_NEWER
+        : ScriptedImporter
+#endif
     {
+#if UNITY_2017_OR_NEWER
         public override void OnImportAsset(AssetImportContext ctx)
         {
             Debug.LogFormat("## Importer ##: {0}", ctx.assetPath);
@@ -21,47 +29,60 @@ namespace UniGLTF
 
             Import(ctx, json, new ArraySegment<byte>());
         }
+#endif
 
         public struct Context
         {
+#if UNITY_2017_OR_NEWER
             public AssetImportContext AssetImportContext;
+#endif
             public String Path;
 
+#if UNITY_2017_OR_NEWER
             public Context(AssetImportContext assetImportContext)
             {
                 AssetImportContext = assetImportContext;
                 Path = assetImportContext.assetPath;
             }
+#endif
 
             public Context(String path)
             {
+#if UNITY_2017_OR_NEWER
                 AssetImportContext = null;
+#endif
                 Path = path;
             }
 
             public void AddObjectToAsset(string key, UnityEngine.Object o)
             {
+#if UNITY_2017_OR_NEWER
                 if (AssetImportContext == null)
                 {
                     return;
                 }
                 AssetImportContext.AddObjectToAsset(key, o);
+#endif
             }
 
             public void SetMainObject(string key, UnityEngine.Object o)
             {
+#if UNITY_2017_OR_NEWER
                 if (AssetImportContext == null)
                 {
                     return;
                 }
                 AssetImportContext.SetMainObject(key, o);
+#endif
             }
         }
 
+#if UNITY_2017_OR_NEWER
         public static GameObject Import(AssetImportContext ctx, string json, ArraySegment<Byte> bytes = default(ArraySegment<Byte>))
         {
             return Import(new Context(ctx), json, bytes);
         }
+#endif
 
         public static GameObject Import(string path, string json, ArraySegment<Byte> bytes = default(ArraySegment<Byte>))
         {
@@ -88,6 +109,7 @@ namespace UniGLTF
         {
             switch (sampler.wrapS)
             {
+#if UNITY_2017_OR_NEWER
                 case glWrap.CLAMP_TO_EDGE:
                     texture.wrapModeU = TextureWrapMode.Clamp;
                     break;
@@ -99,11 +121,21 @@ namespace UniGLTF
                 case glWrap.MIRRORED_REPEAT:
                     texture.wrapModeU = TextureWrapMode.Mirror;
                     break;
+#else
+                case glWrap.CLAMP_TO_EDGE:
+                    texture.wrapMode = TextureWrapMode.Clamp;
+                    break;
+
+                case glWrap.REPEAT:
+                    texture.wrapMode = TextureWrapMode.Repeat;
+                    break;
+#endif
 
                 default:
                     throw new NotImplementedException();
             }
 
+#if UNITY_2017_OR_NEWER
             switch (sampler.wrapT)
             {
                 case glWrap.CLAMP_TO_EDGE:
@@ -121,6 +153,7 @@ namespace UniGLTF
                 default:
                     throw new NotImplementedException();
             }
+#endif
 
             /*
             if (sampler.minFilter != sampler.magFilter)
@@ -353,7 +386,7 @@ namespace UniGLTF
             return root;
         }
 
-        #region Import
+#region Import
         static IEnumerable<TextureWithIsAsset> ImportTextures(glTF gltf)
         {
             if (gltf.textures == null)
@@ -655,6 +688,7 @@ namespace UniGLTF
             }
             if (node.matrix != null && node.matrix.Length > 0)
             {
+#if UNITY_2017_OR_NEWER
                 var values = node.matrix;
                 var col0 = new Vector4(values[0], values[1], values[2], values[3]);
                 var col1 = new Vector4(values[4], values[5], values[6], values[7]);
@@ -663,8 +697,10 @@ namespace UniGLTF
                 var m = new Matrix4x4(col0, col1, col2, col3);
                 go.transform.localRotation = m.rotation;
                 go.transform.localPosition = m.GetColumn(3);
+#else
+                throw new NotImplementedException();
+#endif
             }
-
             return go;
         }
 
@@ -768,6 +804,6 @@ namespace UniGLTF
                 }
             }
         }
-        #endregion
+#endregion
     }
 }

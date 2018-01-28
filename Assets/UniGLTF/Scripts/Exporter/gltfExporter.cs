@@ -337,9 +337,11 @@ namespace UniGLTF
                         wrap = glWrap.REPEAT;
                         break;
 
+#if UNITY_2017_OR_NEWER
                     case TextureWrapMode.Mirror:
                         wrap = glWrap.MIRRORED_REPEAT;
                         break;
+#endif
 
                     default:
                         throw new NotImplementedException();
@@ -364,9 +366,9 @@ namespace UniGLTF
             }
 
             gltf.materials = unityMaterials.Select(x => ExportMaterial(x, unityTextures)).ToList();
-            #endregion
+#endregion
 
-            #region Meshes
+#region Meshes
             var unityMeshes = unityNodes.Select(x => x.GetSharedMesh()).Where(x => x != null).ToList();
             for (int i = 0; i < unityMeshes.Count; ++i)
             {
@@ -421,9 +423,9 @@ namespace UniGLTF
                     });
                 }
             }
-            #endregion
+#endregion
 
-            #region Skins
+#region Skins
             var unitySkins = unityNodes.Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null).ToList();
             gltf.nodes = unityNodes.Select(x => ExportNode(x, unityNodes, unityMeshes, unitySkins)).ToList();
             gltf.scenes = new List<gltfScene>
@@ -454,9 +456,9 @@ namespace UniGLTF
                     gltf.nodes[nodeIndex].skin = skinIndex;
                 }
             }
-            #endregion
+#endregion
 
-            #region Animations
+#region Animations
             var animation = go.GetComponent<Animation>();
             if (animation != null)
             {
@@ -497,11 +499,11 @@ namespace UniGLTF
                     gltf.animations.Add(animationWithCurve.Animation);
                 }
             }
-            #endregion
+#endregion
 
             // glb buffer
             gltf.buffers[bufferIndex].UpdateByteLength();
         }
-        #endregion
+#endregion
     }
 }

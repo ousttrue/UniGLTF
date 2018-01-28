@@ -30,6 +30,7 @@
 * [x] gltf
 * [x] glb
 * [ ] Sample scene and model
+* [ ] Separate editor code
 * [ ] Unity-5.6 compatibility
 
 ### material & texture

@@ -68,11 +68,14 @@ namespace UniGLTF
 
         public static Matrix4x4 ReverseZ(this Matrix4x4 m)
         {
-#if true
+#if UNITY_2017_OR_NEWER
             m.SetTRS(m.GetColumn(3).ReverseZ(), m.rotation.ReverseZ(), Vector3.one);
             return m;
 #else
-            return new Matrix4x4(m.GetColumn(0), m.GetColumn(1), -m.GetColumn(2), m.GetColumn(3));
+            var r = m;
+            Debug.LogWarning("ToDo: Matrix4x4.ReverseZ");
+            return r;
+            //return NewMatrix4x4(m.GetColumn(0), m.GetColumn(1), -m.GetColumn(2), m.GetColumn(3));
 #endif
         }
 

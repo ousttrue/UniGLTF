@@ -1,4 +1,5 @@
-﻿using UnityEditor.Experimental.AssetImporters;
+﻿#if UNITY_2017_OR_NEWER
+using UnityEditor.Experimental.AssetImporters;
 using UnityEngine;
 
 
@@ -23,3 +24,4 @@ public static class AssetImportContextExtensions
     }
 #endif
 }
+#endif
