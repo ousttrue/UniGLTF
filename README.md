@@ -157,6 +157,7 @@ for(int i=0; i<primitiveCount; ++i)
 |features     |importer|exporter|memo     |
 |-------------|--------|--------|---------|
 |blend shape  |o       |        |/meshes/#/primitives/#/targets
+|name ?
 
 ```cs
 foreach(var target in targets)
@@ -210,7 +211,7 @@ skin.rootBone=skeleton;
 |features     |importer|exporter|memo     |
 |-------------|--------|--------|---------|
 |TRS          |o       |o       |/anmations/#/channels/#/target/path == translation|rotation|scale
-|blendshape   |        |        |/animation/#/channels/#/target/path == weight
+|blendshape   |o       |        |/animation/#/channels/#/target/path == weight
 |interpolation|
 
 ```cs

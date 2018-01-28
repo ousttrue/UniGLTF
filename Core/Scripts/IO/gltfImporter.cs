@@ -75,6 +75,9 @@ namespace UniGLTF
             return Import(new Context(ctx), json, bytes);
         }
 #endif
+
+        const float FRAME_WEIGHT = 1.0f;
+
         class PrefabContext : IImporterContext
         {
             public string Path
@@ -106,7 +109,7 @@ namespace UniGLTF
                     // clear subassets
                     foreach (var x in GetSubAssets())
                     {
-                        if(x is Transform
+                        if (x is Transform
                             || x is GameObject)
                         {
                             continue;
@@ -265,7 +268,7 @@ namespace UniGLTF
             var root = new GameObject("_root_");
             ctx.SetMainGameObject("root", root);
 
-            var gltf=JsonUtility.FromJson<glTF>(json);
+            var gltf = JsonUtility.FromJson<glTF>(json);
             if (gltf == null)
             {
                 Debug.LogWarningFormat("{0}: fail to parse json", ctx.Path);
@@ -485,7 +488,7 @@ namespace UniGLTF
             return root;
         }
 
-#region Import
+        #region Import
         static IEnumerable<TextureWithIsAsset> ImportTextures(glTF gltf)
         {
             if (gltf.textures == null)
@@ -674,7 +677,7 @@ namespace UniGLTF
                 {
                     if (blendShapes == null)
                     {
-                        blendShapes = prim.targets.Select((x, i) => new BlendShape("blendShape: " + i)).ToArray();
+                        blendShapes = prim.targets.Select((x, i) => new BlendShape(i.ToString())).ToArray();
                     }
                     for (int i = 0; i < prim.targets.Length; ++i)
                     {
@@ -757,7 +760,7 @@ namespace UniGLTF
                     {
                         if (blendShape.Positions.Count == mesh.vertexCount)
                         {
-                            mesh.AddBlendShapeFrame(blendShape.Name, 100.0f,
+                            mesh.AddBlendShapeFrame(blendShape.Name, FRAME_WEIGHT,
                                 blendShape.Positions.ToArray(),
                                 normals.Count == mesh.vertexCount ? blendShape.Normals.ToArray() : null,
                                 null
@@ -852,14 +855,20 @@ namespace UniGLTF
             return create();
         }
 
-        public static void ImportAnimation(Transform root, AnimationClip clip, List<glTFAnimation> animations, Transform[] nodes, glTF buffer)
+        public static void ImportAnimation(Transform root, AnimationClip clip, List<glTFAnimation> animations, Transform[] nodes, glTF gltf)
         {
-            foreach (var x in animations)
+            for (int i = 0; i < animations.Count; ++i)
             {
-                foreach (var y in x.channels)
+                var animation = animations[i];
+                if (string.IsNullOrEmpty(animation.name))
                 {
-                    var node = nodes[y.target.node];
-                    var relativePath = node.RelativePathFrom(root);
+                    animation.name = string.Format("animation:{0}", i);
+                }
+
+                foreach (var y in animation.channels)
+                {
+                    var targetTransform = nodes[y.target.node];
+                    var relativePath = targetTransform.RelativePathFrom(root);
                     switch (y.target.path)
                     {
                         case glTFAnimationTarget.PATH_TRANSLATION:
@@ -868,13 +877,13 @@ namespace UniGLTF
                                 var curveY = new AnimationCurve();
                                 var curveZ = new AnimationCurve();
 
-                                var sampler = x.samplers[y.sampler];
-                                var input = buffer.GetArrayFromAccessor<float>(sampler.input);
-                                var output = buffer.GetArrayFromAccessor<Vector3>(sampler.output);
-                                for (int i = 0; i < input.Length; ++i)
+                                var sampler = animation.samplers[y.sampler];
+                                var input = gltf.GetArrayFromAccessor<float>(sampler.input);
+                                var output = gltf.GetArrayFromAccessor<Vector3>(sampler.output);
+                                for (int j = 0; j < input.Length; ++j)
                                 {
-                                    var time = input[i];
-                                    var pos = output[i].ReverseZ();
+                                    var time = input[j];
+                                    var pos = output[j].ReverseZ();
                                     curveX.AddKey(time, pos.x);
                                     curveY.AddKey(time, pos.y);
                                     curveZ.AddKey(time, pos.z);
@@ -893,13 +902,13 @@ namespace UniGLTF
                                 var curveZ = new AnimationCurve();
                                 var curveW = new AnimationCurve();
 
-                                var sampler = x.samplers[y.sampler];
-                                var input = buffer.GetArrayFromAccessor<float>(sampler.input);
-                                var output = buffer.GetArrayFromAccessor<Quaternion>(sampler.output);
-                                for (int i = 0; i < input.Length; ++i)
+                                var sampler = animation.samplers[y.sampler];
+                                var input = gltf.GetArrayFromAccessor<float>(sampler.input);
+                                var output = gltf.GetArrayFromAccessor<Quaternion>(sampler.output);
+                                for (int j = 0; j < input.Length; ++j)
                                 {
-                                    var time = input[i];
-                                    var rot = output[i].ReverseZ();
+                                    var time = input[j];
+                                    var rot = output[j].ReverseZ();
                                     curveX.AddKey(time, rot.x);
                                     curveY.AddKey(time, rot.y);
                                     curveZ.AddKey(time, rot.z);
@@ -919,13 +928,13 @@ namespace UniGLTF
                                 var curveY = new AnimationCurve();
                                 var curveZ = new AnimationCurve();
 
-                                var sampler = x.samplers[y.sampler];
-                                var input = buffer.GetArrayFromAccessor<float>(sampler.input);
-                                var output = buffer.GetArrayFromAccessor<Vector3>(sampler.output);
-                                for (int i = 0; i < input.Length; ++i)
+                                var sampler = animation.samplers[y.sampler];
+                                var input = gltf.GetArrayFromAccessor<float>(sampler.input);
+                                var output = gltf.GetArrayFromAccessor<Vector3>(sampler.output);
+                                for (int j = 0; j < input.Length; ++j)
                                 {
-                                    var time = input[i];
-                                    var scale = output[i];
+                                    var time = input[j];
+                                    var scale = output[j];
                                     curveX.AddKey(time, scale.x);
                                     curveY.AddKey(time, scale.y);
                                     curveZ.AddKey(time, scale.z);
@@ -936,10 +945,31 @@ namespace UniGLTF
                                 clip.SetCurve(relativePath, typeof(Transform), "localScale.z", curveZ);
                             }
                             break;
+
+                        case glTFAnimationTarget.PATH_WEIGHT:
+                            {
+                                var node = gltf.nodes[y.target.node];
+                                var mesh = gltf.meshes[node.mesh];
+                                for (int k = 0; k < mesh.weights.Length; ++k)
+                                {
+                                    //var weight = mesh.weights[k];
+                                    var curve = new AnimationCurve();
+                                    var sampler = animation.samplers[y.sampler];
+                                    var input = gltf.GetArrayFromAccessor<float>(sampler.input);
+                                    var output = gltf.GetArrayFromAccessor<float>(sampler.output);
+                                    for (int j = 0; j < input.Length; ++j)
+                                    {
+                                        curve.AddKey(input[j], output[j]);
+                                    }
+
+                                    clip.SetCurve(relativePath, typeof(SkinnedMeshRenderer), "blendShape." + k, curve);
+                                }
+                            }
+                            break;
                     }
                 }
             }
         }
-#endregion
+        #endregion
     }
 }

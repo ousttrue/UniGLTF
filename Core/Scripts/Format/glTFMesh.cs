@@ -59,6 +59,7 @@ namespace UniGLTF
     {
         public string name;
         public List<glTFPrimitives> primitives;
+        public float[] weights;
 
         public glTFMesh(string _name)
         {

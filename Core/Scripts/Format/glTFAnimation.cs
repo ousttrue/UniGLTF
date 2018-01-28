@@ -26,6 +26,7 @@ namespace UniGLTF
         public const string PATH_TRANSLATION = "translation";
         public const string PATH_ROTATION = "rotation";
         public const string PATH_SCALE = "scale";
+        public const string PATH_WEIGHT = "weights";
 
         public static int GetElementCount(string target)
         {
@@ -82,6 +83,7 @@ namespace UniGLTF
     [Serializable]
     public class glTFAnimation: IJsonSerializable
     {
+        public string name = "";
         public List<glTFAnimationChannel> channels = new List<glTFAnimationChannel>();
         public List<glTFAnimationSampler> samplers = new List<glTFAnimationSampler>();
 
