@@ -13,6 +13,10 @@
 
 ## Install
 
+* import [unitypackage](https://github.com/ousttrue/UniGLTF/releases)
+
+### developer
+
 * create Unity new project
 * clone UniGLTF repose in Assets folder
 
