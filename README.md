@@ -10,10 +10,6 @@
 ![duck_assets](doc/duck_assets.png)
 ![animation](Recordings/animation.gif)
 
-## Issues
-
-* crash unity when reimport. workaround, move target file to out of Assets. Launch unity, then move the file to Assets folder.
-
 ## Coordinate(Right-handed and Left-handed)
 
 * Both GLTF and Unity is, x-right and y-up.
@@ -32,7 +28,26 @@ Quaternion reversed = Quaternion.AngleAxis(-angle, new Vector3(axis.x, aixs.y, -
 ```
 
 ```cs
-Matrix reversed = src;
+var src = new Matrix4x4();
+src.m00 = values[0];
+src.m10 = values[1];
+src.m20 = values[2];
+src.m30 = values[3];
+src.m01 = values[4];
+src.m11 = values[5];
+src.m21 = values[6];
+src.m31 = values[7];
+src.m02 = values[8];
+src.m12 = values[9];
+src.m22 = values[10];
+src.m32 = values[11];
+src.m03 = values[12];
+src.m13 = values[13];
+src.m23 = values[14];
+src.m33 = values[15];
+
+// ?
+Matrix4x4 reversed = src;
 m.m20 *= -1;
 m.m21 *= -1;
 m.m22 *= -1;
@@ -45,6 +60,9 @@ This should be done in global coordinate, but animation curve contains local coo
 
 * [x] asset(ScriptedImporter) (Unity-2017 or new)
 * [x] asset(AssetPostprocessor.OnPostprocessAllAssets) (Unity-5.6)
+* [ ] separate Unity-2017's ScriptedImporter
+* [ ] crash in unity2017's ScriptedImporter when reimport. workaround, move target file to out of Assets. Launch unity, then move the file to Assets folder.
+
 * runtime [Assets] - [gltf] - [import]
 
 ## Exporter
@@ -122,10 +140,13 @@ foreach(var target in targets)
 
 #### skin
 
+* Matrix4x4 Behavior may be different between Unity 2017 and Unity 5.6
+* Because of the bindmatrix, The animation of models with different inverseBindMatrices and node hierarchy break
+
 |features     |importer|exporter|memo     |
 |-------------|--------|--------|---------|
 |boneweight   |o       |o       |/meshes/#/primitives/#/attributes/(JOINTS_0|WEIGHTS_0)
-|bindmatrix   |o       |        |/skins/#/inverseBindMatrices
+|bindmatrix   |        |        |/skins/#/inverseBindMatrices
 |skeleton     |o       |        |/skins/#/skeleton
 |joints       |o       |        |/skins/#/joints
 

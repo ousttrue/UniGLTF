@@ -73,10 +73,10 @@ namespace UniGLTF
             return m;
 #else
             var r = m;
-            m.m20 *= -1;
-            m.m21 *= -1;
+            m.m02 *= -1;
+            m.m12 *= -1;
             m.m22 *= -1;
-            m.m23 *= -1;
+            m.m32 *= -1;
             return r;
 #endif
         }
