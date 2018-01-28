@@ -380,7 +380,7 @@ namespace UniGLTF
 
                 var normalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, x.normals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
                 var uvAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, x.uv.Select(y => y.ReverseY()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                var tangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, x.tangents, glBufferTarget.ARRAY_BUFFER);
+                /*var tangentAccessorIndex =*/ gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, x.tangents, glBufferTarget.ARRAY_BUFFER);
 
                 var boneweights = x.boneWeights;
                 var weightAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new Vector4(y.weight0, y.weight1, y.weight2, y.weight3)).ToArray(), glBufferTarget.ARRAY_BUFFER);

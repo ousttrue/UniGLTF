@@ -1,7 +1,7 @@
-﻿using UniGLTF;
-using System.Linq;
+﻿using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
+
 
 namespace UniGLTF
 {
@@ -19,11 +19,6 @@ namespace UniGLTF
                 return JsonUtility.FromJson<T>(x.Segment.ToString());
                 
             }).ToList();
-        }
-
-        public static bool HasKey(this JsonParser parsed, string key)
-        {
-            return parsed.ObjectItems.Any(x => x.Key == key);
         }
     }
 }

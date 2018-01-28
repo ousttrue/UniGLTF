@@ -354,6 +354,10 @@ namespace UniGLTF
                 throw new KeyNotFoundException();
             }
         }
+        public bool HasKey(string key)
+        {
+            return ObjectItems.Any(x => x.Key == key);
+        }
 
         public JsonParser this[int index]
         {
