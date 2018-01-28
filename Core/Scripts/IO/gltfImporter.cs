@@ -723,6 +723,15 @@ namespace UniGLTF
             var mesh = new Mesh();
             mesh.name = gltfMesh.name;
 
+            if (positions.Count > UInt16.MaxValue)
+            {
+#if UNITY_2017_3_OR_NEWER
+                mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+#else
+                Debug.LogWarningFormat("vertices {0} exceed 65535. not implemented. Unity2017.3 supports uint index", positions.Count);
+#endif
+            }
+
             mesh.vertices = positions.ToArray();
             if (normals.Any())
             {
@@ -970,6 +979,6 @@ namespace UniGLTF
                 }
             }
         }
-        #endregion
+#endregion
     }
 }

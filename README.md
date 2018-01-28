@@ -92,6 +92,10 @@ This should be done in global coordinate, but animation curve contains local coo
 
 * https://github.com/KhronosGroup/glTF-Sample-Models
 
+Exclude SciFiHelmet(70074vertices), all model can import.
+
+[Mesh.IndexFormat(from 2017.3)](https://docs.unity3d.com/ScriptReference/Mesh-indexFormat.html) allows a huge mesh, Otherwise mesh division required.
+
 ## Exporter
 
 * asset([right click] - [gltf] - [export]
@@ -251,7 +255,7 @@ for Animator component. require humanoid avatar.
 * Camera
 * Light
 
-## Experimental
+## Experimental ScriptedImporter for Unity2017
 
 [ScriptedImporter](https://docs.unity3d.com/ScriptReference/Experimental.AssetImporters.ScriptedImporter.html)
 
@@ -259,7 +263,7 @@ for Animator component. require humanoid avatar.
 
 ![duck_assets](doc/duck_assets.png)
 
-* [ ] separate Unity-2017's ScriptedImporter
+* [x] separate Unity-2017's ScriptedImporter
 * [ ] crash in unity2017's ScriptedImporter when reimport. workaround, move target file to out of Assets. Launch unity, then move the file to Assets folder.
 
 AssetPostprocessor version is more stable.
