@@ -13,7 +13,7 @@ using UnityEditor.Experimental.AssetImporters;
 
 namespace UniGLTF
 {
-#if UNITY_2017_OR_NEWER
+#if UNITY_2017_OR_NEWER && USE_UNIGLTF_SCRIPTEDIMPORTER
     [ScriptedImporter(1, "gltf")]
 #endif
     public class gltfImporter
