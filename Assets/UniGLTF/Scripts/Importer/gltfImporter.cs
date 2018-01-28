@@ -412,8 +412,9 @@ namespace UniGLTF
 
 #if true
                             // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
-                            var _b = joints.Select(y => y.worldToLocalMatrix * nodes[0].Transform.localToWorldMatrix).ToArray();
-                            mesh.bindposes = _b;
+                            var hipsParent = nodes[skin.skeleton].Transform.parent;
+                            var bindMatrices = joints.Select(y => y.worldToLocalMatrix * hipsParent.localToWorldMatrix).ToArray();
+                            mesh.bindposes = bindMatrices;
 #else
                             var bindPoses = gltf.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices).ToArray();
                             var bindPosesR = bindPoses

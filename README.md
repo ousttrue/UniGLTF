@@ -143,6 +143,13 @@ foreach(var target in targets)
 * Matrix4x4 Behavior may be different between Unity 2017 and Unity 5.6
 * Because of the bindmatrix, The animation of models with different inverseBindMatrices and node hierarchy break
 
+```cs
+// workaround. calculate bindMatrices from hierarchy
+var hipsParent = nodes[skin.skeleton].Transform.parent;
+var bindMatrices = joints.Select(y => y.worldToLocalMatrix * hipsParent.localToWorldMatrix).ToArray();
+mesh.bindposes = bindMatrices;
+```
+
 |features     |importer|exporter|memo     |
 |-------------|--------|--------|---------|
 |boneweight   |o       |o       |/meshes/#/primitives/#/attributes/(JOINTS_0|WEIGHTS_0)
