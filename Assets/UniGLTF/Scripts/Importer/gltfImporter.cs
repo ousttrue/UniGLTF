@@ -441,7 +441,7 @@ namespace UniGLTF
             }
 
             // animation
-            if (gltf.animations != null)
+            if (gltf.animations != null && gltf.animations.Any())
             {
                 var clip = new AnimationClip();
                 clip.name = ANIMATION_NAME;
