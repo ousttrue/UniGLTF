@@ -24,7 +24,18 @@ or
 
 * use [Assets] - [gltf] - [import] menu
 
-## Coordinate(Right-handed and Left-handed)
+## Json
+
+### Deserialize
+
+UnityEngine.JsonUtlity is enough.
+
+### Serrialize
+
+It is necessary to selectively output property.
+UnityEngine.JsonUtlity is not enough.
+
+## Coordinate conversion(Right-handed and Left-handed)
 
 * Both GLTF and Unity is, x-right and y-up.
 * GLTF is z-backward

@@ -134,13 +134,13 @@ namespace UniGLTF
                 ///
                 if (File.Exists(m_prefabPath))
                 {
-                    Debug.LogFormat("ReplacePrefab: {0}", m_prefabPath);
+                    //Debug.LogFormat("ReplacePrefab: {0}", m_prefabPath);
                     var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(m_prefabPath);
                     PrefabUtility.ReplacePrefab(m_go, prefab, ReplacePrefabOptions.ConnectToPrefab);
                 }
                 else
                 {
-                    Debug.LogFormat("CreatePrefab: {0}", m_prefabPath);
+                    //Debug.LogFormat("CreatePrefab: {0}", m_prefabPath);
                     PrefabUtility.CreatePrefab(m_prefabPath, m_go, ReplacePrefabOptions.ConnectToPrefab);
                 }
 
@@ -255,15 +255,25 @@ namespace UniGLTF
             }
         }
 
-        static GameObject Import(IImporterContext ctx, string json, ArraySegment<Byte> bytes)
+        static GameObject Import(IImporterContext ctx, string json, ArraySegment<Byte> glbBinChunk)
         {
             var root = new GameObject("_root_");
             ctx.SetMainGameObject("root", root);
 
             var baseDir = Path.GetDirectoryName(ctx.Path);
 
-            var gltf = glTFExtensions.Parse(json, baseDir, bytes);
-            Debug.Log(gltf);
+            var gltf=JsonUtility.FromJson<glTF>(json);
+            if (gltf == null)
+            {
+                Debug.LogWarningFormat("{0}: fail to parse json", ctx.Path);
+                return null;
+            }
+
+            foreach (var buffer in gltf.buffers)
+            {
+                buffer.OpenStorage(baseDir, glbBinChunk);
+            }
+            Debug.LogFormat("{0}: {1}", ctx.Path, gltf);
 
             // textures
             var textures = ImportTextures(gltf)

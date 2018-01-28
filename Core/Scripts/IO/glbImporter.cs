@@ -38,6 +38,10 @@ namespace UniGLTF
                         {
                             var json = Encoding.UTF8.GetString(bytes);
                             var root = gltfImporter.Import(path, json, new ArraySegment<byte>(), false);
+                            if (root == null)
+                            {
+                                return;
+                            }
                             root.name = Path.GetFileNameWithoutExtension(path);
                         }
                         break;
@@ -45,6 +49,10 @@ namespace UniGLTF
                     case ".glb":
                         {
                             var root = glbImporter.Import(path, bytes, false);
+                            if (root == null)
+                            {
+                                return;
+                            }
                             root.name = Path.GetFileNameWithoutExtension(path);
                         }
                         break;
@@ -95,7 +103,8 @@ namespace UniGLTF
             var version = BitConverter.ToUInt32(bytes, pos);
             if (version != GLB_VERSION)
             {
-                throw new Exception("unknown version: " + version);
+                Debug.LogWarningFormat("{0}: unknown version: {1}", path, version);
+                return null;
             }
             pos += 4;
 
