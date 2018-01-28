@@ -6,10 +6,10 @@ namespace UniGLTF
     [Serializable]
     public class glTFTextureSampler : IJsonSerializable
     {
-        public glFilter magFilter;
+        public glFilter magFilter = glFilter.NEAREST;
         public glFilter minFilter;
-        public glWrap wrapS;
-        public glWrap wrapT;
+        public glWrap wrapS = glWrap.REPEAT;
+        public glWrap wrapT = glWrap.REPEAT;
 
         public string ToJson()
         {

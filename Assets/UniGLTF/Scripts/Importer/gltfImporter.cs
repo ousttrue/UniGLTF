@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using UnityEditor;
 using UnityEngine;
 #if UNITY_2017_OR_NEWER
 using UnityEditor.Experimental.AssetImporters;
@@ -29,64 +30,122 @@ namespace UniGLTF
 
             Import(ctx, json, new ArraySegment<byte>());
         }
-#endif
 
-        public struct Context
+        class ScriptedImporterContext : IImporterContext
         {
-#if UNITY_2017_OR_NEWER
-            public AssetImportContext AssetImportContext;
-#endif
-            public String Path;
+            public string Path
+            {
+                get;
+                private set;
+            }
 
-#if UNITY_2017_OR_NEWER
-            public Context(AssetImportContext assetImportContext)
+            public void Dispose()
+            {
+            }
+
+            public AssetImportContext AssetImportContext;
+
+            public ScriptedImporterContext(ScriptedImporterContext assetImportContext)
             {
                 AssetImportContext = assetImportContext;
                 Path = assetImportContext.assetPath;
             }
-#endif
-
-            public Context(String path)
-            {
-#if UNITY_2017_OR_NEWER
-                AssetImportContext = null;
-#endif
-                Path = path;
-            }
 
             public void AddObjectToAsset(string key, UnityEngine.Object o)
             {
-#if UNITY_2017_OR_NEWER
                 if (AssetImportContext == null)
                 {
                     return;
                 }
                 AssetImportContext.AddObjectToAsset(key, o);
-#endif
             }
 
-            public void SetMainObject(string key, UnityEngine.Object o)
+            public void SetMainGameObject(string key, UnityEngine.GameObject go)
             {
-#if UNITY_2017_OR_NEWER
                 if (AssetImportContext == null)
                 {
                     return;
                 }
-                AssetImportContext.SetMainObject(key, o);
-#endif
+                AssetImportContext.SetMainObject(key, go);
             }
         }
 
-#if UNITY_2017_OR_NEWER
         public static GameObject Import(AssetImportContext ctx, string json, ArraySegment<Byte> bytes = default(ArraySegment<Byte>))
         {
             return Import(new Context(ctx), json, bytes);
         }
 #endif
-
-        public static GameObject Import(string path, string json, ArraySegment<Byte> bytes = default(ArraySegment<Byte>))
+        class PrefabContext : IImporterContext
         {
-            return Import(new Context(path), json, bytes);
+            public string Path
+            {
+                get;
+                private set;
+            }
+
+            string m_prefabPath;
+
+            IEnumerable<UnityEngine.Object> GetSubAssets()
+            {
+                return UnityEditor.AssetDatabase.LoadAllAssetsAtPath(m_prefabPath)
+                    ;
+            }
+
+            public PrefabContext(String path)
+            {
+                Path = path;
+
+                var dir = System.IO.Path.GetDirectoryName(Path);
+                var name = System.IO.Path.GetFileNameWithoutExtension(Path);
+                m_prefabPath = string.Format("{0}/{1}.prefab", dir, name);
+
+                if (File.Exists(m_prefabPath))
+                {
+                    Debug.LogFormat("Exist: {0}", m_prefabPath);
+
+                    // clear subassets
+                    foreach (var x in GetSubAssets())
+                    {
+                        if(x is Transform
+                            || x is GameObject)
+                        {
+                            continue;
+                        }
+                        GameObject.DestroyImmediate(x, true);
+                    }
+                }
+            }
+
+            GameObject m_go;
+            public void SetMainGameObject(string key, GameObject go)
+            {
+                m_go = go;
+            }
+
+            public void AddObjectToAsset(string key, UnityEngine.Object o)
+            {
+                AssetDatabase.AddObjectToAsset(o, m_prefabPath);
+            }
+
+            public void Dispose()
+            {
+                ///
+                /// create prefab, after subasset AssetDatabase.AddObjectToAsset
+                ///
+                if (File.Exists(m_prefabPath))
+                {
+                    Debug.LogFormat("ReplacePrefab: {0}", m_prefabPath);
+                    var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(m_prefabPath);
+                    PrefabUtility.ReplacePrefab(m_go, prefab, ReplacePrefabOptions.ConnectToPrefab);
+                }
+                else
+                {
+                    Debug.LogFormat("CreatePrefab: {0}", m_prefabPath);
+                    PrefabUtility.CreatePrefab(m_prefabPath, m_go, ReplacePrefabOptions.ConnectToPrefab);
+                }
+
+                GameObject.DestroyImmediate(m_go);
+            }
         }
 
         static void TraverseTransform(Transform t, Action<Transform> pred)
@@ -123,6 +182,7 @@ namespace UniGLTF
                     break;
 #else
                 case glWrap.CLAMP_TO_EDGE:
+                case glWrap.MIRRORED_REPEAT:
                     texture.wrapMode = TextureWrapMode.Clamp;
                     break;
 
@@ -177,8 +237,29 @@ namespace UniGLTF
             }
         }
 
-        public static GameObject Import(Context ctx, string json, ArraySegment<Byte> bytes)
+        public static GameObject Import(string path, string json, ArraySegment<Byte> bytes, bool isPrefab)
         {
+            if (isPrefab)
+            {
+                using (var context = new PrefabContext(path))
+                {
+                    return Import(context, json, bytes);
+                }
+            }
+            else
+            {
+                using (var context = new RuntimeContext(path))
+                {
+                    return Import(context, json, bytes);
+                }
+            }
+        }
+
+        static GameObject Import(IImporterContext ctx, string json, ArraySegment<Byte> bytes)
+        {
+            var root = new GameObject("_root_");
+            ctx.SetMainGameObject("root", root);
+
             var baseDir = Path.GetDirectoryName(ctx.Path);
 
             var gltf = glTFExtensions.Parse(json, baseDir, bytes);
@@ -222,8 +303,6 @@ namespace UniGLTF
 
                 return meshWithMaterials;
             }).ToArray();
-
-            var root = new GameObject("_root_");
 
             // nodes
             var _nodes = gltf.nodes.Select(x => ImportNode(x)).ToArray();
@@ -360,8 +439,6 @@ namespace UniGLTF
                 var t = nodes[x].Transform;
                 t.SetParent(root.transform, false);
             }
-
-            ctx.SetMainObject("root", root);
 
             // animation
             if (gltf.animations != null)
@@ -688,8 +765,8 @@ namespace UniGLTF
             }
             if (node.matrix != null && node.matrix.Length > 0)
             {
-#if UNITY_2017_OR_NEWER
                 var values = node.matrix;
+#if UNITY_2017_OR_NEWER
                 var col0 = new Vector4(values[0], values[1], values[2], values[3]);
                 var col1 = new Vector4(values[4], values[5], values[6], values[7]);
                 var col2 = new Vector4(values[8], values[9], values[10], values[11]);
@@ -698,7 +775,26 @@ namespace UniGLTF
                 go.transform.localRotation = m.rotation;
                 go.transform.localPosition = m.GetColumn(3);
 #else
-                throw new NotImplementedException();
+                // https://forum.unity.com/threads/how-to-assign-matrix4x4-to-transform.121966/
+                var m = new Matrix4x4();
+                m.m00 = values[0];
+                m.m01 = values[1];
+                m.m02 = values[2];
+                m.m03 = values[3];
+                m.m10 = values[4];
+                m.m11 = values[5];
+                m.m12 = values[6];
+                m.m13 = values[7];
+                m.m20 = values[8];
+                m.m21 = values[9];
+                m.m22 = values[10];
+                m.m23 = values[11];
+                m.m30 = values[12];
+                m.m31 = values[13];
+                m.m32 = values[14];
+                m.m33 = values[15];
+                go.transform.localRotation = m.ExtractRotation();
+                go.transform.localPosition = m.ExtractPosition();
 #endif
             }
             return go;

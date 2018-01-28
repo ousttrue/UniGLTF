@@ -37,14 +37,14 @@ namespace UniGLTF
                     case ".gltf":
                         {
                             var json = Encoding.UTF8.GetString(bytes);
-                            var root = gltfImporter.Import(path, json);
+                            var root = gltfImporter.Import(path, json, new ArraySegment<byte>(), false);
                             root.name = Path.GetFileNameWithoutExtension(path);
                         }
                         break;
 
                     case ".glb":
                         {
-                            var root = glbImporter.Import(path, bytes);
+                            var root = glbImporter.Import(path, bytes, false);
                             root.name = Path.GetFileNameWithoutExtension(path);
                         }
                         break;
@@ -68,11 +68,6 @@ namespace UniGLTF
         }
 #endif
 
-        public static GameObject Import(string path, Byte[] bytes)
-        {
-            return Import(new gltfImporter.Context(path), bytes);
-        }
-
         public static GlbChunkType ToChunkType(string src)
         {
             switch(src)
@@ -88,9 +83,9 @@ namespace UniGLTF
             }
         }
 
-        public static GameObject Import(gltfImporter.Context ctx, Byte[] bytes)
+        public static GameObject Import(string path, Byte[] bytes, bool isPrefab)
         {
-            var baseDir = Path.GetDirectoryName(ctx.Path);
+            var baseDir = Path.GetDirectoryName(path);
 
             int pos = 0;
             if(Encoding.ASCII.GetString(bytes, 0, 4) != GLB_MAGIC)
@@ -148,9 +143,10 @@ namespace UniGLTF
             var jsonBytes = chunks[0].Bytes;
             var json = Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count);
 
-            return gltfImporter.Import(ctx,
+            return gltfImporter.Import(path,
                 json, 
-                chunks[1].Bytes);
+                chunks[1].Bytes,
+                isPrefab);
         }
     }
 }

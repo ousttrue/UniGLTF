@@ -2,6 +2,7 @@
 
 [glTF](https://github.com/KhronosGroup/glTF) importer for Unity using [ScriptedImporter](https://docs.unity3d.com/ScriptReference/Experimental.AssetImporters.ScriptedImporter.html)
 
+* Unityt5.6.3
 * Unity2017.3.0f3
 * glTF-2.0
 
@@ -13,11 +14,38 @@
 
 * crash unity when reimport. workaround, move target file to out of Assets. Launch unity, then move the file to Assets folder.
 
+## Coordinate(Right-handed and Left-handed)
+
+* Both GLTF and Unity is, x-right and y-up.
+* GLTF is z-backward
+* Unity is z-forward
+
+```cs
+Vector3 reversed = new Vector3(src.x, src.y, -src.z);
+```
+
+```cs
+float angle;
+Vector3 axis;
+src.ToAngleAxis(out angle, out axis);
+Quaternion reversed = Quaternion.AngleAxis(-angle, new Vector3(axis.x, aixs.y, -axis.z));
+```
+
+```cs
+Matrix reversed = src;
+m.m20 *= -1;
+m.m21 *= -1;
+m.m22 *= -1;
+m.m23 *= -1;
+```
+
+This should be done in global coordinate, but animation curve contains local coordinate.
+
 ## Importer
 
-* asset(ScriptedImporter)
+* [x] asset(ScriptedImporter) (Unity-2017 or new)
+* [x] asset(AssetPostprocessor.OnPostprocessAllAssets) (Unity-5.6)
 * runtime [Assets] - [gltf] - [import]
-* todo: asset(AssetPostprocessor.OnPostprocessAllAssets)
 
 ## Exporter
 
@@ -31,7 +59,7 @@
 * [x] glb
 * [ ] Sample scene and model
 * [ ] Separate editor code
-* [ ] Unity-5.6 compatibility
+* [x] Unity-5.6 compatibility
 
 ### material & texture
 
