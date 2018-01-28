@@ -380,6 +380,7 @@ namespace UniGLTF
                 texture.LoadImage(bytes, true);
                 return new TextureWithIsAsset { TextureIndex = index, Texture = texture, IsAsset = false };
             }
+#if UNITY_EDITOR
             else if (gltf.baseDir.StartsWith("Assets/"))
             {
                 // local folder
@@ -389,6 +390,7 @@ namespace UniGLTF
                 var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 return new TextureWithIsAsset { TextureIndex = index, Texture = texture, IsAsset = true };
             }
+#endif
             else
             {
                 // external
@@ -587,7 +589,7 @@ namespace UniGLTF
 #if UNITY_2017_3_OR_NEWER
                 mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 #else
-                Debug.LogWarningFormat("vertices {0} exceed 65535. not implemented. Unity2017.3 supports uint index", positions.Count);
+                Debug.LogWarningFormat("vertices {0} exceed 65535. not implemented. Unity2017.3 supports large mesh", positions.Count);
 #endif
             }
 

@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using UnityEditor;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 
 namespace UniGLTF
@@ -14,6 +15,7 @@ namespace UniGLTF
         const string CONVERT_HUMANOID_KEY = "GameObject/gltf/export";
         private static readonly UnityEngine.Object json;
 
+#if UNITY_EDITOR
         [MenuItem(CONVERT_HUMANOID_KEY, true, 1)]
         private static bool ExportValidate()
         {
@@ -24,7 +26,6 @@ namespace UniGLTF
         private static void Export()
         {
             var go = Selection.activeObject as GameObject;
-
             var path = EditorUtility.SaveFilePanel(
                     "Save glb",
                     "",
@@ -35,6 +36,12 @@ namespace UniGLTF
                 return;
             }
 
+            Export(go, path);
+        }
+#endif
+
+        static void Export(GameObject go, string path)
+        { 
             var gltf = new glTF
             {
                 asset = new glTFAssets
@@ -121,16 +128,9 @@ namespace UniGLTF
         }
         static BytesWithPath GetPngBytes(Texture2D texture)
         {
+#if UNITY_EDITOR
             var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
-            if (String.IsNullOrEmpty(path))
-            {
-                return new BytesWithPath
-                {
-                    Bytes = texture.EncodeToPNG(),
-                };
-
-            }
-            else
+            if (!String.IsNullOrEmpty(path))
             {
                 return new BytesWithPath
                 {
@@ -138,6 +138,12 @@ namespace UniGLTF
                     Path = path,
                 };
             }
+#endif
+
+            return new BytesWithPath
+            {
+                Bytes = texture.EncodeToPNG(),
+            };
         }
 
         public static glTFMaterial ExportMaterial(Material m, List<Texture2D> textures)
@@ -251,6 +257,7 @@ namespace UniGLTF
             public Dictionary<int, InputOutputValues> SamplerMap = new Dictionary<int, InputOutputValues>();
         }
 
+#if UNITY_EDITOR
         static AnimationWithSampleCurves ExportAnimation(AnimationClip clip, Transform root, List<Transform> nodes)
         {
             var animation = new AnimationWithSampleCurves
@@ -288,6 +295,7 @@ namespace UniGLTF
 
             return animation;
         }
+#endif
 
         public static void FromGameObject(this glTF gltf, GameObject go)
         {
@@ -463,9 +471,10 @@ namespace UniGLTF
                     gltf.nodes[nodeIndex].skin = skinIndex;
                 }
             }
-#endregion
+            #endregion
 
-#region Animations
+#if UNITY_EDITOR
+            #region Animations
             var animation = go.GetComponent<Animation>();
             if (animation != null)
             {
@@ -506,7 +515,8 @@ namespace UniGLTF
                     gltf.animations.Add(animationWithCurve.Animation);
                 }
             }
-#endregion
+            #endregion
+#endif
 
             // glb buffer
             gltf.buffers[bufferIndex].UpdateByteLength();

@@ -11,6 +11,10 @@
 
 * [license](LICENSE)
 
+## Version
+
+* 20180129 1.0.1 first version.
+
 ## Install
 
 * import [unitypackage](https://github.com/ousttrue/UniGLTF/releases)
@@ -113,7 +117,7 @@ Exclude SciFiHelmet(70074vertices), all model can import.
 * [x] gltf
 * [x] glb
 * [ ] Sample scene and model
-* [ ] Separate editor code
+* [x] Separate editor code
 * [x] Unity-5.6 compatibility
 
 ### material & texture
@@ -147,7 +151,8 @@ material.mainTexture = texture;
 |normals      |o       |o       |/meshes/#/primitives/#/attributes/NORMAL, reverse-z
 |uv           |o       |o       |/meshes/#/primitives/#/attributes/TEXCOORD_0, reverse-y
 |tangent      |        |        |/meshes/#/primitives/#/attributes/TANGENT, ?
-|primitive    |o       |o       |todo:sharing attributes|
+|primitive    |o       |o       |/meshes/#/primitives/#/indices
+|sharing attributes|   |        |
 
 ```cs
 var mesh=new Mesh();

@@ -1,7 +1,9 @@
 ﻿using System.IO;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 
 namespace UniHumanoid
@@ -9,6 +11,8 @@ namespace UniHumanoid
     public class AnimationClipUtility : MonoBehaviour
     {
         const string CONVERT_HUMANOID_KEY = "Assets/AnimationClip/ConvertHumanoid";
+
+#if UNITY_EDITOR
         [MenuItem(CONVERT_HUMANOID_KEY)]
         private static void ConvertHumanoid()
         {
@@ -96,5 +100,6 @@ namespace UniHumanoid
         {
             return Selection.activeObject is AnimationClip;
         }
+#endif
     }
 }
