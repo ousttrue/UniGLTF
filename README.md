@@ -1,6 +1,6 @@
 # UniGLTF
 
-[glTF](https://github.com/KhronosGroup/glTF) importer
+[glTF](https://github.com/KhronosGroup/glTF) importer and exporter
 
 * Unityt5.6.3
 * glTF-2.0
@@ -9,11 +9,18 @@
 ![duck_prefab](doc/duck_prefab.png)
 ![animation](doc/animation.gif)
 
-* [license](LICENSE)
+## License
+
+* [MIT license](LICENSE)
 
 ## Version
 
-* 20180129 1.0.1 first version.
+* 20180129 [1.0.1](https://github.com/ousttrue/UniGLTF/releases/tag/v1.0.1) first version.
+
+## ToDo
+
+* /materials/#/pbrMetallicRoughness/metallicRoughnessTexture
+* /materials/#/emissiveFactor
 
 ## Install
 
@@ -30,7 +37,7 @@
 
 or
 
-* use [Assets] - [gltf] - [import] menu
+* menu [Assets] - [gltf] - [import]
 
 ## Json
 
@@ -195,7 +202,7 @@ mesh.bindposes = bindMatrices;
 
 |features     |importer|exporter|memo     |
 |-------------|--------|--------|---------|
-|boneweight   |o       |o       |/meshes/#/primitives/#/attributes/(JOINTS_0|WEIGHTS_0)
+|boneweight   |o       |o       |/meshes/#/primitives/#/attributes/(JOINTS_0,WEIGHTS_0)
 |bindmatrix   |        |        |/skins/#/inverseBindMatrices
 |skeleton     |o       |        |/skins/#/skeleton
 |joints       |o       |        |/skins/#/joints
