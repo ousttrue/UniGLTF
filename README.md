@@ -17,11 +17,6 @@
 
 * 20180129 [1.0.1](https://github.com/ousttrue/UniGLTF/releases/tag/v1.0.1) first version.
 
-## ToDo
-
-* /materials/#/pbrMetallicRoughness/metallicRoughnessTexture
-* /materials/#/emissiveFactor
-
 ## Install
 
 * import [unitypackage](https://github.com/ousttrue/UniGLTF/releases)
@@ -135,7 +130,11 @@ Exclude SciFiHelmet(70074vertices), all model can import.
 |color texture|o       |o       |/materials/#/pbrMetallicRoughness/baseColorTexture
 |sampler      |o       |o       |/samplers
 |multi uv     |
-|PBR          |
+|metallic map |o       |        |/materials/#/pbrMetallicRoughness/metallicRoughnessTexture
+|normal   map |o       |        |/materials/#/normalTexture
+|occlusion map|o       |        |/materials/#/occlusionTexture
+|emissive     |o       |        |/materials/#/emissiveFactor, material.enalbeKeyword("\_EMISSION") not affect
+|emissive map |o       |        |/materials/#/emissiveMap, material.enalbeKeyword("\_EMISSION") not affect
 
 ```cs
 var texture=new Texture2D(2, 2);

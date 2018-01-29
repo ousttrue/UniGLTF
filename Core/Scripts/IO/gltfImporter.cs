@@ -403,6 +403,38 @@ namespace UniGLTF
             }
         }
 
+        /// <summary>
+        /// StandardShader vaiables
+        /// 
+        /// _Color
+        /// _MainTex
+        /// _Cutoff
+        /// _Glossiness
+        /// _Metallic
+        /// _MetallicGlossMap
+        /// _BumpScale
+        /// _BumpMap
+        /// _Parallax
+        /// _ParallaxMap
+        /// _OcclusionStrength
+        /// _OcclusionMap
+        /// _EmissionColor
+        /// _EmissionMap
+        /// _DetailMask
+        /// _DetailAlbedoMap
+        /// _DetailNormalMapScale
+        /// _DetailNormalMap
+        /// _UVSec
+        /// _EmissionScaleUI
+        /// _EmissionColorUI
+        /// _Mode
+        /// _SrcBlend
+        /// _DstBlend
+        /// _ZWrite
+        /// </summary>
+        /// <param name="gltf"></param>
+        /// <param name="textures"></param>
+        /// <returns></returns>
         static IEnumerable<Material> ImportMaterials(glTF gltf, Texture2D[] textures)
         {
             var shader = Shader.Find("Standard");
@@ -413,11 +445,18 @@ namespace UniGLTF
             }
             else
             {
-                return gltf.materials.Select(x =>
+                return gltf.materials.Select((x, i) =>
                 {
                     var material = new Material(shader);
 
-                    material.name = x.name;
+                    if (string.IsNullOrEmpty(x.name))
+                    {
+                        material.name = string.Format("material:{0:00}", i);
+                    }
+                    else
+                    {
+                        material.name = x.name;
+                    }
 
                     if (x.pbrMetallicRoughness != null)
                     {
@@ -429,8 +468,40 @@ namespace UniGLTF
 
                         if (x.pbrMetallicRoughness.baseColorTexture.index != -1)
                         {
-                            material.mainTexture = textures[x.pbrMetallicRoughness.baseColorTexture.index];
+                            var texture = textures[x.pbrMetallicRoughness.baseColorTexture.index];
+                            material.mainTexture = texture;
                         }
+
+                        if (x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
+                        {
+                            var texture = textures[x.pbrMetallicRoughness.metallicRoughnessTexture.index];
+                            material.SetTexture("_MetallicGlossMap", texture);
+                        }
+                    }
+
+                    if (x.normalTexture.index != -1)
+                    {
+                        var texture = textures[x.normalTexture.index];
+                        material.SetTexture("_BumpMap", texture);
+                    }
+
+                    if (x.occlusionTexture.index != -1)
+                    {
+                        var texture = textures[x.occlusionTexture.index];
+                        material.SetTexture("_OcclusionMap", texture);
+                    }
+
+                    if (x.emissiveFactor != null)
+                    {
+                        material.EnableKeyword("_EMISSION");
+                        material.SetColor("_EmissionColor", new Color(x.emissiveFactor[0], x.emissiveFactor[1], x.emissiveFactor[2]));
+                    }
+
+                    if (x.emissiveTexture.index != -1)
+                    {
+                        material.EnableKeyword("_EMISSION");
+                        var texture = textures[x.emissiveTexture.index];
+                        material.SetTexture("_EmissionMap", texture);
                     }
 
                     return material;

@@ -30,7 +30,7 @@ namespace UniGLTF
     {
         public GltfTextureRef baseColorTexture = null;
         public float[] baseColorFactor;
-        public GltfTextureRef metallicRoghnessTexture = null;
+        public GltfTextureRef metallicRoughnessTexture = null;
         public float metallicFactor;
         public float roughnessFactor;
 
@@ -40,18 +40,18 @@ namespace UniGLTF
             f.BeginMap();
             if (baseColorTexture != null)
             {
-                f.Key("baseColorTexture"); f.Value(baseColorTexture);
+                f.KeyValue(() => baseColorTexture);
             }
             if (baseColorFactor != null)
             {
-                f.Key("baseColorFactor"); f.Value(baseColorFactor);
+                f.KeyValue(() => baseColorFactor);
             }
-            if (metallicRoghnessTexture != null)
+            if (metallicRoughnessTexture != null)
             {
-                f.Key("metallicRoghnessTexture"); f.Value(metallicRoghnessTexture);
+                f.KeyValue(() => metallicRoughnessTexture);
             }
-            f.Key("metallicFactor"); f.Value(metallicFactor);
-            f.Key("roughnessFactor"); f.Value(roughnessFactor);
+            f.KeyValue(() => metallicFactor);
+            f.KeyValue(() => roughnessFactor);
             f.EndMap();
             return f.ToString();
         }
