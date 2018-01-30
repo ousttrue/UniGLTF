@@ -41,7 +41,7 @@ namespace UniGLTF
 #endif
 
         static void Export(GameObject go, string path)
-        { 
+        {
             var gltf = new glTF
             {
                 asset = new glTFAssets
@@ -59,7 +59,7 @@ namespace UniGLTF
 
                 gltf.FromGameObject(copy);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Debug.LogError(ex);
             }
@@ -113,13 +113,17 @@ namespace UniGLTF
             {
                 get
                 {
-                    if (Path.ToLower().EndsWith(".png"))
+                    var ext = System.IO.Path.GetExtension(Path).ToLower();
+                    switch (ext)
                     {
-                        return "image/png";
-                    }
-                    if (Path.ToLower().EndsWith(".jpg"))
-                    {
-                        return "image/jpeg";
+                        case ".png":
+                            return "image/png";
+
+                        case ".jpg":
+                            return "image/jpeg";
+
+                        case ".tga":
+                            return "image/tga";
                     }
 
                     throw new NotImplementedException();
@@ -381,24 +385,34 @@ namespace UniGLTF
             }
 
             gltf.materials = unityMaterials.Select(x => ExportMaterial(x, unityTextures)).ToList();
-#endregion
+            #endregion
 
-#region Meshes
-            var unityMeshes = unityNodes.Select(x => x.GetSharedMesh()).Where(x => x != null).ToList();
+            #region Meshes
+            var unityMeshes = unityNodes
+                .Select(x => new MeshWithMaterials
+                {
+                    Mesh= x.GetSharedMesh(),
+                    Materials = x.GetSharedMaterials()
+                })
+                .Where(x => x.Mesh != null)
+                .ToList();
             for (int i = 0; i < unityMeshes.Count; ++i)
             {
                 var x = unityMeshes[i];
+                var mesh = x.Mesh;
+                var materials = x.Materials;
 
-                var positions = x.vertices.Select(y => y.ReverseZ()).ToArray();
+                var positions = mesh.vertices.Select(y => y.ReverseZ()).ToArray();
                 var positionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, positions, glBufferTarget.ARRAY_BUFFER);
                 gltf.accessors[positionAccessorIndex].min = positions.Aggregate(positions[0], (a, b) => new Vector3(Mathf.Min(a.x, b.x), Math.Min(a.y, b.y), Mathf.Min(a.z, b.z))).ToArray();
                 gltf.accessors[positionAccessorIndex].max = positions.Aggregate(positions[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
 
-                var normalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, x.normals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                var uvAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, x.uv.Select(y => y.ReverseY()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                /*var tangentAccessorIndex =*/ gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, x.tangents, glBufferTarget.ARRAY_BUFFER);
+                var normalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.normals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                var uvAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.uv.Select(y => y.ReverseY()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                /*var tangentAccessorIndex =*/
+                gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.tangents, glBufferTarget.ARRAY_BUFFER);
 
-                var boneweights = x.boneWeights;
+                var boneweights = mesh.boneWeights;
                 var weightAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new Vector4(y.weight0, y.weight1, y.weight2, y.weight3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
                 var jointsAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new UShort4((ushort)y.boneIndex0, (ushort)y.boneIndex1, (ushort)y.boneIndex2, (ushort)y.boneIndex3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
 
@@ -423,26 +437,27 @@ namespace UniGLTF
                     attributes.JOINTS_0 = jointsAccessorIndex;
                 }
 
-                gltf.meshes.Add(new glTFMesh(x.name));
+                gltf.meshes.Add(new glTFMesh(mesh.name));
 
-                for (int j = 0; j < x.subMeshCount; ++j)
+                for (int j = 0; j < mesh.subMeshCount; ++j)
                 {
-                    var indices = TriangleUtil.FlipTriangle(x.GetIndices(j)).Select(y => (uint)y).ToArray();
+                    var indices = TriangleUtil.FlipTriangle(mesh.GetIndices(j)).Select(y => (uint)y).ToArray();
                     var indicesAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, indices, glBufferTarget.ELEMENT_ARRAY_BUFFER);
 
                     gltf.meshes.Last().primitives.Add(new glTFPrimitives
                     {
                         attributes = attributes,
                         indices = indicesAccessorIndex,
-                        mode = 4 // triangels ?
+                        mode = 4, // triangels ?
+                        material = unityMaterials.IndexOf(materials[j])
                     });
                 }
             }
-#endregion
+            #endregion
 
-#region Skins
+            #region Skins
             var unitySkins = unityNodes.Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null).ToList();
-            gltf.nodes = unityNodes.Select(x => ExportNode(x, unityNodes, unityMeshes, unitySkins)).ToList();
+            gltf.nodes = unityNodes.Select(x => ExportNode(x, unityNodes, unityMeshes.Select(y => y.Mesh).ToList(), unitySkins)).ToList();
             gltf.scenes = new List<gltfScene>
             {
                 new gltfScene
@@ -521,6 +536,6 @@ namespace UniGLTF
             // glb buffer
             gltf.buffers[bufferIndex].UpdateByteLength();
         }
-#endregion
+        #endregion
     }
 }

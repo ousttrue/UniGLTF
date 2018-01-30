@@ -21,12 +21,6 @@ namespace UniGLTF
         }
     }
 
-    public struct MeshWithMaterials
-    {
-        public Mesh Mesh;
-        public Material[] Materials;
-    }
-
     class BlendShape
     {
         public string Name;
