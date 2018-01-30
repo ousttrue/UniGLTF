@@ -140,18 +140,20 @@ namespace UniGLTF
             else
             {
                 var tmp = m_bytes;
-                m_bytes = new Byte[m_bytes.Length + bytesLength];
+                // alignment
+                var padding = tmp.Length % stride == 0 ? 0 : stride - tmp.Length % stride;
+                m_bytes = new Byte[m_bytes.Length + padding + bytesLength];
                 Buffer.BlockCopy(tmp, 0, m_bytes, 0, tmp.Length);
-                if(tmp.Length + bytesLength > m_bytes.Length)
+                if(tmp.Length + padding + bytesLength > m_bytes.Length)
                 {
                     throw new ArgumentOutOfRangeException();
                 }
-                Marshal.Copy(p, m_bytes, tmp.Length, bytesLength);
+                Marshal.Copy(p, m_bytes, tmp.Length+padding, bytesLength);
                 return new glTFBufferView
                 {
                     buffer = 0,
                     byteLength = bytesLength,
-                    byteOffset = tmp.Length,
+                    byteOffset = tmp.Length+padding,
                     byteStride = stride,
                     target = target,
                 };
