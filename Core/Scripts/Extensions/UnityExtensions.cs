@@ -62,17 +62,14 @@ namespace UniGLTF
 
         public static Matrix4x4 ReverseZ(this Matrix4x4 m)
         {
-#if UNITY_2017_OR_NEWER
+#if false
+//#if UNITY_2017_1_OR_NEWER
             m.SetTRS(m.GetColumn(3).ReverseZ(), m.rotation.ReverseZ(), Vector3.one);
-            return m;
 #else
-            var r = m;
-            m.m02 *= -1;
-            m.m12 *= -1;
-            m.m22 *= -1;
-            m.m32 *= -1;
-            return r;
+            // ToDo
+            m.SetTRS(m.ExtractPosition().ReverseZ(), m.ExtractRotation().ReverseZ(), Vector3.one);
 #endif
+            return m;
         }
 
         public static Quaternion ExtractRotation(this Matrix4x4 matrix)

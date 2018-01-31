@@ -288,23 +288,19 @@ namespace UniGLTF
 
                             var joints = skin.joints.Select(y => nodes[y].Transform).ToArray();
                             skinnedMeshRenderer.bones = joints;
-                            skinnedMeshRenderer.rootBone = nodes[skin.skeleton].Transform;
+                            //skinnedMeshRenderer.rootBone = nodes[skin.skeleton].Transform;
 
-#if true
+#if false
                             // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
                             var hipsParent = nodes[0].Transform;
-                            var bindMatrices = joints.Select(y => y.worldToLocalMatrix * hipsParent.localToWorldMatrix).ToArray();
-                            mesh.bindposes = bindMatrices;
+                            var calculatedBindPoses = joints.Select(y => y.worldToLocalMatrix * hipsParent.localToWorldMatrix).ToArray();
+                            mesh.bindposes = calculatedBindPoses;
 #else
-                            var bindPoses = gltf.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices).ToArray();
-                            var bindPosesR = bindPoses
+                            var bindPoses = gltf.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices)                               
                                 .Select(y => y.ReverseZ())
-                                //.Select(y => y * nodes[0].Transform.localToWorldMatrix)
-                                //.Select(y => nodes[0].Transform.localToWorldMatrix * y)
-                                //.Select(y => y * Matrix4x4.Inverse(nodes[0].Transform.localToWorldMatrix))
                                 .ToArray()
                                 ;
-                            mesh.bindposes = bindPosesR;
+                            mesh.bindposes = bindPoses;
 #endif
 
                             skinnedMeshRenderer.sharedMesh = mesh;
@@ -347,7 +343,7 @@ namespace UniGLTF
             return root;
         }
 
-        #region Import
+#region Import
         static IEnumerable<TextureWithIsAsset> ImportTextures(glTF gltf)
         {
             if (gltf.textures == null)
