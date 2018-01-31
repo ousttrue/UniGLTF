@@ -292,7 +292,7 @@ namespace UniGLTF
 
 #if true
                             // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
-                            var hipsParent = nodes[skin.skeleton].Transform.parent;
+                            var hipsParent = nodes[0].Transform;
                             var bindMatrices = joints.Select(y => y.worldToLocalMatrix * hipsParent.localToWorldMatrix).ToArray();
                             mesh.bindposes = bindMatrices;
 #else
