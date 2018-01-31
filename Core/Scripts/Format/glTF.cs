@@ -6,21 +6,34 @@ using System.Linq;
 namespace UniGLTF
 {
     [Serializable]
-    public class gltfScene : IJsonSerializable
+    public abstract class JsonSerializableBase : IJsonSerializable
     {
-        public int[] nodes;
+        protected abstract void SerializeMembers(JsonFormatter f);
 
         public string ToJson()
         {
             var f = new JsonFormatter();
             f.BeginMap();
-            f.KeyValue(() => nodes);
+
+            SerializeMembers(f);
+
             f.EndMap();
             return f.ToString();
         }
     }
 
-    public class glTF : IJsonSerializable
+    [Serializable]
+    public class gltfScene : JsonSerializableBase
+    {
+        public int[] nodes;
+
+        protected override void SerializeMembers(JsonFormatter f)
+        {
+            f.KeyValue(() => nodes);
+        }
+    }
+
+    public class glTF : JsonSerializableBase
     {
         public string baseDir
         {
@@ -136,10 +149,8 @@ namespace UniGLTF
             return string.Format("{0}", asset);
         }
 
-        public string ToJson()
+        protected override void SerializeMembers(JsonFormatter f)
         {
-            var f = new JsonFormatter();
-            f.BeginMap();
             f.KeyValue(() => asset);
 
             // buffer
@@ -199,9 +210,6 @@ namespace UniGLTF
             {
                 f.Key("animations"); f.Value(animations);
             }
-
-            f.EndMap();
-            return f.ToString();
         }
     }
 }

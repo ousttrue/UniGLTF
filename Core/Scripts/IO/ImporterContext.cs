@@ -6,6 +6,7 @@ namespace UniGLTF
 {
     public interface IImporterContext : IDisposable
     {
+        GameObject MainGameObject { get; }
         String Path { get; }
         void SetMainGameObject(string key, GameObject go);
         void AddObjectToAsset(string key, UnityEngine.Object o);
@@ -14,6 +15,12 @@ namespace UniGLTF
     public class RuntimeContext : IImporterContext
     {
         public string Path
+        {
+            get;
+            private set;
+        }
+
+        public GameObject MainGameObject
         {
             get;
             private set;
@@ -34,6 +41,7 @@ namespace UniGLTF
 
         public void SetMainGameObject(string key, GameObject go)
         {
+            MainGameObject = go;
         }
     }
 }

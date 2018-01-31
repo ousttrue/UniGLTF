@@ -15,6 +15,12 @@ namespace UniGLTF
             private set;
         }
 
+        public GameObject MainGameObject
+        {
+            get;
+            private set;
+        }
+
         string m_prefabPath;
 
         IEnumerable<UnityEngine.Object> GetSubAssets()
@@ -47,10 +53,9 @@ namespace UniGLTF
             }
         }
 
-        GameObject m_go;
         public void SetMainGameObject(string key, GameObject go)
         {
-            m_go = go;
+            MainGameObject = go;
         }
 
         public void AddObjectToAsset(string key, UnityEngine.Object o)
@@ -60,7 +65,7 @@ namespace UniGLTF
 
         public void Dispose()
         {
-            if (m_go == null)
+            if (MainGameObject == null)
             {
                 return;
             }
@@ -72,15 +77,15 @@ namespace UniGLTF
             {
                 //Debug.LogFormat("ReplacePrefab: {0}", m_prefabPath);
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(m_prefabPath);
-                PrefabUtility.ReplacePrefab(m_go, prefab, ReplacePrefabOptions.ConnectToPrefab);
+                PrefabUtility.ReplacePrefab(MainGameObject, prefab, ReplacePrefabOptions.ConnectToPrefab);
             }
             else
             {
                 //Debug.LogFormat("CreatePrefab: {0}", m_prefabPath);
-                PrefabUtility.CreatePrefab(m_prefabPath, m_go, ReplacePrefabOptions.ConnectToPrefab);
+                PrefabUtility.CreatePrefab(m_prefabPath, MainGameObject, ReplacePrefabOptions.ConnectToPrefab);
             }
 
-            GameObject.DestroyImmediate(m_go);
+            GameObject.DestroyImmediate(MainGameObject);
         }
     }
 }

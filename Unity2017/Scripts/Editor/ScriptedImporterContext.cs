@@ -1,12 +1,18 @@
 ﻿#if UNITY_2017_3_OR_NEWER
 using UnityEditor.Experimental.AssetImporters;
-
+using UnityEngine;
 
 namespace UniGLTF
 {
     class ScriptedImporterContext : IImporterContext
     {
         public string Path
+        {
+            get;
+            private set;
+        }
+
+        public GameObject MainGameObject
         {
             get;
             private set;
@@ -26,19 +32,12 @@ namespace UniGLTF
 
         public void AddObjectToAsset(string key, UnityEngine.Object o)
         {
-            if (AssetImportContext == null)
-            {
-                return;
-            }
             AssetImportContext.AddObjectToAsset(key, o);
         }
 
         public void SetMainGameObject(string key, UnityEngine.GameObject go)
         {
-            if (AssetImportContext == null)
-            {
-                return;
-            }
+            MainGameObject = go;
             AssetImportContext.SetMainObject(key, go);
         }
     }

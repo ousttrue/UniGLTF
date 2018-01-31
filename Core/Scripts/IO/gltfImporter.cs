@@ -89,7 +89,10 @@ namespace UniGLTF
             public int? SkinIndex;
         }
 
-        public static GameObject Import(IImporterContext ctx, string json, ArraySegment<Byte> glbBinChunk)
+        public delegate void OnLoadCallback(IImporterContext ctx, string json, Transform[] nodes);
+
+        public static GameObject Import(IImporterContext ctx, string json, ArraySegment<Byte> glbBinChunk
+            , OnLoadCallback callback=null)
         {
             // exclude not gltf-2.0
             var parsed = json.ParseAsJson();
@@ -260,8 +263,8 @@ namespace UniGLTF
                 var t = nodes[x].Transform;
                 //t.SetParent(root.transform, false);
 
-                foreach(var transform in t.Traverse())
-                { 
+                foreach (var transform in t.Traverse())
+                {
                     var g = globalTransformMap[transform];
                     transform.position = g.Position.ReverseZ();
                     transform.rotation = g.Rotation.ReverseZ();
@@ -296,7 +299,7 @@ namespace UniGLTF
                             var calculatedBindPoses = joints.Select(y => y.worldToLocalMatrix * hipsParent.localToWorldMatrix).ToArray();
                             mesh.bindposes = calculatedBindPoses;
 #else
-                            var bindPoses = gltf.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices)                               
+                            var bindPoses = gltf.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices)
                                 .Select(y => y.ReverseZ())
                                 .ToArray()
                                 ;
@@ -338,12 +341,17 @@ namespace UniGLTF
                 ctx.AddObjectToAsset(ANIMATION_NAME, clip);
             }
 
+            if (callback != null)
+            {
+                callback(ctx, json, nodes.Select(x => x.Transform).ToArray());
+            }
+
             Debug.LogFormat("Import completed");
 
             return root;
         }
 
-#region Import
+        #region Import
         static IEnumerable<TextureWithIsAsset> ImportTextures(glTF gltf)
         {
             if (gltf.textures == null)
@@ -907,6 +915,6 @@ namespace UniGLTF
                 }
             }
         }
-#endregion
+        #endregion
     }
 }

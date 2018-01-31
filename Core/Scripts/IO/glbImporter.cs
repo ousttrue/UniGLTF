@@ -27,7 +27,8 @@ namespace UniGLTF
             }
         }
 
-        public static GameObject Import(IImporterContext context, Byte[] bytes)
+        public static GameObject Import(IImporterContext context, Byte[] bytes,
+            gltfImporter.OnLoadCallback callback=null)
         {
             int pos = 0;
             if(Encoding.ASCII.GetString(bytes, 0, 4) != GLB_MAGIC)
@@ -88,7 +89,9 @@ namespace UniGLTF
 
             return gltfImporter.Import(context,
                 json, 
-                chunks[1].Bytes);
+                chunks[1].Bytes,
+                callback
+                );
         }
     }
 }
