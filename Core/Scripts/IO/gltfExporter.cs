@@ -108,46 +108,43 @@ namespace UniGLTF
         {
             public Byte[] Bytes;
             public string Path;
+            public string Mime;
 
-            public string Mime
+            public BytesWithPath(Texture2D texture)
             {
-                get
+                var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
+                /*
+                if (!String.IsNullOrEmpty(path))
                 {
+                    Bytes = File.ReadAllBytes(path);
+                    Path = path;
                     var ext = System.IO.Path.GetExtension(Path).ToLower();
                     switch (ext)
                     {
                         case ".png":
-                            return "image/png";
+                            Mime = "image/png";
+                            break;
 
                         case ".jpg":
-                            return "image/jpeg";
+                            Mime = "image/jpeg";
+                            break;
 
                         case ".tga":
-                            return "image/tga";
-                    }
+                            Mime = "image/tga";
+                            break;
 
-                    throw new NotImplementedException();
+                        default:
+                            throw new NotImplementedException();
+                    }
+                }
+                else
+                */
+                {
+                    Path = "";
+                    Bytes = texture.EncodeToPNG();
+                    Mime = "image/png";
                 }
             }
-        }
-        static BytesWithPath GetPngBytes(Texture2D texture)
-        {
-#if UNITY_EDITOR
-            var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
-            if (!String.IsNullOrEmpty(path))
-            {
-                return new BytesWithPath
-                {
-                    Bytes = File.ReadAllBytes(path),
-                    Path = path,
-                };
-            }
-#endif
-
-            return new BytesWithPath
-            {
-                Bytes = texture.EncodeToPNG(),
-            };
         }
 
         public static glTFMaterial ExportMaterial(Material m, List<Texture2D> textures)
@@ -318,7 +315,7 @@ namespace UniGLTF
             {
                 var texture = unityTextures[i];
 
-                var bytesWithPath = GetPngBytes(texture); ;
+                var bytesWithPath = new BytesWithPath(texture); ;
 
                 // add view
                 var view = gltf.buffers[bufferIndex].Storage.Extend(bytesWithPath.Bytes, glBufferTarget.NONE);
