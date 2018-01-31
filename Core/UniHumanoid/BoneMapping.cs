@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Linq;
-
+using System;
 
 namespace UniHumanoid
 {
@@ -12,6 +12,26 @@ namespace UniHumanoid
         private void Reset()
         {
             Bones = new GameObject[(int)HumanBodyBones.LastBone];
+
+            var animator = GetComponent<Animator>();
+            if (animator != null)
+            {
+                if (animator.avatar != null)
+                {
+                    foreach(HumanBodyBones key in Enum.GetValues(typeof(HumanBodyBones)))
+                    {
+                        if (key == HumanBodyBones.LastBone)
+                        {
+                            break;
+                        }
+                        var transform = animator.GetBoneTransform(key);
+                        if (transform != null)
+                        {
+                            Bones[(int)key] = transform.gameObject;
+                        }
+                    }
+                }
+            }
         }
 
         public void GuessBoneMapping()
