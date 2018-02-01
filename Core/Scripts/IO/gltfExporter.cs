@@ -298,7 +298,7 @@ namespace UniGLTF
         }
 #endif
 
-        public static void FromGameObject(this glTF gltf, GameObject go)
+        public static List<Mesh> FromGameObject(this glTF gltf, GameObject go)
         {
             var bytesBuffer = new ArrayByteBuffer();
             var bufferIndex = gltf.AddBuffer(bytesBuffer);
@@ -532,6 +532,8 @@ namespace UniGLTF
 
             // glb buffer
             gltf.buffers[bufferIndex].UpdateByteLength();
+
+            return unityMeshes.Select(x => x.Mesh).ToList();
         }
         #endregion
     }
