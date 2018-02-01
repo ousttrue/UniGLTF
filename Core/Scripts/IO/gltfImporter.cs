@@ -10,7 +10,11 @@ namespace UniGLTF
 {
     public static class gltfImporter
     {
-        const float FRAME_WEIGHT = 1.0f;
+        const float FRAME_WEIGHT = 100.0f;
+
+        public delegate void OnLoadCallback(IImporterContext ctx, string json, 
+            Transform[] nodes,
+            List<Mesh> meshes);
 
         static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
         {
@@ -88,8 +92,6 @@ namespace UniGLTF
             public Transform Transform;
             public int? SkinIndex;
         }
-
-        public delegate void OnLoadCallback(IImporterContext ctx, string json, Transform[] nodes);
 
         public static GameObject Import(IImporterContext ctx, string json, ArraySegment<Byte> glbBinChunk
             , OnLoadCallback callback=null)
@@ -343,7 +345,10 @@ namespace UniGLTF
 
             if (callback != null)
             {
-                callback(ctx, json, nodes.Select(x => x.Transform).ToArray());
+                callback(ctx, json, 
+                    nodes.Select(x => x.Transform).ToArray(),
+                    meshes.Select(x => x.Mesh).ToList()
+                    );
             }
 
             Debug.LogFormat("Import completed");
@@ -537,118 +542,224 @@ namespace UniGLTF
 
         static MeshWithMaterials ImportMesh(glTF gltf, glTFMesh gltfMesh, Material[] materials)
         {
+            glTFAttributes lastAttributes = null;
+            var sharedAttributes = true;
+            foreach (var prim in gltfMesh.primitives)
+            {
+                if(lastAttributes!=null && !prim.attributes.Equals(lastAttributes))
+                {
+                    sharedAttributes = false;
+                    break;
+                }
+                lastAttributes = prim.attributes;
+            }
+
             var positions = new List<Vector3>();
             var normals = new List<Vector3>();
             var uv = new List<Vector2>();
             var boneWeights = new List<BoneWeight>();
             var subMeshes = new List<int[]>();
             var materialIndices = new List<int>();
-
-            var targets = gltfMesh.primitives[0].targets;
-            for (int i = 1; i < gltfMesh.primitives.Count; ++i)
-            {
-                if (gltfMesh.primitives[i].targets != targets)
-                {
-                    throw new FormatException(string.Format("diffirent targets: {0} with {1}",
-                        gltfMesh.primitives[i],
-                        targets));
-                }
-            }
-
             BlendShape[] blendShapes = null;
-            foreach (var prim in gltfMesh.primitives)
+
+            if (sharedAttributes)
             {
-                var indexOffset = positions.Count;
-                var indexBuffer = prim.indices;
-
-                var positionCount = positions.Count;
-                positions.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
-                positionCount = positions.Count - positionCount;
-
-                // normal
-                if (prim.attributes.NORMAL != -1)
                 {
-                    normals.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
-                }
+                    var prim = gltfMesh.primitives.First();
+                    positions.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
 
-                // uv
-                if (prim.attributes.TEXCOORD_0 != -1)
-                {
-                    uv.AddRange(gltf.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
-                }
-                else
-                {
-                    // for inconsistent attributes in primitives
-                    uv.AddRange(new Vector2[positionCount]);
-                }
-
-                // skin
-                if (prim.attributes.JOINTS_0 != -1 && prim.attributes.WEIGHTS_0 != -1)
-                {
-                    var joints0 = gltf.GetArrayFromAccessor<UShort4>(prim.attributes.JOINTS_0); // uint4
-                    var weights0 = gltf.GetArrayFromAccessor<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
-
-                    for (int j = 0; j < joints0.Length; ++j)
+                    // normal
+                    if (prim.attributes.NORMAL != -1)
                     {
-                        var bw = new BoneWeight();
-
-                        bw.boneIndex0 = joints0[j].x;
-                        bw.weight0 = weights0[j].x;
-
-                        bw.boneIndex1 = joints0[j].y;
-                        bw.weight1 = weights0[j].y;
-
-                        bw.boneIndex2 = joints0[j].z;
-                        bw.weight2 = weights0[j].z;
-
-                        bw.boneIndex3 = joints0[j].w;
-                        bw.weight3 = weights0[j].w;
-
-                        boneWeights.Add(bw);
+                        normals.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
                     }
-                }
 
-                // blendshape
-                if (prim.targets != null && prim.targets.Length > 0)
-                {
-                    if (blendShapes == null)
+                    // uv
+                    if (prim.attributes.TEXCOORD_0 != -1)
                     {
-                        blendShapes = prim.targets.Select((x, i) => new BlendShape(i.ToString())).ToArray();
+                        uv.AddRange(gltf.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
                     }
-                    for (int i = 0; i < prim.targets.Length; ++i)
+                    else
                     {
-                        //var name = string.Format("target{0}", i++);
-                        var primTarget = prim.targets[i];
-                        var blendShape = blendShapes[i];
+                        // for inconsistent attributes in primitives
+                        uv.AddRange(new Vector2[positions.Count]);
+                    }
 
-                        if (primTarget.POSITION != -1)
+                    // skin
+                    if (prim.attributes.JOINTS_0 != -1 && prim.attributes.WEIGHTS_0 != -1)
+                    {
+                        var joints0 = gltf.GetArrayFromAccessor<UShort4>(prim.attributes.JOINTS_0); // uint4
+                        var weights0 = gltf.GetArrayFromAccessor<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
+
+                        for (int j = 0; j < joints0.Length; ++j)
                         {
-                            blendShape.Positions.AddRange(
-                                gltf.GetArrayFromAccessor<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
+                            var bw = new BoneWeight();
+
+                            bw.boneIndex0 = joints0[j].x;
+                            bw.weight0 = weights0[j].x;
+
+                            bw.boneIndex1 = joints0[j].y;
+                            bw.weight1 = weights0[j].y;
+
+                            bw.boneIndex2 = joints0[j].z;
+                            bw.weight2 = weights0[j].z;
+
+                            bw.boneIndex3 = joints0[j].w;
+                            bw.weight3 = weights0[j].w;
+
+                            boneWeights.Add(bw);
                         }
-                        if (primTarget.NORMAL != -1)
+                    }
+
+                    // blendshape
+                    if (prim.targets != null && prim.targets.Count > 0)
+                    {
+                        if (blendShapes == null)
                         {
-                            blendShape.Normals.AddRange(
-                                gltf.GetArrayFromAccessor<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
+                            blendShapes = prim.targets.Select((x, i) => new BlendShape(i.ToString())).ToArray();
                         }
+                        for (int i = 0; i < prim.targets.Count; ++i)
+                        {
+                            //var name = string.Format("target{0}", i++);
+                            var primTarget = prim.targets[i];
+                            var blendShape = blendShapes[i];
+
+                            if (primTarget.POSITION != -1)
+                            {
+                                blendShape.Positions.AddRange(
+                                    gltf.GetArrayFromAccessor<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
+                            }
+                            if (primTarget.NORMAL != -1)
+                            {
+                                blendShape.Normals.AddRange(
+                                    gltf.GetArrayFromAccessor<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
+                            }
 #if false
                         if (primTarget.TANGEN!=-1)
                         {
                             blendShape.Tangents = GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32())/*.Select(ReverseZ).ToArray()*/;
                         }
 #endif
+                        }
                     }
                 }
 
-                var indices =
-                 (indexBuffer >= 0)
-                 ? gltf.GetIndices(indexBuffer).Select(x => x + indexOffset).ToArray()
-                 : TriangleUtil.FlipTriangle(Enumerable.Range(0, positions.Count)).ToArray() // without index array
-                 ;
-                subMeshes.Add(indices);
+                foreach (var prim in gltfMesh.primitives)
+                {
+                    var indices =gltf.GetIndices(prim.indices).Select(x => x).ToArray();
+                    subMeshes.Add(indices);
 
-                // material
-                materialIndices.Add(prim.material);
+                    // material
+                    materialIndices.Add(prim.material);
+                }
+            }
+            else
+            {
+                var targets = gltfMesh.primitives[0].targets;
+                for (int i = 1; i < gltfMesh.primitives.Count; ++i)
+                {
+                    if (gltfMesh.primitives[i].targets != targets)
+                    {
+                        throw new FormatException(string.Format("diffirent targets: {0} with {1}",
+                            gltfMesh.primitives[i],
+                            targets));
+                    }
+                }
+
+                foreach (var prim in gltfMesh.primitives)
+                {
+                    var indexOffset = positions.Count;
+                    var indexBuffer = prim.indices;
+
+                    var positionCount = positions.Count;
+                    positions.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
+                    positionCount = positions.Count - positionCount;
+
+                    // normal
+                    if (prim.attributes.NORMAL != -1)
+                    {
+                        normals.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
+                    }
+
+                    // uv
+                    if (prim.attributes.TEXCOORD_0 != -1)
+                    {
+                        uv.AddRange(gltf.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
+                    }
+                    else
+                    {
+                        // for inconsistent attributes in primitives
+                        uv.AddRange(new Vector2[positionCount]);
+                    }
+
+                    // skin
+                    if (prim.attributes.JOINTS_0 != -1 && prim.attributes.WEIGHTS_0 != -1)
+                    {
+                        var joints0 = gltf.GetArrayFromAccessor<UShort4>(prim.attributes.JOINTS_0); // uint4
+                        var weights0 = gltf.GetArrayFromAccessor<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
+
+                        for (int j = 0; j < joints0.Length; ++j)
+                        {
+                            var bw = new BoneWeight();
+
+                            bw.boneIndex0 = joints0[j].x;
+                            bw.weight0 = weights0[j].x;
+
+                            bw.boneIndex1 = joints0[j].y;
+                            bw.weight1 = weights0[j].y;
+
+                            bw.boneIndex2 = joints0[j].z;
+                            bw.weight2 = weights0[j].z;
+
+                            bw.boneIndex3 = joints0[j].w;
+                            bw.weight3 = weights0[j].w;
+
+                            boneWeights.Add(bw);
+                        }
+                    }
+
+                    // blendshape
+                    if (prim.targets != null && prim.targets.Count > 0)
+                    {
+                        if (blendShapes == null)
+                        {
+                            blendShapes = prim.targets.Select((x, i) => new BlendShape(i.ToString())).ToArray();
+                        }
+                        for (int i = 0; i < prim.targets.Count; ++i)
+                        {
+                            //var name = string.Format("target{0}", i++);
+                            var primTarget = prim.targets[i];
+                            var blendShape = blendShapes[i];
+
+                            if (primTarget.POSITION != -1)
+                            {
+                                blendShape.Positions.AddRange(
+                                    gltf.GetArrayFromAccessor<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
+                            }
+                            if (primTarget.NORMAL != -1)
+                            {
+                                blendShape.Normals.AddRange(
+                                    gltf.GetArrayFromAccessor<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
+                            }
+#if false
+                        if (primTarget.TANGEN!=-1)
+                        {
+                            blendShape.Tangents = GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32())/*.Select(ReverseZ).ToArray()*/;
+                        }
+#endif
+                        }
+                    }
+
+                    var indices =
+                     (indexBuffer >= 0)
+                     ? gltf.GetIndices(indexBuffer).Select(x => x + indexOffset).ToArray()
+                     : TriangleUtil.FlipTriangle(Enumerable.Range(0, positions.Count)).ToArray() // without index array
+                     ;
+                    subMeshes.Add(indices);
+
+                    // material
+                    materialIndices.Add(prim.material);
+                }
             }
             if (!materialIndices.Any())
             {
@@ -915,6 +1026,6 @@ namespace UniGLTF
                 }
             }
         }
-        #endregion
+#endregion
     }
 }

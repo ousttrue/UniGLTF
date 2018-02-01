@@ -13,6 +13,22 @@ namespace UniGLTF
         public int JOINTS_0 = -1;
         public int WEIGHTS_0 = -1;
 
+        public override bool Equals(object obj)
+        {
+            var rhs = obj as glTFAttributes;
+            if (rhs == null)
+            {
+                return base.Equals(obj);
+            }
+
+            return POSITION == rhs.POSITION
+                && NORMAL == rhs.NORMAL
+                && TEXCOORD_0 == rhs.TEXCOORD_0
+                && JOINTS_0 == rhs.JOINTS_0
+                && WEIGHTS_0 == rhs.WEIGHTS_0
+                ;
+        }
+
         public string ToJson()
         {
             var f = new JsonFormatter();
@@ -35,7 +51,7 @@ namespace UniGLTF
         public glTFAttributes attributes;
         public int material;
 
-        public glTFAttributes[] targets;
+        public List<glTFAttributes> targets = new List<glTFAttributes>();
 
         public string ToJson()
         {

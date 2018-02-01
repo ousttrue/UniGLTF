@@ -9,7 +9,15 @@ namespace UniGLTF
     {
         string Uri { get; }
         ArraySegment<Byte> GetBytes();
-        glTFBufferView Extend<T>(T[] array, glBufferTarget target) where T : struct;
+        glTFBufferView Extend<T>(ArraySegment<T> array, glBufferTarget target) where T : struct;
+    }
+
+    public static class IBytesBufferExtensions
+    {
+        public static glTFBufferView Extend<T>(this IBytesBuffer buffer, T[] array, glBufferTarget target) where T : struct
+        {
+            return buffer.Extend(new ArraySegment<T>(array), target);
+        }
     }
 
     /// <summary>
@@ -58,7 +66,7 @@ namespace UniGLTF
             }
         }
 
-        public glTFBufferView Extend<T>(T[] array, glBufferTarget target) where T : struct
+        public glTFBufferView Extend<T>(ArraySegment<T> array, glBufferTarget target) where T : struct
         {
             throw new NotImplementedException();
         }
@@ -82,7 +90,7 @@ namespace UniGLTF
             private set;
         }
 
-        public glTFBufferView Extend<T>(T[] array, glBufferTarget target) where T : struct
+        public glTFBufferView Extend<T>(ArraySegment<T> array, glBufferTarget target) where T : struct
         {
             throw new NotImplementedException();
         }
@@ -112,12 +120,12 @@ namespace UniGLTF
             m_bytes = bytes;
         }
 
-        public glTFBufferView Extend<T>(T[] array, glBufferTarget target) where T : struct
+        public glTFBufferView Extend<T>(ArraySegment<T> array, glBufferTarget target) where T : struct
         {
             using (var pin = Pin.Create(array))
             {
                 var elementSize = Marshal.SizeOf(typeof(T));
-                var view=Extend(pin.Ptr, array.Length * elementSize, elementSize, target);
+                var view=Extend(pin.Ptr, array.Count * elementSize, elementSize, target);
                 return view;
             }
         }

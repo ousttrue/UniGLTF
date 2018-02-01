@@ -100,9 +100,16 @@ namespace UniGLTF
             }
         }
 
-        public static int ExtendBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex, T[] array, glBufferTarget target=glBufferTarget.NONE) where T : struct
+        public static int ExtendBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex, T[] array, 
+            glBufferTarget target = glBufferTarget.NONE) where T : struct
         {
-            if (array.Length == 0)
+            return gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, new ArraySegment<T>(array), target);
+        }
+
+        public static int ExtendBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex, ArraySegment<T> array, 
+            glBufferTarget target=glBufferTarget.NONE) where T : struct
+        {
+            if (array.Count == 0)
             {
                 return -1;
             }
@@ -117,7 +124,7 @@ namespace UniGLTF
                 byteOffset = 0,
                 componentType = GetComponentType<T>(),
                 type = GetAccessorType<T>(),
-                count = array.Length,
+                count = array.Count,
             });
             return accessorIndex;
         }

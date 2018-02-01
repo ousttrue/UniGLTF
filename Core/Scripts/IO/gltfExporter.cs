@@ -449,6 +449,30 @@ namespace UniGLTF
                         material = unityMaterials.IndexOf(materials[j])
                     });
                 }
+
+                if (mesh.blendShapeCount > 0)
+                {
+                    for(int j=0; j<mesh.blendShapeCount; ++j)
+                    {
+                        var blendShapeVertices = mesh.vertices;
+                        var blendShpaeNormals = mesh.normals;
+                        var k =mesh.GetBlendShapeFrameCount(j);
+                        mesh.GetBlendShapeFrameVertices(j, k-1, blendShapeVertices, blendShpaeNormals, null);
+
+                        var blendShapePositionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
+                            blendShapeVertices.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                        var blendShapeNormalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
+                            blendShpaeNormals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                        //
+                        // first primitive has whole blendShape
+                        //
+                        gltf.meshes.Last().primitives[0].targets.Add(new glTFAttributes
+                        {
+                            POSITION=blendShapePositionAccessorIndex,
+                            NORMAL=blendShapeNormalAccessorIndex,
+                        });
+                    }
+                }
             }
             #endregion
 

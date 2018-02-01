@@ -158,7 +158,7 @@ material.mainTexture = texture;
 |uv           |o       |o       |/meshes/#/primitives/#/attributes/TEXCOORD_0, reverse-y
 |tangent      |        |        |/meshes/#/primitives/#/attributes/TANGENT, ?
 |primitive    |o       |o       |/meshes/#/primitives/#/indices
-|sharing attributes|   |        |
+|sharing attributes|o  |o       |
 
 ```cs
 var mesh=new Mesh();
@@ -177,7 +177,7 @@ for(int i=0; i<primitiveCount; ++i)
 
 |features     |importer|exporter|memo     |
 |-------------|--------|--------|---------|
-|blend shape  |o       |        |/meshes/#/primitives/#/targets
+|blend shape  |o       |o       |/meshes/#/primitives/#/targets
 |name ?
 
 ```cs
@@ -202,9 +202,9 @@ mesh.bindposes = bindMatrices;
 |features     |importer|exporter|memo     |
 |-------------|--------|--------|---------|
 |boneweight   |o       |o       |/meshes/#/primitives/#/attributes/(JOINTS_0,WEIGHTS_0)
-|bindmatrix   |        |        |/skins/#/inverseBindMatrices
-|skeleton     |o       |        |/skins/#/skeleton
-|joints       |o       |        |/skins/#/joints
+|bindmatrix   |o       |o       |/skins/#/inverseBindMatrices
+|skeleton     |o       |o       |/skins/#/skeleton
+|joints       |o       |o       |/skins/#/joints
 
 ```cs
 mesh.boneWeights=boneWeights;
