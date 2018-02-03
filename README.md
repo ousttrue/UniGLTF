@@ -287,17 +287,5 @@ AssetPostprocessor version is more stable.
 
 ## Humanoid Helper
 
-* model position is origin
-* model look at +z orientation
-* model root node rotation is Quatenion.identity
-
-![gizmo](doc/BoneMappingGizmo.png)
-![inspector](doc/BoneMappingInspector.png)
-![humanoid](doc/humanoid.gif)
-
-|features     |importer|exporter|memo     |
-|-------------|--------|--------|---------|
-|avatar       |o       |        |
-|avatar params|        |        |
-|bone name    |        |        |rename to bone name
+* move to [UniHumanoid](https://github.com/ousttrue/UniHumanoid)
 
