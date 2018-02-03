@@ -298,7 +298,13 @@ namespace UniGLTF
         }
 #endif
 
-        public static List<Mesh> FromGameObject(this glTF gltf, GameObject go)
+        public struct Exported
+        {
+            public List<Mesh> Meshes;
+            public List<Transform> Nodes;
+        }
+
+        public static Exported FromGameObject(this glTF gltf, GameObject go)
         {
             var bytesBuffer = new ArrayByteBuffer();
             var bufferIndex = gltf.AddBuffer(bytesBuffer);
@@ -388,7 +394,7 @@ namespace UniGLTF
             var unityMeshes = unityNodes
                 .Select(x => new MeshWithMaterials
                 {
-                    Mesh= x.GetSharedMesh(),
+                    Mesh = x.GetSharedMesh(),
                     Materials = x.GetSharedMaterials()
                 })
                 .Where(x => x.Mesh != null)
@@ -452,12 +458,12 @@ namespace UniGLTF
 
                 if (mesh.blendShapeCount > 0)
                 {
-                    for(int j=0; j<mesh.blendShapeCount; ++j)
+                    for (int j = 0; j < mesh.blendShapeCount; ++j)
                     {
                         var blendShapeVertices = mesh.vertices;
                         var blendShpaeNormals = mesh.normals;
-                        var k =mesh.GetBlendShapeFrameCount(j);
-                        mesh.GetBlendShapeFrameVertices(j, k-1, blendShapeVertices, blendShpaeNormals, null);
+                        var k = mesh.GetBlendShapeFrameCount(j);
+                        mesh.GetBlendShapeFrameVertices(j, k - 1, blendShapeVertices, blendShpaeNormals, null);
 
                         var blendShapePositionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
                             blendShapeVertices.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
@@ -468,8 +474,8 @@ namespace UniGLTF
                         //
                         gltf.meshes.Last().primitives[0].targets.Add(new glTFAttributes
                         {
-                            POSITION=blendShapePositionAccessorIndex,
-                            NORMAL=blendShapeNormalAccessorIndex,
+                            POSITION = blendShapePositionAccessorIndex,
+                            NORMAL = blendShapeNormalAccessorIndex,
                         });
                     }
                 }
@@ -557,7 +563,11 @@ namespace UniGLTF
             // glb buffer
             gltf.buffers[bufferIndex].UpdateByteLength();
 
-            return unityMeshes.Select(x => x.Mesh).ToList();
+            return new Exported
+            {
+                Meshes = unityMeshes.Select(x => x.Mesh).ToList(),
+                Nodes = unityNodes.Select(x => x.transform).ToList(),
+            };
         }
         #endregion
     }
