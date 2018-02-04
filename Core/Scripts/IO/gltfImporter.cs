@@ -658,9 +658,9 @@ namespace UniGLTF
                 var targets = gltfMesh.primitives[0].targets;
                 for (int i = 1; i < gltfMesh.primitives.Count; ++i)
                 {
-                    if (gltfMesh.primitives[i].targets != targets)
+                    if (!gltfMesh.primitives[i].targets.SequenceEqual(targets))
                     {
-                        throw new FormatException(string.Format("diffirent targets: {0} with {1}",
+                        throw new NotImplementedException(string.Format("diffirent targets: {0} with {1}",
                             gltfMesh.primitives[i],
                             targets));
                     }
