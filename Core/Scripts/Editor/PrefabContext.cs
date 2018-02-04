@@ -77,7 +77,7 @@ namespace UniGLTF
             {
                 //Debug.LogFormat("ReplacePrefab: {0}", m_prefabPath);
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(m_prefabPath);
-                PrefabUtility.ReplacePrefab(MainGameObject, prefab, ReplacePrefabOptions.ConnectToPrefab);
+                PrefabUtility.ReplacePrefab(MainGameObject, prefab, ReplacePrefabOptions.ReplaceNameBased);
             }
             else
             {
