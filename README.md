@@ -15,6 +15,7 @@
 
 ## Version
 
+* 20180205 [1.2](https://github.com/ousttrue/UniGLTF/releases/tag/v1.2)
 * 20180129 [1.0.1](https://github.com/ousttrue/UniGLTF/releases/tag/v1.0.1) first version.
 
 ## Install
