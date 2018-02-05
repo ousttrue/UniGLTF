@@ -186,22 +186,19 @@ namespace UniGLTF
                 */
                 {
                     Path = "";
-                    try
-                    {
-                        Bytes = texture.EncodeToPNG();
-                        if (Bytes == null)
-                        {
-                            Debug.LogErrorFormat("{0}: compressed texture cannot export", texture.name);
-                        }
-                    }
-                    catch (UnityException ex)
-                    {
-                        Debug.LogErrorFormat("{0}: {1}", texture.name, ex);
-                        Bytes = null;
-                    }
+                    Bytes = CopyTexture(texture).EncodeToPNG();
                     Mime = "image/png";
                 }
             }
+        }
+
+        static Texture2D CopyTexture(Texture2D src)
+        {
+            var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32);
+            Graphics.Blit(src, renderTexture);
+            var copyTexture = new Texture2D(src.width, src.height, TextureFormat.ARGB32, false);
+            copyTexture.ReadPixels(new Rect(0, 0, src.width, src.height), 0, 0);
+            return copyTexture;
         }
 
         public static glTFMaterial ExportMaterial(Material m, List<Texture2D> textures)
