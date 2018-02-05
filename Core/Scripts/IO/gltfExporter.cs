@@ -13,7 +13,6 @@ namespace UniGLTF
     public static class gltfExporter
     {
         const string CONVERT_HUMANOID_KEY = "GameObject/gltf/export";
-        private static readonly UnityEngine.Object json;
 
 #if UNITY_EDITOR
         [MenuItem(CONVERT_HUMANOID_KEY, true, 1)]
@@ -36,46 +35,92 @@ namespace UniGLTF
                 return;
             }
 
-            Export(go, path);
+            using (var exporter = gltfExporter<glTF>.Export(go))
+            {
+                exporter.WriteTo(path);
+            }
         }
 #endif
+    }
 
-        static void Export(GameObject go, string path)
+    public class gltfExporter<T>: IDisposable where T: glTF
+    {
+        //private static readonly UnityEngine.Object json;
+
+        public T glTF
         {
-            var gltf = new glTF
+            get;
+            private set;
+        }
+
+        public GameObject Copy
+        {
+            get;
+            private set;
+        }
+
+        public List<Mesh> Meshes
+        {
+            get;
+            private set;
+        }
+
+        public List<Transform> Nodes
+        {
+            get;
+            private set;
+        }
+
+        public static gltfExporter<T> Export(GameObject go)
+        {
+            var gltf = Activator.CreateInstance<T>();
+
+            gltf.asset = new glTFAssets
             {
-                asset = new glTFAssets
-                {
-                    generator = "UniGLTF",
-                    version = "2.0",
-                }
+                generator = "UniGLTF",
+                version = "2.0",
             };
 
-            var copy = GameObject.Instantiate(go);
+            var exporter = new gltfExporter<T>
+            {
+                glTF = gltf,
+                Copy = GameObject.Instantiate(go)
+            };
+
             try
             {
                 // Left handed to Right handed
-                copy.transform.ReverseZ();
+                exporter.Copy.transform.ReverseZ();
 
-                gltf.FromGameObject(copy);
+                var exported = FromGameObject(gltf, exporter.Copy);
+                exporter.Meshes = exported.Meshes;
+                exporter.Nodes = exported.Nodes;
             }
             catch (Exception ex)
             {
                 Debug.LogError(ex);
             }
 
+            return exporter;
+        }
+
+        public void Dispose()
+        {
             if (Application.isEditor)
             {
-                GameObject.DestroyImmediate(copy);
+                GameObject.DestroyImmediate(Copy);
             }
             else
             {
-                GameObject.Destroy(copy);
+                GameObject.Destroy(Copy);
             }
+        }
 
-            var buffer = gltf.buffers[0].Storage;
+        public void WriteTo(string path)
+        {
+            var buffer = glTF.buffers[0].Storage;
 
-            var json = gltf.ToJson();
+            var json = glTF.ToJson();
 
             using (var s = new FileStream(path, FileMode.Create))
             {
@@ -316,7 +361,7 @@ namespace UniGLTF
             public List<Transform> Nodes;
         }
 
-        public static Exported FromGameObject(this glTF gltf, GameObject go)
+        public static Exported FromGameObject(glTF gltf, GameObject go)
         {
             var bytesBuffer = new ArrayByteBuffer();
             var bufferIndex = gltf.AddBuffer(bytesBuffer);
