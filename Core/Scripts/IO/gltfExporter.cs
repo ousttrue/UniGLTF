@@ -495,7 +495,9 @@ namespace UniGLTF
             #endregion
 
             #region Skins
-            var unitySkins = unityNodes.Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null).ToList();
+            var unitySkins = unityNodes
+                .Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null && x.rootBone!=null)
+                .ToList();
             gltf.nodes = unityNodes.Select(x => ExportNode(x, unityNodes, unityMeshes.Select(y => y.Mesh).ToList(), unitySkins)).ToList();
             gltf.scenes = new List<gltfScene>
             {
