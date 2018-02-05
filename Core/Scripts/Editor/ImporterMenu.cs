@@ -28,6 +28,7 @@ namespace UniGLTF
                                 return;
                             }
                             root.name = Path.GetFileNameWithoutExtension(path);
+                            Selection.activeGameObject = root;
                         }
                         break;
 
@@ -39,6 +40,7 @@ namespace UniGLTF
                                 return;
                             }
                             root.name = Path.GetFileNameWithoutExtension(path);
+                            Selection.activeGameObject = root;
                         }
                         break;
 
