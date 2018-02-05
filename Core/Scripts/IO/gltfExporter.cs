@@ -141,7 +141,19 @@ namespace UniGLTF
                 */
                 {
                     Path = "";
-                    Bytes = texture.EncodeToPNG();
+                    try
+                    {
+                        Bytes = texture.EncodeToPNG();
+                        if (Bytes == null)
+                        {
+                            Debug.LogErrorFormat("{0}: compressed texture cannot export", texture.name);
+                        }
+                    }
+                    catch (UnityException ex)
+                    {
+                        Debug.LogErrorFormat("{0}: {1}", texture.name, ex);
+                        Bytes = null;
+                    }
                     Mime = "image/png";
                 }
             }
