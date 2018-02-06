@@ -383,7 +383,7 @@ namespace UniGLTF
             {
                 // use buffer view
                 var texture = new Texture2D(2, 2);
-                //texture.name = string.Format("texture#{0:00}", i++);
+                texture.name = string.Format("buffer#{0:00}", index);
                 var byteSegment = gltf.GetViewBytes(image.bufferView);
                 var bytes = byteSegment.Array.Skip(byteSegment.Offset).Take(byteSegment.Count).ToArray();
                 texture.LoadImage(bytes, true);
@@ -394,9 +394,8 @@ namespace UniGLTF
             {
                 // local folder
                 var path = Path.Combine(gltf.baseDir, image.uri);
-                //Debug.LogFormat("load texture: {0}", path);
-
                 var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                texture.name = Path.GetFileNameWithoutExtension(path);
                 return new TextureWithIsAsset { TextureIndex = index, Texture = texture, IsAsset = true };
             }
 #endif
@@ -405,8 +404,8 @@ namespace UniGLTF
                 // external
                 var path = Path.Combine(gltf.baseDir, image.uri);
                 var bytes = File.ReadAllBytes(path);
-
                 var texture = new Texture2D(2, 2);
+                texture.name = Path.GetFileNameWithoutExtension(path);
                 texture.LoadImage(bytes);
                 return new TextureWithIsAsset { TextureIndex = index, Texture = texture, IsAsset = true };
             }
