@@ -10,7 +10,7 @@ using UnityEditor;
 
 namespace UniGLTF
 {
-    public static class gltfExporter
+    public class gltfExporter : IDisposable
     {
         const string CONVERT_HUMANOID_KEY = "GameObject/gltf/export";
 
@@ -22,7 +22,7 @@ namespace UniGLTF
         }
 
         [MenuItem(CONVERT_HUMANOID_KEY, false, 1)]
-        private static void Export()
+        private static void ExportFromMenu()
         {
             var go = Selection.activeObject as GameObject;
             var path = EditorUtility.SaveFilePanel(
@@ -35,28 +35,21 @@ namespace UniGLTF
                 return;
             }
 
-            using (var exporter = gltfExporter<glTF>.Export(go))
+            using (var exporter = new gltfExporter(new glTF()))
             {
+                exporter.Prepare(go);
+                exporter.Export();
                 exporter.WriteTo(path);
             }
         }
 #endif
-    }
 
-    public class gltfExporter<T>: IDisposable where T: glTF
-    {
-        //private static readonly UnityEngine.Object json;
-
-        public T glTF
-        {
-            get;
-            private set;
-        }
+        glTF glTF;
 
         public GameObject Copy
         {
             get;
-            private set;
+            protected set;
         }
 
         public List<Mesh> Meshes
@@ -71,37 +64,30 @@ namespace UniGLTF
             private set;
         }
 
-        public static gltfExporter<T> Export(GameObject go)
+        public gltfExporter(glTF gltf)
         {
-            var gltf = Activator.CreateInstance<T>();
+            glTF = gltf;
 
-            gltf.asset = new glTFAssets
+            glTF.asset=new glTFAssets
             {
                 generator = "UniGLTF",
                 version = "2.0",
             };
+        }
 
-            var exporter = new gltfExporter<T>
-            {
-                glTF = gltf,
-                Copy = GameObject.Instantiate(go)
-            };
+        public virtual void Prepare(GameObject go)
+        {
+            Copy = GameObject.Instantiate(go);
 
-            try
-            {
-                // Left handed to Right handed
-                exporter.Copy.transform.ReverseZ();
+            // Left handed to Right handed
+            Copy.transform.ReverseZ();
+        }
 
-                var exported = FromGameObject(gltf, exporter.Copy);
-                exporter.Meshes = exported.Meshes;
-                exporter.Nodes = exported.Nodes;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError(ex);
-            }
-
-            return exporter;
+        public virtual void Export()
+        {
+            var exported = FromGameObject(glTF, Copy);
+            Meshes = exported.Meshes;
+            Nodes = exported.Nodes;
         }
 
         public void Dispose()
