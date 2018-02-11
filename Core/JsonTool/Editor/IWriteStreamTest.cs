@@ -4,7 +4,7 @@ using System;
 using System.Text;
 
 
-namespace OsaruTest
+namespace UniGLTF
 {
     public class StoreTests
     {
