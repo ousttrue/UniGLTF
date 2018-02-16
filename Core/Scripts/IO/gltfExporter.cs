@@ -143,7 +143,7 @@ namespace UniGLTF
 
             public BytesWithPath(Texture2D texture)
             {
-                var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
+                //var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
                 /*
                 if (!String.IsNullOrEmpty(path))
                 {
