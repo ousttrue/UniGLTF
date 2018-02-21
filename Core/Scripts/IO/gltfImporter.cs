@@ -12,9 +12,11 @@ namespace UniGLTF
     {
         const float FRAME_WEIGHT = 100.0f;
 
-        public delegate void OnLoadCallback(IImporterContext ctx, string json, 
+        public delegate void OnLoadCallback(IImporterContext ctx, string json,
             Transform[] nodes,
             List<Mesh> meshes);
+
+        public delegate string GetBlendShapeName(int meshIndex, int blendShapeIndex);
 
         static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
         {
@@ -93,9 +95,22 @@ namespace UniGLTF
             public int? SkinIndex;
         }
 
-        public static GameObject Import(IImporterContext ctx, string json, ArraySegment<Byte> glbBinChunk
-            , OnLoadCallback callback=null)
+        static string DefaultGetBlendShapeName(int meshIndex, int blendShapeIndex)
         {
+            return blendShapeIndex.ToString();
+        }
+
+        public static GameObject Import(IImporterContext ctx, string json,
+            ArraySegment<Byte> glbBinChunk,
+            OnLoadCallback callback = null,
+            GetBlendShapeName getBlendShapeName = null
+            )
+        {
+            if (getBlendShapeName == null)
+            {
+                getBlendShapeName = DefaultGetBlendShapeName;
+            }
+
             // exclude not gltf-2.0
             var parsed = json.ParseAsJson();
             try
@@ -174,10 +189,9 @@ namespace UniGLTF
                 ctx.AddObjectToAsset(material.name, material);
             }
 
-            // meshes
             var meshes = gltf.meshes.Select((x, i) =>
             {
-                var meshWithMaterials = ImportMesh(gltf, x, materials);
+                var meshWithMaterials = ImportMesh(gltf, i, x, materials, getBlendShapeName);
                 var mesh = meshWithMaterials.Mesh;
                 if (string.IsNullOrEmpty(mesh.name))
                 {
@@ -345,7 +359,7 @@ namespace UniGLTF
 
             if (callback != null)
             {
-                callback(ctx, json, 
+                callback(ctx, json,
                     nodes.Select(x => x.Transform).ToArray(),
                     meshes.Select(x => x.Mesh).ToList()
                     );
@@ -539,13 +553,16 @@ namespace UniGLTF
             }
         }
 
-        static MeshWithMaterials ImportMesh(glTF gltf, glTFMesh gltfMesh, Material[] materials)
+        static MeshWithMaterials ImportMesh(glTF gltf, int meshIndex, glTFMesh gltfMesh,
+            Material[] materials,
+            GetBlendShapeName getBlendShapeName
+            )
         {
             glTFAttributes lastAttributes = null;
             var sharedAttributes = true;
             foreach (var prim in gltfMesh.primitives)
             {
-                if(lastAttributes!=null && !prim.attributes.Equals(lastAttributes))
+                if (lastAttributes != null && !prim.attributes.Equals(lastAttributes))
                 {
                     sharedAttributes = false;
                     break;
@@ -615,7 +632,7 @@ namespace UniGLTF
                     {
                         if (blendShapes == null)
                         {
-                            blendShapes = prim.targets.Select((x, i) => new BlendShape(i.ToString())).ToArray();
+                            blendShapes = prim.targets.Select((x, i) => new BlendShape(getBlendShapeName(meshIndex, i))).ToArray();
                         }
                         for (int i = 0; i < prim.targets.Count; ++i)
                         {
@@ -645,7 +662,7 @@ namespace UniGLTF
 
                 foreach (var prim in gltfMesh.primitives)
                 {
-                    var indices =gltf.GetIndices(prim.indices).Select(x => x).ToArray();
+                    var indices = gltf.GetIndices(prim.indices).Select(x => x).ToArray();
                     subMeshes.Add(indices);
 
                     // material
@@ -1025,6 +1042,6 @@ namespace UniGLTF
                 }
             }
         }
-#endregion
+        #endregion
     }
 }

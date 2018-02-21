@@ -27,11 +27,10 @@ namespace UniGLTF
             }
         }
 
-        public static GameObject Import(IImporterContext context, Byte[] bytes,
-            gltfImporter.OnLoadCallback callback=null)
+        public static List<GlbChunk> ParseGlbChanks(Byte[] bytes)
         {
             int pos = 0;
-            if(Encoding.ASCII.GetString(bytes, 0, 4) != GLB_MAGIC)
+            if (Encoding.ASCII.GetString(bytes, 0, 4) != GLB_MAGIC)
             {
                 throw new Exception("invalid magic");
             }
@@ -40,7 +39,7 @@ namespace UniGLTF
             var version = BitConverter.ToUInt32(bytes, pos);
             if (version != GLB_VERSION)
             {
-                Debug.LogWarningFormat("{0}: unknown version: {1}", context.Path, version);
+                Debug.LogWarningFormat("unknown version: {0}", version);
                 return null;
             }
             pos += 4;
@@ -49,7 +48,7 @@ namespace UniGLTF
             pos += 4;
 
             var chunks = new List<GlbChunk>();
-            while(pos<bytes.Length)
+            while (pos < bytes.Length)
             {
                 var chunkDataSize = BitConverter.ToInt32(bytes, pos);
                 pos += 4;
@@ -68,6 +67,14 @@ namespace UniGLTF
 
                 pos += chunkDataSize;
             }
+
+            return chunks;
+        }
+
+        public static GameObject Import(IImporterContext context, Byte[] bytes,
+            gltfImporter.OnLoadCallback callback=null)
+        {
+            var chunks = ParseGlbChanks(bytes);
 
             if(chunks.Count!=2)
             {
