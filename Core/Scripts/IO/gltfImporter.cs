@@ -103,7 +103,8 @@ namespace UniGLTF
         public static GameObject Import(IImporterContext ctx, string json,
             ArraySegment<Byte> glbBinChunk,
             OnLoadCallback callback = null,
-            GetBlendShapeName getBlendShapeName = null
+            GetBlendShapeName getBlendShapeName = null,
+            string shaderName = "Standard"
             )
         {
             if (getBlendShapeName == null)
@@ -183,7 +184,7 @@ namespace UniGLTF
                     .ToArray();
 
             // materials
-            var materials = ImportMaterials(gltf, textures).ToArray();
+            var materials = ImportMaterials(gltf, textures, shaderName).ToArray();
             foreach (var material in materials)
             {
                 ctx.AddObjectToAsset(material.name, material);
@@ -461,9 +462,9 @@ namespace UniGLTF
         /// <param name="gltf"></param>
         /// <param name="textures"></param>
         /// <returns></returns>
-        static IEnumerable<Material> ImportMaterials(glTF gltf, Texture2D[] textures)
+        static IEnumerable<Material> ImportMaterials(glTF gltf, Texture2D[] textures, string shaderName)
         {
-            var shader = Shader.Find("Standard");
+            var shader = Shader.Find(shaderName);
             if (gltf.materials == null || !gltf.materials.Any())
             {
                 var material = new Material(shader);
