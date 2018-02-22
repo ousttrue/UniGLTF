@@ -309,18 +309,22 @@ namespace UniGLTF
                             skinnedMeshRenderer.bones = joints;
                             //skinnedMeshRenderer.rootBone = nodes[skin.skeleton].Transform;
 
+                            if (skin.inverseBindMatrices != -1)
+                            {
+                                // BlendShape only ?
 #if false
                             // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
                             var hipsParent = nodes[0].Transform;
                             var calculatedBindPoses = joints.Select(y => y.worldToLocalMatrix * hipsParent.localToWorldMatrix).ToArray();
                             mesh.bindposes = calculatedBindPoses;
 #else
-                            var bindPoses = gltf.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices)
-                                .Select(y => y.ReverseZ())
-                                .ToArray()
-                                ;
-                            mesh.bindposes = bindPoses;
+                                var bindPoses = gltf.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices)
+                                    .Select(y => y.ReverseZ())
+                                    .ToArray()
+                                    ;
+                                mesh.bindposes = bindPoses;
 #endif
+                            }
 
                             skinnedMeshRenderer.sharedMesh = mesh;
                         }
