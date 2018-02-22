@@ -246,6 +246,15 @@ namespace UniGLTF
             CommaCheck();
             m_w.Write(x.ToString());
         }
+        public void Value(Vector3 v)
+        {
+            //CommaCheck();
+            BeginMap();
+            Key("x"); Value(v.x);
+            Key("y"); Value(v.y);
+            Key("z"); Value(v.z);
+            EndMap();
+        }
 
         public void Value(float[] a)
         {

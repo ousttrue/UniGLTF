@@ -52,6 +52,12 @@ namespace UniGLTF
             protected set;
         }
 
+        public struct MeshWithRenderer
+        {
+            public Mesh Mesh;
+            public Renderer Rendererer;
+        }
+
         public List<Mesh> Meshes
         {
             get;
@@ -86,7 +92,7 @@ namespace UniGLTF
         public virtual void Export()
         {
             var exported = FromGameObject(glTF, Copy);
-            Meshes = exported.Meshes;
+            Meshes = exported.Meshes.Select(x => x.Mesh).ToList();
             Nodes = exported.Nodes;
         }
 
@@ -340,7 +346,7 @@ namespace UniGLTF
 
         public struct Exported
         {
-            public List<Mesh> Meshes;
+            public List<MeshWithRenderer> Meshes;
             public List<Transform> Nodes;
         }
 
@@ -432,10 +438,10 @@ namespace UniGLTF
 
             #region Meshes
             var unityMeshes = unityNodes
-                .Select(x => new MeshWithMaterials
+                .Select(x => new MeshWithRenderer
                 {
                     Mesh = x.GetSharedMesh(),
-                    Materials = x.GetSharedMaterials()
+                    Rendererer = x.GetComponent<Renderer>(),
                 })
                 .Where(x => x.Mesh != null)
                 .ToList();
@@ -443,7 +449,7 @@ namespace UniGLTF
             {
                 var x = unityMeshes[i];
                 var mesh = x.Mesh;
-                var materials = x.Materials;
+                var materials = x.Rendererer.sharedMaterials;
 
                 var positions = mesh.vertices.Select(y => y.ReverseZ()).ToArray();
                 var positionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, positions, glBufferTarget.ARRAY_BUFFER);
@@ -607,7 +613,7 @@ namespace UniGLTF
 
             return new Exported
             {
-                Meshes = unityMeshes.Select(x => x.Mesh).ToList(),
+                Meshes = unityMeshes,
                 Nodes = unityNodes.Select(x => x.transform).ToList(),
             };
         }
