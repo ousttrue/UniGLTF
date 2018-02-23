@@ -60,6 +60,31 @@ namespace UniGLTF
             return Quaternion.AngleAxis(-angle, ReverseZ(axis));
         }
 
+        public static Matrix4x4 Matrix4x4FromColumns(Vector4 c0, Vector4 c1, Vector4 c2, Vector4 c3)
+        {
+#if UNITY_2017_1_OR_NEWER
+            return new Matrix4x4(c0, c1, c2, c3);
+#else
+            var m = default(Matrix4x4);
+            m.SetColumn(0, c0);
+            m.SetColumn(1, c1);
+            m.SetColumn(2, c2);
+            m.SetColumn(3, c3);
+            return m;
+#endif
+        }
+
+        public static Matrix4x4 Matrix4x4FromRotation(Quaternion q)
+        {
+#if UNITY_2017_1_OR_NEWER
+            return Matrix4x4.Rotate(q);
+#else
+            var m = default(Matrix4x4);
+            m.SetTRS(Vector3.zero, q, Vector3.one);
+            return m;
+#endif
+        }
+
         public static Matrix4x4 ReverseZ(this Matrix4x4 m)
         {
 #if false
