@@ -198,11 +198,13 @@ namespace UniGLTF
             var material = new glTFMaterial
             {
                 name = m.name,
-                pbrMetallicRoughness = new GltfPbrMetallicRoughness
-                {
-                    baseColorFactor = m.color.ToArray(),
-                }
+                pbrMetallicRoughness = new GltfPbrMetallicRoughness(),
             };
+
+            if (m.HasProperty("_Color"))
+            {
+                material.pbrMetallicRoughness.baseColorFactor = m.color.ToArray();
+            }
 
             if (m.mainTexture != null)
             {
