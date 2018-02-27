@@ -28,13 +28,18 @@ namespace UniGLTF
             return AssetDatabase.LoadAllAssetsAtPath(m_prefabPath);
         }
 
-        public PrefabContext(String path)
+        public PrefabContext(String path, bool overwrite = true)
         {
             Path = path;
 
             var dir = System.IO.Path.GetDirectoryName(Path);
             var name = System.IO.Path.GetFileNameWithoutExtension(Path);
+
             m_prefabPath = string.Format("{0}/{1}.prefab", dir, name);
+            if (!overwrite)
+            {
+                m_prefabPath = AssetDatabase.GenerateUniqueAssetPath(m_prefabPath);
+            }
 
             if (File.Exists(m_prefabPath))
             {
