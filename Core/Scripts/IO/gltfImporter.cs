@@ -152,7 +152,7 @@ namespace UniGLTF
             }
 
             gltf.baseDir = Path.GetDirectoryName(ctx.Path);
-            Debug.LogFormat("{0}: {1}", ctx.Path, gltf);
+            //Debug.LogFormat("{0}: {1}", ctx.Path, gltf);
 
             foreach (var buffer in gltf.buffers)
             {
@@ -370,7 +370,7 @@ namespace UniGLTF
                     );
             }
 
-            Debug.LogFormat("Import completed");
+            Debug.LogFormat("Import {0}", ctx.Path);
 
             return root;
         }
