@@ -72,7 +72,8 @@ namespace UniGLTF
         }
 
         public static GameObject Import(IImporterContext context, Byte[] bytes,
-            gltfImporter.OnLoadCallback callback=null, string shaderName="Standard")
+            gltfImporter.OnLoadCallback callback=null, 
+            gltfImporter.CreateMaterialFunc createMaterial=null)
         {
             var chunks = ParseGlbChanks(bytes);
 
@@ -99,7 +100,7 @@ namespace UniGLTF
                 chunks[1].Bytes,
                 callback,
                 null,
-                shaderName
+                createMaterial
                 );
         }
     }

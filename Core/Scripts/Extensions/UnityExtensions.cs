@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 
 namespace UniGLTF
@@ -148,7 +151,7 @@ namespace UniGLTF
 
         public static Transform GetChildByName(this Transform self, string childName)
         {
-            foreach(Transform child in self)
+            foreach (Transform child in self)
             {
                 if (child.name == childName)
                 {
@@ -165,9 +168,9 @@ namespace UniGLTF
 
             var splited = path.Split('/');
 
-            foreach(var childName in splited)
+            foreach (var childName in splited)
             {
-                current=current.GetChildByName(childName);
+                current = current.GetChildByName(childName);
             }
 
             return current;
@@ -220,6 +223,11 @@ namespace UniGLTF
             return new float[] { v.x, v.y, v.z };
         }
 
+        public static float[] ToArray(this Vector4 v)
+        {
+            return new float[] { v.x, v.y, v.z, v.w };
+        }
+
         public static float[] ToArray(this Color c)
         {
             return new float[] { c.r, c.g, c.b, c.a };
@@ -264,7 +272,26 @@ namespace UniGLTF
             return new Material[] { };
         }
 
-        public static bool Has<T>(this Transform transform, T t)where T: Component
+        public static IEnumerable<Texture2D> GetTextures(this Material m)
+        {
+#if UNITY_EDITOR
+            for (int i = 0; i < ShaderUtil.GetPropertyCount(m.shader); ++i)
+            {
+                if(ShaderUtil.GetPropertyType(m.shader, i)==ShaderUtil.ShaderPropertyType.TexEnv)
+                {
+                    var texture = m.GetTexture(ShaderUtil.GetPropertyName(m.shader, i)) as Texture2D;
+                    if (texture != null)
+                    {
+                        yield return texture;
+                    }
+                }
+            }
+#else
+            yield return m.mainTexture;
+#endif
+        }
+
+        public static bool Has<T>(this Transform transform, T t) where T : Component
         {
             return transform.GetComponent<T>() == t;
         }

@@ -70,6 +70,18 @@ namespace UniGLTF
             private set;
         }
 
+        public List<Material> Materials
+        {
+            get;
+            private set;
+        }
+
+        public List<Texture2D> Textures
+        {
+            get;
+            private set;
+        }
+
         public gltfExporter(glTF gltf)
         {
             glTF = gltf;
@@ -94,6 +106,8 @@ namespace UniGLTF
             var exported = FromGameObject(glTF, Copy);
             Meshes = exported.Meshes.Select(x => x.Mesh).ToList();
             Nodes = exported.Nodes;
+            Materials = exported.Materials;
+            Textures = exported.Textures;
         }
 
         public void Dispose()
@@ -341,6 +355,8 @@ namespace UniGLTF
         {
             public List<MeshWithRenderer> Meshes;
             public List<Transform> Nodes;
+            public List<Material> Materials;
+            public List<Texture2D> Textures;
         }
 
         public static Exported FromGameObject(glTF gltf, GameObject go)
@@ -354,7 +370,7 @@ namespace UniGLTF
 
             #region Material
             var unityMaterials = unityNodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
-            var unityTextures = unityMaterials.Select(x => (Texture2D)x.mainTexture).Where(x => x != null).Distinct().ToList();
+            var unityTextures = unityMaterials.SelectMany(x => x.GetTextures()).Where(x => x != null).Distinct().ToList();
 
             for (int i = 0; i < unityTextures.Count; ++i)
             {
@@ -425,7 +441,7 @@ namespace UniGLTF
                     source = imageIndex,
                 });
             }
-
+           
             gltf.materials = unityMaterials.Select(x => ExportMaterial(x, unityTextures)).ToList();
             #endregion
 
@@ -608,6 +624,8 @@ namespace UniGLTF
             {
                 Meshes = unityMeshes,
                 Nodes = unityNodes.Select(x => x.transform).ToList(),
+                Materials = unityMaterials,
+                Textures = unityTextures,
             };
         }
         #endregion

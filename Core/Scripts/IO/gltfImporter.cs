@@ -18,6 +18,8 @@ namespace UniGLTF
 
         public delegate string GetBlendShapeName(int meshIndex, int blendShapeIndex);
 
+        public delegate Material CreateMaterialFunc(int i, glTFMaterial gltfMaterial, Texture2D[] textures);
+
         static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
         {
             if (texture == null)
@@ -100,11 +102,106 @@ namespace UniGLTF
             return blendShapeIndex.ToString();
         }
 
+        /// StandardShader vaiables
+        /// 
+        /// _Color
+        /// _MainTex
+        /// _Cutoff
+        /// _Glossiness
+        /// _Metallic
+        /// _MetallicGlossMap
+        /// _BumpScale
+        /// _BumpMap
+        /// _Parallax
+        /// _ParallaxMap
+        /// _OcclusionStrength
+        /// _OcclusionMap
+        /// _EmissionColor
+        /// _EmissionMap
+        /// _DetailMask
+        /// _DetailAlbedoMap
+        /// _DetailNormalMapScale
+        /// _DetailNormalMap
+        /// _UVSec
+        /// _EmissionScaleUI
+        /// _EmissionColorUI
+        /// _Mode
+        /// _SrcBlend
+        /// _DstBlend
+        /// _ZWrite
+        public static CreateMaterialFunc CreateMaterialFuncFromShader(Shader shader)
+        {
+            if (shader == null) return null;
+
+            CreateMaterialFunc func= (i, x, textures) =>
+            {
+                var material = new Material(shader);
+                if (string.IsNullOrEmpty(x.name))
+                {
+                    material.name = string.Format("material:{0:00}", i);
+                }
+                else
+                {
+                    material.name = x.name;
+                }
+
+                if (x.pbrMetallicRoughness != null)
+                {
+                    if (x.pbrMetallicRoughness.baseColorFactor != null)
+                    {
+                        var color = x.pbrMetallicRoughness.baseColorFactor;
+                        material.color = new Color(color[0], color[1], color[2], color[3]);
+                    }
+
+                    if (x.pbrMetallicRoughness.baseColorTexture.index != -1)
+                    {
+                        var texture = textures[x.pbrMetallicRoughness.baseColorTexture.index];
+                        material.mainTexture = texture;
+                    }
+
+                    if (x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
+                    {
+                        var texture = textures[x.pbrMetallicRoughness.metallicRoughnessTexture.index];
+                        material.SetTexture("_MetallicGlossMap", texture);
+                    }
+                }
+
+                if (x.normalTexture.index != -1)
+                {
+                    var texture = textures[x.normalTexture.index];
+                    material.SetTexture("_BumpMap", texture);
+                }
+
+                if (x.occlusionTexture.index != -1)
+                {
+                    var texture = textures[x.occlusionTexture.index];
+                    material.SetTexture("_OcclusionMap", texture);
+                }
+
+                if (x.emissiveFactor != null)
+                {
+                    material.EnableKeyword("_EMISSION");
+                    material.SetColor("_EmissionColor", new Color(x.emissiveFactor[0], x.emissiveFactor[1], x.emissiveFactor[2]));
+                }
+
+                if (x.emissiveTexture.index != -1)
+                {
+                    material.EnableKeyword("_EMISSION");
+                    var texture = textures[x.emissiveTexture.index];
+                    material.SetTexture("_EmissionMap", texture);
+                }
+
+                return material;
+            };
+
+            return func;
+        }
+
         public static GameObject Import(IImporterContext ctx, string json,
             ArraySegment<Byte> glbBinChunk,
             OnLoadCallback callback = null,
             GetBlendShapeName getBlendShapeName = null,
-            string shaderName = "Standard"
+            CreateMaterialFunc createMaterial = null
             )
         {
             if (getBlendShapeName == null)
@@ -183,8 +280,24 @@ namespace UniGLTF
                     })
                     .ToArray();
 
+            if (createMaterial == null)
+            {
+                createMaterial = CreateMaterialFuncFromShader(Shader.Find("Standard"));
+            }
+
             // materials
-            var materials = ImportMaterials(ctx, gltf, textures, shaderName).ToArray();
+            List<Material> materials = new List<Material>();
+            if (gltf.materials == null || !gltf.materials.Any())
+            {
+                materials.Add(createMaterial(0, null, textures.Select(x => x.Texture).ToArray()));
+            }
+            else
+            {
+                for(int i=0; i<gltf.materials.Count; ++i)
+                {
+                    materials.Add(createMaterial(i, gltf.materials[i], textures.Select(x => x.Texture).ToArray()));
+                }
+            }
             foreach (var material in materials)
             {
                 ctx.AddObjectToAsset(material.name, material);
@@ -552,7 +665,7 @@ namespace UniGLTF
         }
 
         static MeshWithMaterials ImportMesh(glTF gltf, int meshIndex, glTFMesh gltfMesh,
-            Material[] materials,
+            List<Material> materials,
             GetBlendShapeName getBlendShapeName
             )
         {
@@ -815,7 +928,8 @@ namespace UniGLTF
             {
                 mesh.SetTriangles(subMeshes[i], i);
             }
-            mesh.RecalculateNormals();
+            //mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
             var result = new MeshWithMaterials
             {
                 Mesh = mesh,
@@ -1040,6 +1154,6 @@ namespace UniGLTF
                 }
             }
         }
-        #endregion
+#endregion
     }
 }
