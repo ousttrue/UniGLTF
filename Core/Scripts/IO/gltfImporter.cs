@@ -388,37 +388,6 @@ namespace UniGLTF
             }
         }
 
-        static Color32 ConvertMetallicRoughness(Color32 src)
-        {
-            return new Color32
-            {
-                r = src.b,
-                g = src.b,
-                b = src.b,
-                a = (byte)(255 - src.g),
-            };
-        }
-
-        public struct TextureItem
-        {
-            public int TextureIndex;
-            public Texture2D Texture;
-            public bool IsAsset;
-
-            Texture2D m_metallicRoughness;
-            public Texture2D GetMetallicRoughnessConverted(IImporterContext ctx)
-            {
-                if (m_metallicRoughness == null)
-                {
-                    m_metallicRoughness = new Texture2D(Texture.width, Texture.height, TextureFormat.ARGB32, true);
-                    m_metallicRoughness.SetPixels32(Texture.GetPixels32().Select(ConvertMetallicRoughness).ToArray());
-                    m_metallicRoughness.name = Texture.name + ".metallicRoughness";
-                    ctx.AddObjectToAsset(m_metallicRoughness.name, m_metallicRoughness);
-                }
-                return m_metallicRoughness;
-            }
-        }
-
         static TextureItem ImportTexture(glTF gltf, int index)
         {
             var image = gltf.images[index];
@@ -430,7 +399,7 @@ namespace UniGLTF
                 var byteSegment = gltf.GetViewBytes(image.bufferView);
                 var bytes = byteSegment.Array.Skip(byteSegment.Offset).Take(byteSegment.Count).ToArray();
                 texture.LoadImage(bytes, true);
-                return new TextureItem { TextureIndex = index, Texture = texture, IsAsset = false };
+                return new TextureItem(texture, index, false);
             }
 #if UNITY_EDITOR
             else if (gltf.baseDir.StartsWith("Assets/"))
@@ -439,7 +408,7 @@ namespace UniGLTF
                 var path = Path.Combine(gltf.baseDir, image.uri);
                 var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 texture.name = Path.GetFileNameWithoutExtension(path);
-                return new TextureItem { TextureIndex = index, Texture = texture, IsAsset = true };
+                return new TextureItem(texture, index, true);
             }
 #endif
             else
@@ -450,7 +419,7 @@ namespace UniGLTF
                 var texture = new Texture2D(2, 2);
                 texture.name = Path.GetFileNameWithoutExtension(path);
                 texture.LoadImage(bytes);
-                return new TextureItem { TextureIndex = index, Texture = texture, IsAsset = true };
+                return new TextureItem(texture, index, true);
             }
         }
 

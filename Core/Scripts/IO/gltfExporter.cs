@@ -178,19 +178,10 @@ namespace UniGLTF
                 */
                 {
                     Path = "";
-                    Bytes = CopyTexture(texture).EncodeToPNG();
+                    Bytes = new TextureItem(texture).CopyTexture().EncodeToPNG();
                     Mime = "image/png";
                 }
             }
-        }
-
-        static Texture2D CopyTexture(Texture2D src)
-        {
-            var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32);
-            Graphics.Blit(src, renderTexture);
-            var copyTexture = new Texture2D(src.width, src.height, TextureFormat.ARGB32, false);
-            copyTexture.ReadPixels(new Rect(0, 0, src.width, src.height), 0, 0);
-            return copyTexture;
         }
 
         public static glTFMaterial ExportMaterial(Material m, List<Texture2D> textures)
