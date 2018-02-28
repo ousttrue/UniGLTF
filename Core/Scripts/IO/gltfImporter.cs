@@ -179,12 +179,12 @@ namespace UniGLTF
                                 ctx.AddObjectToAsset(x.Texture.name, x.Texture);
                             }
                         }
-                        return x.Texture;
+                        return x;
                     })
                     .ToArray();
 
             // materials
-            var materials = ImportMaterials(gltf, textures, shaderName).ToArray();
+            var materials = ImportMaterials(ctx, gltf, textures, shaderName).ToArray();
             foreach (var material in materials)
             {
                 ctx.AddObjectToAsset(material.name, material);
@@ -376,11 +376,11 @@ namespace UniGLTF
         }
 
         #region Import
-        static IEnumerable<TextureWithIsAsset> ImportTextures(glTF gltf)
+        static IEnumerable<TextureItem> ImportTextures(glTF gltf)
         {
             if (gltf.textures == null)
             {
-                return new TextureWithIsAsset[] { };
+                return new TextureItem[] { };
             }
             else
             {
@@ -388,14 +388,38 @@ namespace UniGLTF
             }
         }
 
-        public struct TextureWithIsAsset
+        static Color32 ConvertMetallicRoughness(Color32 src)
+        {
+            return new Color32
+            {
+                r = src.b,
+                g = src.b,
+                b = src.b,
+                a = (byte)(255 - src.g),
+            };
+        }
+
+        public struct TextureItem
         {
             public int TextureIndex;
             public Texture2D Texture;
             public bool IsAsset;
+
+            Texture2D m_metallicRoughness;
+            public Texture2D GetMetallicRoughnessConverted(IImporterContext ctx)
+            {
+                if (m_metallicRoughness == null)
+                {
+                    m_metallicRoughness = new Texture2D(Texture.width, Texture.height, TextureFormat.ARGB32, true);
+                    m_metallicRoughness.SetPixels32(Texture.GetPixels32().Select(ConvertMetallicRoughness).ToArray());
+                    m_metallicRoughness.name = Texture.name + ".metallicRoughness";
+                    ctx.AddObjectToAsset(m_metallicRoughness.name, m_metallicRoughness);
+                }
+                return m_metallicRoughness;
+            }
         }
 
-        static TextureWithIsAsset ImportTexture(glTF gltf, int index)
+        static TextureItem ImportTexture(glTF gltf, int index)
         {
             var image = gltf.images[index];
             if (string.IsNullOrEmpty(image.uri))
@@ -406,7 +430,7 @@ namespace UniGLTF
                 var byteSegment = gltf.GetViewBytes(image.bufferView);
                 var bytes = byteSegment.Array.Skip(byteSegment.Offset).Take(byteSegment.Count).ToArray();
                 texture.LoadImage(bytes, true);
-                return new TextureWithIsAsset { TextureIndex = index, Texture = texture, IsAsset = false };
+                return new TextureItem { TextureIndex = index, Texture = texture, IsAsset = false };
             }
 #if UNITY_EDITOR
             else if (gltf.baseDir.StartsWith("Assets/"))
@@ -415,7 +439,7 @@ namespace UniGLTF
                 var path = Path.Combine(gltf.baseDir, image.uri);
                 var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 texture.name = Path.GetFileNameWithoutExtension(path);
-                return new TextureWithIsAsset { TextureIndex = index, Texture = texture, IsAsset = true };
+                return new TextureItem { TextureIndex = index, Texture = texture, IsAsset = true };
             }
 #endif
             else
@@ -426,7 +450,7 @@ namespace UniGLTF
                 var texture = new Texture2D(2, 2);
                 texture.name = Path.GetFileNameWithoutExtension(path);
                 texture.LoadImage(bytes);
-                return new TextureWithIsAsset { TextureIndex = index, Texture = texture, IsAsset = true };
+                return new TextureItem { TextureIndex = index, Texture = texture, IsAsset = true };
             }
         }
 
@@ -462,7 +486,7 @@ namespace UniGLTF
         /// <param name="gltf"></param>
         /// <param name="textures"></param>
         /// <returns></returns>
-        static IEnumerable<Material> ImportMaterials(glTF gltf, Texture2D[] textures, string shaderName)
+        static IEnumerable<Material> ImportMaterials(IImporterContext ctx, glTF gltf, TextureItem[] textures, string shaderName)
         {
             var shader = Shader.Find(shaderName);
             if (gltf.materials == null || !gltf.materials.Any())
@@ -496,26 +520,26 @@ namespace UniGLTF
                         if (x.pbrMetallicRoughness.baseColorTexture.index != -1)
                         {
                             var texture = textures[x.pbrMetallicRoughness.baseColorTexture.index];
-                            material.mainTexture = texture;
+                            material.mainTexture = texture.Texture;
                         }
 
                         if (x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
                         {
                             var texture = textures[x.pbrMetallicRoughness.metallicRoughnessTexture.index];
-                            material.SetTexture("_MetallicGlossMap", texture);
+                            material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessConverted(ctx));
                         }
                     }
 
                     if (x.normalTexture.index != -1)
                     {
                         var texture = textures[x.normalTexture.index];
-                        material.SetTexture("_BumpMap", texture);
+                        material.SetTexture("_BumpMap", texture.Texture);
                     }
 
                     if (x.occlusionTexture.index != -1)
                     {
                         var texture = textures[x.occlusionTexture.index];
-                        material.SetTexture("_OcclusionMap", texture);
+                        material.SetTexture("_OcclusionMap", texture.Texture);
                     }
 
                     if (x.emissiveFactor != null)
@@ -528,7 +552,7 @@ namespace UniGLTF
                     {
                         material.EnableKeyword("_EMISSION");
                         var texture = textures[x.emissiveTexture.index];
-                        material.SetTexture("_EmissionMap", texture);
+                        material.SetTexture("_EmissionMap", texture.Texture);
                     }
 
                     return material;
