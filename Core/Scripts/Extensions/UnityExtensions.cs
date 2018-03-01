@@ -286,8 +286,13 @@ namespace UniGLTF
                     }
                 }
             }
+
 #else
-            yield return m.mainTexture;
+            var texture = m.mainTexture as Texture2D;
+            if (texture != null)
+            {
+                yield return texture;
+            }
 #endif
         }
 
