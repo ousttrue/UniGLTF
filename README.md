@@ -16,6 +16,7 @@
 
 ## Version
 
+* 20180303 [1.3](https://github.com/ousttrue/UniGLTF/releases/tag/v1.3)
 * 20180205 [1.2.1](https://github.com/ousttrue/UniGLTF/releases/tag/v1.2.1)
 * 20180129 [1.0.1](https://github.com/ousttrue/UniGLTF/releases/tag/v1.0.1) first version.
 
@@ -129,7 +130,7 @@ Exclude SciFiHelmet(70074vertices), all model can import.
 |color texture|o       |o       |/materials/#/pbrMetallicRoughness/baseColorTexture
 |sampler      |o       |o       |/samplers
 |multi uv     |
-|metallic map |o       |        |/materials/#/pbrMetallicRoughness/metallicRoughnessTexture
+|metallic map |o       |        |/materials/#/pbrMetallicRoughness/metallicRoughnessTexture, require convert
 |normal   map |o       |        |/materials/#/normalTexture
 |occlusion map|o       |        |/materials/#/occlusionTexture
 |emissive     |o       |        |/materials/#/emissiveFactor, material.enalbeKeyword("\_EMISSION") not affect
@@ -155,7 +156,7 @@ material.mainTexture = texture;
 |positions    |o       |o       |/meshes/#/primitives/#/attributes/POSITION, reverse-z
 |normals      |o       |o       |/meshes/#/primitives/#/attributes/NORMAL, reverse-z
 |uv           |o       |o       |/meshes/#/primitives/#/attributes/TEXCOORD_0, reverse-y
-|tangent      |        |        |/meshes/#/primitives/#/attributes/TANGENT, ?
+|tangent      |o       |o       |/meshes/#/primitives/#/attributes/TANGENT, reverse-z
 |primitive    |o       |o       |/meshes/#/primitives/#/indices
 |sharing attributes|o  |o       |
 
