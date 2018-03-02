@@ -5,6 +5,7 @@
 * Unityt5.6.3
 * glTF-2.0
 
+![metalroughness](doc/metalroughness.png)
 ![duck](doc/duck.png)
 ![duck_prefab](doc/duck_prefab.png)
 ![animation](doc/animation.gif)
@@ -89,9 +90,6 @@ m.m21 *= -1;
 m.m22 *= -1;
 m.m23 *= -1;
 ```
-
-This should be done in global coordinate, but animation curve contains local coordinate.
-
 ## Importer
 
 * [x] asset(ScriptedImporter) (Unity-2017 or new)
@@ -227,7 +225,7 @@ skin.rootBone=skeleton;
 
 ### animation
 
-* reverse-z. May be in global coordinate...
+* reverse-z. BindMatrices reverse-z in global, each curves reverse-z in bone local.
 * AnimationUtility.GetCurveBindings
 
 |features     |importer|exporter|memo     |
