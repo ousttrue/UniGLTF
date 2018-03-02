@@ -20,7 +20,7 @@ namespace UniGLTF
 
         public delegate Material CreateMaterialFunc(int i, glTFMaterial gltfMaterial, Texture2D[] textures);
 
-        static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
+        public static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
         {
             if (texture == null)
             {
@@ -501,7 +501,7 @@ namespace UniGLTF
             }
         }
 
-        static TextureItem ImportTexture(glTF gltf, int index)
+        public static TextureItem ImportTexture(glTF gltf, int index)
         {
             var image = gltf.images[index];
             if (string.IsNullOrEmpty(image.uri))
