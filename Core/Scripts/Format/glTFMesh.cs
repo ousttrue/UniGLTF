@@ -9,6 +9,7 @@ namespace UniGLTF
     {
         public int POSITION = -1;
         public int NORMAL = -1;
+        public int TANGENT = -1;
         public int TEXCOORD_0 = -1;
         public int JOINTS_0 = -1;
         public int WEIGHTS_0 = -1;
@@ -23,6 +24,7 @@ namespace UniGLTF
 
             return POSITION == rhs.POSITION
                 && NORMAL == rhs.NORMAL
+                && TANGENT == rhs.TANGENT
                 && TEXCOORD_0 == rhs.TEXCOORD_0
                 && JOINTS_0 == rhs.JOINTS_0
                 && WEIGHTS_0 == rhs.WEIGHTS_0
@@ -35,6 +37,7 @@ namespace UniGLTF
             f.BeginMap();
             if (POSITION >= 0) { f.KeyValue(() => POSITION); }
             if (NORMAL >= 0) { f.KeyValue(() => NORMAL); }
+            if (TANGENT >= 0) { f.KeyValue(() => TANGENT); }
             if (TEXCOORD_0 >= 0) { f.KeyValue(() => TEXCOORD_0); }
             if (JOINTS_0 >= 0) { f.KeyValue(() => JOINTS_0); }
             if (WEIGHTS_0 >= 0) { f.KeyValue(() => WEIGHTS_0); }

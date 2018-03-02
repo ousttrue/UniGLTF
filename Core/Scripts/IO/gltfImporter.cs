@@ -303,6 +303,7 @@ namespace UniGLTF
                 ctx.AddObjectToAsset(material.name, material);
             }
 
+            // meshes
             var meshes = gltf.meshes.Select((x, i) =>
             {
                 var meshWithMaterials = ImportMesh(gltf, i, x, materials, getBlendShapeName);
@@ -577,6 +578,7 @@ namespace UniGLTF
 
             var positions = new List<Vector3>();
             var normals = new List<Vector3>();
+            var tangents = new List<Vector4>();
             var uv = new List<Vector2>();
             var boneWeights = new List<BoneWeight>();
             var subMeshes = new List<int[]>();
@@ -585,6 +587,7 @@ namespace UniGLTF
 
             if (sharedAttributes)
             {
+                // multiple submesh sharing same VertexBuffer
                 {
                     var prim = gltfMesh.primitives.First();
                     positions.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
@@ -593,6 +596,12 @@ namespace UniGLTF
                     if (prim.attributes.NORMAL != -1)
                     {
                         normals.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
+                    }
+
+                    // tangent
+                    if (prim.attributes.TANGENT != -1)
+                    {
+                        tangents.AddRange(gltf.GetArrayFromAccessor<Vector4>(prim.attributes.TANGENT).Select(x => x.ReverseZ()));
                     }
 
                     // uv
@@ -676,6 +685,9 @@ namespace UniGLTF
             }
             else
             {
+                // multiple submMesh is not sharing a VertexBuffer.
+                // each subMesh use a independent VertexBuffer.
+
                 var targets = gltfMesh.primitives[0].targets;
                 for (int i = 1; i < gltfMesh.primitives.Count; ++i)
                 {
@@ -700,6 +712,11 @@ namespace UniGLTF
                     if (prim.attributes.NORMAL != -1)
                     {
                         normals.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
+                    }
+
+                    if (prim.attributes.TANGENT != -1)
+                    {
+                        tangents.AddRange(gltf.GetArrayFromAccessor<Vector4>(prim.attributes.TANGENT).Select(x => x.ReverseZ()));
                     }
 
                     // uv
@@ -809,6 +826,14 @@ namespace UniGLTF
             {
                 mesh.RecalculateNormals();
             }
+            if (tangents.Any())
+            {
+                mesh.tangents = tangents.ToArray();
+            }
+            else
+            {
+                mesh.RecalculateTangents();
+            }
             if (uv.Any())
             {
                 mesh.uv = uv.ToArray();
@@ -822,8 +847,6 @@ namespace UniGLTF
             {
                 mesh.SetTriangles(subMeshes[i], i);
             }
-            //mesh.RecalculateNormals();
-            mesh.RecalculateTangents();
             var result = new MeshWithMaterials
             {
                 Mesh = mesh,
