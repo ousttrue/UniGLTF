@@ -466,9 +466,8 @@ namespace UniGLTF
                 gltf.accessors[positionAccessorIndex].max = positions.Aggregate(positions[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
 
                 var normalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.normals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                var tangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.tangents.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
                 var uvAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.uv.Select(y => y.ReverseY()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                /*var tangentAccessorIndex =*/
-                gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.tangents, glBufferTarget.ARRAY_BUFFER);
 
                 var boneweights = mesh.boneWeights;
                 var weightAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new Vector4(y.weight0, y.weight1, y.weight2, y.weight3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
@@ -481,6 +480,10 @@ namespace UniGLTF
                 if (normalAccessorIndex != -1)
                 {
                     attributes.NORMAL = normalAccessorIndex;
+                }
+                if (tangentAccessorIndex != -1)
+                {
+                    attributes.TANGENT = tangentAccessorIndex;
                 }
                 if (uvAccessorIndex != -1)
                 {
@@ -517,6 +520,7 @@ namespace UniGLTF
                     {
                         var blendShapeVertices = mesh.vertices;
                         var blendShpaeNormals = mesh.normals;
+                        var blendShapeTangents = mesh.tangents.Select(y => (Vector3)y).ToArray();
                         var k = mesh.GetBlendShapeFrameCount(j);
                         mesh.GetBlendShapeFrameVertices(j, k - 1, blendShapeVertices, blendShpaeNormals, null);
 
@@ -524,6 +528,8 @@ namespace UniGLTF
                             blendShapeVertices.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
                         var blendShapeNormalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
                             blendShpaeNormals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                        var blendShapeTangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
+                            blendShapeTangents.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
                         //
                         // first primitive has whole blendShape
                         //
@@ -531,6 +537,7 @@ namespace UniGLTF
                         {
                             POSITION = blendShapePositionAccessorIndex,
                             NORMAL = blendShapeNormalAccessorIndex,
+                            TANGENT = blendShapeTangentAccessorIndex,
                         });
                     }
                 }

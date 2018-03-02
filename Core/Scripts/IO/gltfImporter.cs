@@ -664,12 +664,11 @@ namespace UniGLTF
                                 blendShape.Normals.AddRange(
                                     gltf.GetArrayFromAccessor<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
                             }
-#if false
-                        if (primTarget.TANGEN!=-1)
-                        {
-                            blendShape.Tangents = GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32())/*.Select(ReverseZ).ToArray()*/;
-                        }
-#endif
+                            if (primTarget.TANGENT!=-1)
+                            {
+                                blendShape.Tangents.AddRange(
+                                    gltf.GetArrayFromAccessor<Vector3>(primTarget.TANGENT).Select(x => x.ReverseZ()).ToArray());
+                            }
                         }
                     }
                 }
@@ -779,12 +778,11 @@ namespace UniGLTF
                                 blendShape.Normals.AddRange(
                                     gltf.GetArrayFromAccessor<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
                             }
-#if false
-                        if (primTarget.TANGEN!=-1)
-                        {
-                            blendShape.Tangents = GetBuffer<Vector3>(targetJson["TANGENT"].GetInt32())/*.Select(ReverseZ).ToArray()*/;
-                        }
-#endif
+                            if (primTarget.TANGENT != -1)
+                            {
+                                blendShape.Tangents.AddRange(
+                                    gltf.GetArrayFromAccessor<Vector3>(primTarget.TANGENT).Select(x => x.ReverseZ()).ToArray());
+                            }
                         }
                     }
 
