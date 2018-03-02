@@ -18,7 +18,7 @@ namespace UniGLTF
 
         public delegate string GetBlendShapeName(int meshIndex, int blendShapeIndex);
 
-        public delegate Material CreateMaterialFunc(int i, glTFMaterial gltfMaterial, Texture2D[] textures);
+        public delegate Material CreateMaterialFunc(IImporterContext ctx, int i, glTFMaterial gltfMaterial, TextureItem[] textures);
 
         public static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
         {
@@ -133,7 +133,7 @@ namespace UniGLTF
         {
             if (shader == null) return null;
 
-            CreateMaterialFunc func= (i, x, textures) =>
+            CreateMaterialFunc func= (ctx, i, x, textures) =>
             {
                 var material = new Material(shader);
                 if (string.IsNullOrEmpty(x.name))
@@ -156,26 +156,26 @@ namespace UniGLTF
                     if (x.pbrMetallicRoughness.baseColorTexture.index != -1)
                     {
                         var texture = textures[x.pbrMetallicRoughness.baseColorTexture.index];
-                        material.mainTexture = texture;
+                        material.mainTexture = texture.Texture;
                     }
 
                     if (x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
                     {
                         var texture = textures[x.pbrMetallicRoughness.metallicRoughnessTexture.index];
-                        material.SetTexture("_MetallicGlossMap", texture);
+                        material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessConverted(ctx));
                     }
                 }
 
                 if (x.normalTexture.index != -1)
                 {
                     var texture = textures[x.normalTexture.index];
-                    material.SetTexture("_BumpMap", texture);
+                    material.SetTexture("_BumpMap", texture.Texture);
                 }
 
                 if (x.occlusionTexture.index != -1)
                 {
                     var texture = textures[x.occlusionTexture.index];
-                    material.SetTexture("_OcclusionMap", texture);
+                    material.SetTexture("_OcclusionMap", texture.Texture);
                 }
 
                 if (x.emissiveFactor != null)
@@ -188,7 +188,7 @@ namespace UniGLTF
                 {
                     material.EnableKeyword("_EMISSION");
                     var texture = textures[x.emissiveTexture.index];
-                    material.SetTexture("_EmissionMap", texture);
+                    material.SetTexture("_EmissionMap", texture.Texture);
                 }
 
                 return material;
@@ -289,13 +289,13 @@ namespace UniGLTF
             List<Material> materials = new List<Material>();
             if (gltf.materials == null || !gltf.materials.Any())
             {
-                materials.Add(createMaterial(0, null, textures.Select(x => x.Texture).ToArray()));
+                materials.Add(createMaterial(ctx, 0, null, textures));
             }
             else
             {
                 for(int i=0; i<gltf.materials.Count; ++i)
                 {
-                    materials.Add(createMaterial(i, gltf.materials[i], textures.Select(x => x.Texture).ToArray()));
+                    materials.Add(createMaterial(ctx, i, gltf.materials[i], textures));
                 }
             }
             foreach (var material in materials)
