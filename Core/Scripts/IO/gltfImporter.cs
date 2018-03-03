@@ -162,7 +162,7 @@ namespace UniGLTF
                         if (x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
                         {
                             var texture = textures[x.pbrMetallicRoughness.metallicRoughnessTexture.index];
-                            material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessConverted(ctx));
+                            material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessOcclusionConverted(ctx));
                         }
                     }
 
@@ -175,7 +175,7 @@ namespace UniGLTF
                     if (x.occlusionTexture.index != -1)
                     {
                         var texture = textures[x.occlusionTexture.index];
-                        material.SetTexture("_OcclusionMap", texture.Texture);
+                        material.SetTexture("_OcclusionMap", texture.GetMetallicRoughnessOcclusionConverted(ctx));
                     }
 
                     if (x.emissiveFactor != null)
