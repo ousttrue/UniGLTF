@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using UnityEditor;
-
+using UnityEngine;
 
 namespace UniGLTF
 {
@@ -27,13 +27,21 @@ namespace UniGLTF
         {
             using (var context = new PrefabContext(srcPath))
             {
-                if (isGlb)
+                try
                 {
-                    glbImporter.Import(context, File.ReadAllBytes(srcPath));
+                    if (isGlb)
+                    {
+                        glbImporter.Import(context, File.ReadAllBytes(srcPath));
+                    }
+                    else
+                    {
+                        gltfImporter.Import(context, File.ReadAllText(srcPath, System.Text.Encoding.UTF8), new ArraySegment<byte>());
+                    }
                 }
-                else
+                catch (Exception)
                 {
-                    gltfImporter.Import(context, File.ReadAllText(srcPath, System.Text.Encoding.UTF8), new ArraySegment<byte>());
+                    Debug.LogErrorFormat("import error: {0}", srcPath);
+                    throw;
                 }
             }
         }
