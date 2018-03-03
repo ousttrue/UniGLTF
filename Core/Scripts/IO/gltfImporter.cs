@@ -18,7 +18,7 @@ namespace UniGLTF
 
         public delegate string GetBlendShapeName(int meshIndex, int blendShapeIndex);
 
-        public delegate Material CreateMaterialFunc(IImporterContext ctx, int i, glTFMaterial gltfMaterial, TextureItem[] textures);
+        public delegate Material CreateMaterialFunc(IImporterContext ctx, int i, glTFMaterial gltfMaterial, List<TextureItem> textures);
 
         public static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
         {
@@ -97,7 +97,7 @@ namespace UniGLTF
             public int? SkinIndex;
         }
 
-        static string DefaultGetBlendShapeName(int meshIndex, int blendShapeIndex)
+        public static string DefaultGetBlendShapeName(int meshIndex, int blendShapeIndex)
         {
             return blendShapeIndex.ToString();
         }
@@ -161,6 +161,7 @@ namespace UniGLTF
 
                         if (x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
                         {
+                            material.EnableKeyword("_METALLICGLOSSMAP");
                             var texture = textures[x.pbrMetallicRoughness.metallicRoughnessTexture.index];
                             material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessOcclusionConverted(ctx));
                         }
@@ -168,6 +169,7 @@ namespace UniGLTF
 
                     if (x.normalTexture.index != -1)
                     {
+                        material.EnableKeyword("_NORMALMAP");
                         var texture = textures[x.normalTexture.index];
                         material.SetTexture("_BumpMap", texture.Texture);
                     }
@@ -178,20 +180,22 @@ namespace UniGLTF
                         material.SetTexture("_OcclusionMap", texture.GetMetallicRoughnessOcclusionConverted(ctx));
                     }
 
-                    if (x.emissiveFactor != null)
+                    if (x.emissiveFactor != null
+                        || x.emissiveTexture.index != -1)
                     {
-                        // todo: emission is disabled by inspector
                         material.EnableKeyword("_EMISSION");
-                        material.SetColor("_EmissionColor", new Color(x.emissiveFactor[0], x.emissiveFactor[1], x.emissiveFactor[2]));
-                    }
+                        material.globalIlluminationFlags &= ~MaterialGlobalIlluminationFlags.EmissiveIsBlack;
 
-                    if (x.emissiveTexture.index != -1)
-                    {
-                        // todo: emission is disabled by inspector
-                        var texture = textures[x.emissiveTexture.index];
-                        material.EnableKeyword("_EMISSION");
-                        material.SetTexture("_EmissionMap", texture.Texture);
-                        material.SetColor("_EmissionColor", Color.white);
+                        if (x.emissiveFactor != null)
+                        {
+                            material.SetColor("_EmissionColor", new Color(x.emissiveFactor[0], x.emissiveFactor[1], x.emissiveFactor[2]));
+                        }
+
+                        if (x.emissiveTexture.index != -1)
+                        {
+                            var texture = textures[x.emissiveTexture.index];
+                            material.SetTexture("_EmissionMap", texture.Texture);
+                        }
                     }
                 }
 
@@ -282,7 +286,7 @@ namespace UniGLTF
                         }
                         return x;
                     })
-                    .ToArray();
+                    .ToList();
 
             if (createMaterial == null)
             {
@@ -572,7 +576,7 @@ namespace UniGLTF
             }
         }
 
-        static MeshWithMaterials ImportMesh(glTF gltf, int meshIndex, glTFMesh gltfMesh,
+        public static MeshWithMaterials ImportMesh(glTF gltf, int meshIndex, glTFMesh gltfMesh,
             List<Material> materials,
             GetBlendShapeName getBlendShapeName
             )
@@ -896,7 +900,7 @@ namespace UniGLTF
             return result;
         }
 
-        static GameObject ImportNode(glTFNode node)
+        public static GameObject ImportNode(glTFNode node)
         {
             var go = new GameObject(node.name);
 

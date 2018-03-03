@@ -14,6 +14,11 @@ namespace UniGLTF
         public int JOINTS_0 = -1;
         public int WEIGHTS_0 = -1;
 
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
         public override bool Equals(object obj)
         {
             var rhs = obj as glTFAttributes;
