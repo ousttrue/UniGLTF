@@ -180,15 +180,18 @@ namespace UniGLTF
 
                     if (x.emissiveFactor != null)
                     {
+                        // todo: emission is disabled by inspector
                         material.EnableKeyword("_EMISSION");
                         material.SetColor("_EmissionColor", new Color(x.emissiveFactor[0], x.emissiveFactor[1], x.emissiveFactor[2]));
                     }
 
                     if (x.emissiveTexture.index != -1)
                     {
-                        material.EnableKeyword("_EMISSION");
+                        // todo: emission is disabled by inspector
                         var texture = textures[x.emissiveTexture.index];
+                        material.EnableKeyword("_EMISSION");
                         material.SetTexture("_EmissionMap", texture.Texture);
+                        material.SetColor("_EmissionColor", Color.white);
                     }
                 }
 

@@ -132,7 +132,7 @@ Exclude SciFiHelmet(70074vertices), all model can import.
 |multi uv     |
 |metallic map |o       |        |/materials/#/pbrMetallicRoughness/metallicRoughnessTexture, require convert
 |normal   map |o       |        |/materials/#/normalTexture
-|occlusion map|o       |        |/materials/#/occlusionTexture
+|occlusion map|o       |        |/materials/#/occlusionTexture, require convert
 |emissive     |o       |        |/materials/#/emissiveFactor, material.enalbeKeyword("\_EMISSION") not affect
 |emissive map |o       |        |/materials/#/emissiveMap, material.enalbeKeyword("\_EMISSION") not affect
 
