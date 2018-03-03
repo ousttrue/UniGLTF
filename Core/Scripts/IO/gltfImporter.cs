@@ -519,6 +519,15 @@ namespace UniGLTF
                 texture.LoadImage(bytes, true);
                 return new TextureItem(texture, index, false);
             }
+            else if (image.uri.StartsWith("data:"))
+            {
+                // embeded
+                var bytes = UriByteBuffer.ReadEmbeded(image.uri);
+                var texture = new Texture2D(2, 2);
+                texture.name = "embeded";
+                texture.LoadImage(bytes);
+                return new TextureItem(texture, index, false);
+            }
 #if UNITY_EDITOR
             else if (gltf.baseDir.StartsWith("Assets/"))
             {
@@ -537,7 +546,7 @@ namespace UniGLTF
                 var texture = new Texture2D(2, 2);
                 texture.name = Path.GetFileNameWithoutExtension(path);
                 texture.LoadImage(bytes);
-                return new TextureItem(texture, index, true);
+                return new TextureItem(texture, index, false);
             }
         }
 

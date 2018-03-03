@@ -70,6 +70,14 @@ namespace UniGLTF
             Graphics.Blit(Texture, renderTexture);
             var copyTexture = new Texture2D(Texture.width, Texture.height, TextureFormat.ARGB32, false, linear);
             copyTexture.ReadPixels(new Rect(0, 0, Texture.width, Texture.height), 0, 0);
+            if (Application.isEditor)
+            {
+                GameObject.DestroyImmediate(renderTexture);
+            }
+            else
+            {
+                GameObject.Destroy(renderTexture);
+            }
             return copyTexture;
         }
     }
