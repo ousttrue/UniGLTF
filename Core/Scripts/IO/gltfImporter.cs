@@ -136,59 +136,60 @@ namespace UniGLTF
             CreateMaterialFunc func= (ctx, i, x, textures) =>
             {
                 var material = new Material(shader);
-                if (string.IsNullOrEmpty(x.name))
-                {
-                    material.name = string.Format("material:{0:00}", i);
-                }
-                else
-                {
-                    material.name = x.name;
-                }
+                material.name = string.Format("material:{0:00}", i);
 
-                if (x.pbrMetallicRoughness != null)
+                if (x != null)
                 {
-                    if (x.pbrMetallicRoughness.baseColorFactor != null)
+                    if (!string.IsNullOrEmpty(x.name))
                     {
-                        var color = x.pbrMetallicRoughness.baseColorFactor;
-                        material.color = new Color(color[0], color[1], color[2], color[3]);
+                        material.name = x.name;
                     }
 
-                    if (x.pbrMetallicRoughness.baseColorTexture.index != -1)
+                    if (x.pbrMetallicRoughness != null)
                     {
-                        var texture = textures[x.pbrMetallicRoughness.baseColorTexture.index];
-                        material.mainTexture = texture.Texture;
+                        if (x.pbrMetallicRoughness.baseColorFactor != null)
+                        {
+                            var color = x.pbrMetallicRoughness.baseColorFactor;
+                            material.color = new Color(color[0], color[1], color[2], color[3]);
+                        }
+
+                        if (x.pbrMetallicRoughness.baseColorTexture.index != -1)
+                        {
+                            var texture = textures[x.pbrMetallicRoughness.baseColorTexture.index];
+                            material.mainTexture = texture.Texture;
+                        }
+
+                        if (x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
+                        {
+                            var texture = textures[x.pbrMetallicRoughness.metallicRoughnessTexture.index];
+                            material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessConverted(ctx));
+                        }
                     }
 
-                    if (x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
+                    if (x.normalTexture.index != -1)
                     {
-                        var texture = textures[x.pbrMetallicRoughness.metallicRoughnessTexture.index];
-                        material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessConverted(ctx));
+                        var texture = textures[x.normalTexture.index];
+                        material.SetTexture("_BumpMap", texture.Texture);
                     }
-                }
 
-                if (x.normalTexture.index != -1)
-                {
-                    var texture = textures[x.normalTexture.index];
-                    material.SetTexture("_BumpMap", texture.Texture);
-                }
+                    if (x.occlusionTexture.index != -1)
+                    {
+                        var texture = textures[x.occlusionTexture.index];
+                        material.SetTexture("_OcclusionMap", texture.Texture);
+                    }
 
-                if (x.occlusionTexture.index != -1)
-                {
-                    var texture = textures[x.occlusionTexture.index];
-                    material.SetTexture("_OcclusionMap", texture.Texture);
-                }
+                    if (x.emissiveFactor != null)
+                    {
+                        material.EnableKeyword("_EMISSION");
+                        material.SetColor("_EmissionColor", new Color(x.emissiveFactor[0], x.emissiveFactor[1], x.emissiveFactor[2]));
+                    }
 
-                if (x.emissiveFactor != null)
-                {
-                    material.EnableKeyword("_EMISSION");
-                    material.SetColor("_EmissionColor", new Color(x.emissiveFactor[0], x.emissiveFactor[1], x.emissiveFactor[2]));
-                }
-
-                if (x.emissiveTexture.index != -1)
-                {
-                    material.EnableKeyword("_EMISSION");
-                    var texture = textures[x.emissiveTexture.index];
-                    material.SetTexture("_EmissionMap", texture.Texture);
+                    if (x.emissiveTexture.index != -1)
+                    {
+                        material.EnableKeyword("_EMISSION");
+                        var texture = textures[x.emissiveTexture.index];
+                        material.SetTexture("_EmissionMap", texture.Texture);
+                    }
                 }
 
                 return material;
