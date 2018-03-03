@@ -688,8 +688,15 @@ namespace UniGLTF
 
                 foreach (var prim in gltfMesh.primitives)
                 {
-                    var indices = gltf.GetIndices(prim.indices).Select(x => x).ToArray();
-                    subMeshes.Add(indices);
+                    if (prim.indices == -1)
+                    {
+                        subMeshes.Add(TriangleUtil.FlipTriangle(Enumerable.Range(0, positions.Count)).ToArray());
+                    }
+                    else
+                    {
+                        var indices = gltf.GetIndices(prim.indices).Select(x => x).ToArray();
+                        subMeshes.Add(indices);
+                    }
 
                     // material
                     materialIndices.Add(prim.material);
