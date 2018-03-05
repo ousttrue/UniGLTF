@@ -359,6 +359,76 @@ namespace UniGLTF
             public List<Texture2D> Textures;
         }
 
+        public static int ExportTexture(glTF gltf, int bufferIndex, Texture2D texture)
+        {
+            var bytesWithPath = new BytesWithPath(texture); ;
+
+            // add view
+            var view = gltf.buffers[bufferIndex].Storage.Extend(bytesWithPath.Bytes, glBufferTarget.NONE);
+            var viewIndex = gltf.AddBufferView(view);
+
+            // add image
+            var imageIndex = gltf.images.Count;
+            gltf.images.Add(new glTFImage
+            {
+                bufferView = viewIndex,
+                mimeType = bytesWithPath.Mime,
+            });
+
+            // add sampler
+            var filter = default(glFilter);
+            switch (texture.filterMode)
+            {
+                case FilterMode.Point:
+                    filter = glFilter.NEAREST;
+                    break;
+
+                default:
+                    filter = glFilter.LINEAR;
+                    break;
+            }
+            var wrap = default(glWrap);
+
+            switch (texture.wrapMode)
+            {
+                case TextureWrapMode.Clamp:
+                    wrap = glWrap.CLAMP_TO_EDGE;
+                    break;
+
+                case TextureWrapMode.Repeat:
+                    wrap = glWrap.REPEAT;
+                    break;
+
+#if UNITY_2017_OR_NEWER
+                    case TextureWrapMode.Mirror:
+                        wrap = glWrap.MIRRORED_REPEAT;
+                        break;
+#endif
+
+                default:
+                    throw new NotImplementedException();
+            }
+
+            var samplerIndex = gltf.samplers.Count;
+            gltf.samplers.Add(new glTFTextureSampler
+            {
+                magFilter = filter,
+                minFilter = filter,
+                wrapS = wrap,
+                wrapT = wrap,
+
+            });
+
+            // add texture
+            gltf.textures.Add(new glTFTexture
+            {
+                sampler = samplerIndex,
+                source = imageIndex,
+            });
+
+            return imageIndex;
+        }
+
         public static Exported FromGameObject(glTF gltf, GameObject go)
         {
             var bytesBuffer = new ArrayByteBuffer();
@@ -375,71 +445,7 @@ namespace UniGLTF
             for (int i = 0; i < unityTextures.Count; ++i)
             {
                 var texture = unityTextures[i];
-
-                var bytesWithPath = new BytesWithPath(texture); ;
-
-                // add view
-                var view = gltf.buffers[bufferIndex].Storage.Extend(bytesWithPath.Bytes, glBufferTarget.NONE);
-                var viewIndex = gltf.AddBufferView(view);
-
-                // add image
-                var imageIndex = gltf.images.Count;
-                gltf.images.Add(new glTFImage
-                {
-                    bufferView = viewIndex,
-                    mimeType = bytesWithPath.Mime,
-                });
-
-                // add sampler
-                var filter = default(glFilter);
-                switch (texture.filterMode)
-                {
-                    case FilterMode.Point:
-                        filter = glFilter.NEAREST;
-                        break;
-
-                    default:
-                        filter = glFilter.LINEAR;
-                        break;
-                }
-                var wrap = default(glWrap);
-
-                switch (texture.wrapMode)
-                {
-                    case TextureWrapMode.Clamp:
-                        wrap = glWrap.CLAMP_TO_EDGE;
-                        break;
-
-                    case TextureWrapMode.Repeat:
-                        wrap = glWrap.REPEAT;
-                        break;
-
-#if UNITY_2017_OR_NEWER
-                    case TextureWrapMode.Mirror:
-                        wrap = glWrap.MIRRORED_REPEAT;
-                        break;
-#endif
-
-                    default:
-                        throw new NotImplementedException();
-                }
-
-                var samplerIndex = gltf.samplers.Count;
-                gltf.samplers.Add(new glTFTextureSampler
-                {
-                    magFilter = filter,
-                    minFilter = filter,
-                    wrapS = wrap,
-                    wrapT = wrap,
-
-                });
-
-                // add texture
-                gltf.textures.Add(new glTFTexture
-                {
-                    sampler = samplerIndex,
-                    source = imageIndex,
-                });
+                ExportTexture(gltf, bufferIndex, texture);            
             }
            
             gltf.materials = unityMaterials.Select(x => ExportMaterial(x, unityTextures)).ToList();

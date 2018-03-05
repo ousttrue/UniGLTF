@@ -14,7 +14,9 @@ namespace UniGLTF
 
         public delegate void OnLoadCallback(IImporterContext ctx, string json,
             Transform[] nodes,
-            List<Mesh> meshes);
+            List<Mesh> meshes,
+            List<Texture2D> textures
+            );
 
         public delegate string GetBlendShapeName(int meshIndex, int blendShapeIndex);
 
@@ -488,7 +490,8 @@ namespace UniGLTF
             {
                 callback(ctx, json,
                     nodes.Select(x => x.Transform).ToArray(),
-                    meshes.Select(x => x.Mesh).ToList()
+                    meshes.Select(x => x.Mesh).ToList(),
+                    textures.Select(x => x.Texture).ToList()
                     );
             }
 
