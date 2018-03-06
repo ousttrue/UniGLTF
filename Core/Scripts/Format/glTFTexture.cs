@@ -4,38 +4,35 @@
 namespace UniGLTF
 {
     [Serializable]
-    public class glTFTextureSampler : IJsonSerializable
+    public class glTFTextureSampler : JsonSerializableBase
     {
         public glFilter magFilter = glFilter.NEAREST;
         public glFilter minFilter = glFilter.NEAREST;
         public glWrap wrapS = glWrap.REPEAT;
         public glWrap wrapT = glWrap.REPEAT;
 
-        public string ToJson()
+        protected override void SerializeMembers(JsonFormatter f)
         {
-            var f = new JsonFormatter();
-            f.BeginMap();
             f.Key("magFilter"); f.Value((int)magFilter);
             f.Key("minFilter"); f.Value((int)minFilter);
             f.Key("wrapS"); f.Value((int)wrapS);
             f.Key("wrapT"); f.Value((int)wrapT);
-            f.EndMap();
-            return f.ToString();
         }
     }
 
     [Serializable]
-    public class glTFImage : IJsonSerializable
+    public class glTFImage : JsonSerializableBase
     {
         public string uri;
 
         public int bufferView;
         public string mimeType;
 
-        public string ToJson()
+        public extraName extra = new extraName();
+
+        protected override void SerializeMembers(JsonFormatter f)
         {
-            var f = new JsonFormatter();
-            f.BeginMap();
+            f.KeyValue(() => extra);
             if (!string.IsNullOrEmpty(uri))
             {
                 f.KeyValue(() => uri);
@@ -45,25 +42,19 @@ namespace UniGLTF
                 f.KeyValue(() => bufferView);
                 f.KeyValue(() => mimeType);
             }
-            f.EndMap();
-            return f.ToString();
         }
     }
 
     [Serializable]
-    public class glTFTexture : IJsonSerializable
+    public class glTFTexture : JsonSerializableBase
     {
         public int sampler;
         public int source;
 
-        public string ToJson()
+        protected override void SerializeMembers(JsonFormatter f)
         {
-            var f = new JsonFormatter();
-            f.BeginMap();
             f.KeyValue(() => sampler);
             f.KeyValue(() => source);
-            f.EndMap();
-            return f.ToString();
         }
     }
 }

@@ -371,6 +371,10 @@ namespace UniGLTF
             var imageIndex = gltf.images.Count;
             gltf.images.Add(new glTFImage
             {
+                extra = new extraName
+                {
+                    name = texture.name,
+                },
                 bufferView = viewIndex,
                 mimeType = bytesWithPath.Mime,
             });
@@ -539,8 +543,12 @@ namespace UniGLTF
                         //
                         // first primitive has whole blendShape
                         //
-                        gltf.meshes.Last().primitives[0].targets.Add(new glTFAttributes
+                        gltf.meshes.Last().primitives[0].targets.Add(new gltfMorphTarget
                         {
+                            extra = new extraName
+                            {
+                                name = mesh.GetBlendShapeName(j)
+                            },
                             POSITION = blendShapePositionAccessorIndex,
                             NORMAL = blendShapeNormalAccessorIndex,
                             TANGENT = blendShapeTangentAccessorIndex,

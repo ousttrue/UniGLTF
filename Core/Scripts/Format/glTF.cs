@@ -23,6 +23,17 @@ namespace UniGLTF
     }
 
     [Serializable]
+    public class extraName : JsonSerializableBase
+    {
+        public string name;
+
+        protected override void SerializeMembers(JsonFormatter f)
+        {
+            f.KeyValue(() => name);
+        }
+    }
+
+    [Serializable]
     public class gltfScene : JsonSerializableBase
     {
         public int[] nodes;

@@ -18,8 +18,6 @@ namespace UniGLTF
             List<Texture2D> textures
             );
 
-        public delegate string GetBlendShapeName(int meshIndex, int blendShapeIndex);
-
         public delegate Material CreateMaterialFunc(IImporterContext ctx, int i, glTFMaterial gltfMaterial, List<TextureItem> textures);
 
         public static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
@@ -97,11 +95,6 @@ namespace UniGLTF
         {
             public Transform Transform;
             public int? SkinIndex;
-        }
-
-        public static string DefaultGetBlendShapeName(int meshIndex, int blendShapeIndex)
-        {
-            return blendShapeIndex.ToString();
         }
 
         /// StandardShader vaiables
@@ -210,15 +203,9 @@ namespace UniGLTF
         public static GameObject Import(IImporterContext ctx, string json,
             ArraySegment<Byte> glbBinChunk,
             OnLoadCallback callback = null,
-            GetBlendShapeName getBlendShapeName = null,
             CreateMaterialFunc createMaterial = null
             )
         {
-            if (getBlendShapeName == null)
-            {
-                getBlendShapeName = DefaultGetBlendShapeName;
-            }
-
             // exclude not gltf-2.0
             var parsed = json.ParseAsJson();
             try
@@ -316,7 +303,7 @@ namespace UniGLTF
             // meshes
             var meshes = gltf.meshes.Select((x, i) =>
             {
-                var meshWithMaterials = ImportMesh(gltf, i, x, materials, getBlendShapeName);
+                var meshWithMaterials = ImportMesh(gltf, i, x, materials);
                 var mesh = meshWithMaterials.Mesh;
                 if (string.IsNullOrEmpty(mesh.name))
                 {
@@ -520,7 +507,7 @@ namespace UniGLTF
             {
                 // use buffer view
                 var texture = new Texture2D(2, 2);
-                texture.name = string.Format("buffer#{0:00}", index);
+                texture.name = string.IsNullOrEmpty(image.extra.name) ? string.Format("buffer#{0:00}", index) : image.extra.name;
                 var byteSegment = gltf.GetViewBytes(image.bufferView);
                 var bytes = byteSegment.Array.Skip(byteSegment.Offset).Take(byteSegment.Count).ToArray();
                 texture.LoadImage(bytes, true);
@@ -531,7 +518,7 @@ namespace UniGLTF
                 // embeded
                 var bytes = UriByteBuffer.ReadEmbeded(image.uri);
                 var texture = new Texture2D(2, 2);
-                texture.name = "embeded";
+                texture.name = string.IsNullOrEmpty(image.extra.name) ? "embeded" : image.extra.name;
                 texture.LoadImage(bytes);
                 return new TextureItem(texture, index, false);
             }
@@ -541,7 +528,7 @@ namespace UniGLTF
                 // local folder
                 var path = Path.Combine(gltf.baseDir, image.uri);
                 var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                texture.name = Path.GetFileNameWithoutExtension(path);
+                texture.name = string.IsNullOrEmpty(image.extra.name) ? Path.GetFileNameWithoutExtension(path) : image.extra.name;
                 return new TextureItem(texture, index, true);
             }
 #endif
@@ -551,7 +538,7 @@ namespace UniGLTF
                 var path = Path.Combine(gltf.baseDir, image.uri);
                 var bytes = File.ReadAllBytes(path);
                 var texture = new Texture2D(2, 2);
-                texture.name = Path.GetFileNameWithoutExtension(path);
+                texture.name = string.IsNullOrEmpty(image.extra.name) ? Path.GetFileNameWithoutExtension(path) : image.extra.name;
                 texture.LoadImage(bytes);
                 return new TextureItem(texture, index, false);
             }
@@ -579,10 +566,7 @@ namespace UniGLTF
             }
         }
 
-        public static MeshWithMaterials ImportMesh(glTF gltf, int meshIndex, glTFMesh gltfMesh,
-            List<Material> materials,
-            GetBlendShapeName getBlendShapeName
-            )
+        public static MeshWithMaterials ImportMesh(glTF gltf, int meshIndex, glTFMesh gltfMesh, List<Material> materials)
         {
             glTFAttributes lastAttributes = null;
             var sharedAttributes = true;
@@ -666,7 +650,10 @@ namespace UniGLTF
                     {
                         if (blendShapes == null)
                         {
-                            blendShapes = prim.targets.Select((x, i) => new BlendShape(getBlendShapeName(meshIndex, i))).ToArray();
+                            blendShapes = prim.targets.Select((x, i) => new BlendShape(
+                                string.IsNullOrEmpty(prim.targets[i].extra.name)
+                                ? i.ToString()
+                                : prim.targets[i].extra.name)).ToArray();
                         }
                         for (int i = 0; i < prim.targets.Count; ++i)
                         {
@@ -787,7 +774,9 @@ namespace UniGLTF
                     {
                         if (blendShapes == null)
                         {
-                            blendShapes = prim.targets.Select((x, i) => new BlendShape(i.ToString())).ToArray();
+                            blendShapes = prim.targets.Select((x, i) => new BlendShape(string.IsNullOrEmpty(prim.targets[i].extra.name)
+                                ? i.ToString()
+                                : prim.targets[i].extra.name)).ToArray();
                         }
                         for (int i = 0; i < prim.targets.Count; ++i)
                         {

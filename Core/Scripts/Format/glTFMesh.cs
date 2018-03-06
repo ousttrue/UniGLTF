@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace UniGLTF
 {
     [Serializable]
-    public class glTFAttributes : IJsonSerializable
+    public class glTFAttributes : JsonSerializableBase
     {
         public int POSITION = -1;
         public int NORMAL = -1;
@@ -36,18 +36,26 @@ namespace UniGLTF
                 ;
         }
 
-        public string ToJson()
+        protected override void SerializeMembers(JsonFormatter f)
         {
-            var f = new JsonFormatter();
-            f.BeginMap();
-            if (POSITION >= 0) { f.KeyValue(() => POSITION); }
-            if (NORMAL >= 0) { f.KeyValue(() => NORMAL); }
-            if (TANGENT >= 0) { f.KeyValue(() => TANGENT); }
-            if (TEXCOORD_0 >= 0) { f.KeyValue(() => TEXCOORD_0); }
-            if (JOINTS_0 >= 0) { f.KeyValue(() => JOINTS_0); }
-            if (WEIGHTS_0 >= 0) { f.KeyValue(() => WEIGHTS_0); }
-            f.EndMap();
-            return f.ToString();
+            f.KeyValue(() => POSITION);
+            f.KeyValue(() => NORMAL);
+            f.KeyValue(() => TANGENT);
+            f.KeyValue(() => TEXCOORD_0);
+            f.KeyValue(() => JOINTS_0);
+            f.KeyValue(() => WEIGHTS_0);
+        }
+    }
+
+    [Serializable]
+    public class gltfMorphTarget : glTFAttributes
+    {
+        public extraName extra = new extraName();
+
+        protected override void SerializeMembers(JsonFormatter f)
+        {
+            f.KeyValue(() => extra);
+            base.SerializeMembers(f);
         }
     }
 
@@ -59,7 +67,7 @@ namespace UniGLTF
         public glTFAttributes attributes;
         public int material;
 
-        public List<glTFAttributes> targets = new List<glTFAttributes>();
+        public List<gltfMorphTarget> targets = new List<gltfMorphTarget>();
 
         public string ToJson()
         {

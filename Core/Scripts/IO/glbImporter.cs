@@ -99,7 +99,6 @@ namespace UniGLTF
                 json, 
                 chunks[1].Bytes,
                 callback,
-                null,
                 createMaterial
                 );
         }
