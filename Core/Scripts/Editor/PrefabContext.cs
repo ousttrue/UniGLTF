@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace UniGLTF
 {
-    class PrefabContext : IImporterContext
+    class PrefabContext// : IImporterContext
     {
         public string Path
         {

@@ -7,43 +7,63 @@ namespace UniGLTF
 {
     public class gltfAssetPostprocessor : AssetPostprocessor
     {
-        static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+        static void OnPostprocessAllAssets(string[] importedAssets,
+            string[] deletedAssets,
+            string[] movedAssets,
+            string[] movedFromAssetPaths)
         {
             foreach (string path in importedAssets)
             {
+                ImporterContext context = null;
                 var ext = Path.GetExtension(path).ToLower();
-                if (ext == ".gltf")
+                try
                 {
-                    ImportGltf(path, false);
+                    if (ext == ".gltf")
+                    {
+                        context = ImportGltf(path, false);
+                    }
+                    else if (ext == ".glb")
+                    {
+                        context = ImportGltf(path, true);
+                    }
+                    if (context != null)
+                    {
+                        context.SaveAsAsset();
+                    }
+                    if (context != null)
+                    {
+                        context.Destroy(false);
+                    }
                 }
-                else if (ext == ".glb")
+                catch (Exception ex)
                 {
-                    ImportGltf(path, true);
+                    Debug.LogErrorFormat("import error: {0}", path);
+                    Debug.LogErrorFormat("{0}", ex);
+                    if (context != null)
+                    {
+                        context.Destroy(true);
+                    }
                 }
             }
         }
 
-        static void ImportGltf(string srcPath, bool isGlb)
+        static ImporterContext ImportGltf(string srcPath, bool isGlb)
         {
-            using (var context = new PrefabContext(srcPath))
+            Debug.LogFormat("ImportGltf: {0}", srcPath);
+            var context = new ImporterContext
             {
-                try
-                {
-                    if (isGlb)
-                    {
-                        glbImporter.Import(context, File.ReadAllBytes(srcPath));
-                    }
-                    else
-                    {
-                        gltfImporter.Import(context, File.ReadAllText(srcPath, System.Text.Encoding.UTF8), new ArraySegment<byte>());
-                    }
-                }
-                catch (Exception)
-                {
-                    Debug.LogErrorFormat("import error: {0}", srcPath);
-                    throw;
-                }
+                Path = srcPath,
+            };
+            if (isGlb)
+            {
+                glbImporter.Import(context, File.ReadAllBytes(srcPath));
             }
+            else
+            {
+                context.Json = File.ReadAllText(srcPath, System.Text.Encoding.UTF8);
+                gltfImporter.Import(context, new ArraySegment<byte>());
+            }
+            return context;
         }
     }
 }

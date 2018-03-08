@@ -15,32 +15,28 @@ namespace UniGLTF
             if (!string.IsNullOrEmpty(path))
             {
                 Debug.Log(path);
+                var context = new ImporterContext
+                {
+                    Path = path,
+                };
                 var bytes = File.ReadAllBytes(path);
                 var ext = Path.GetExtension(path).ToLower();
                 switch (ext)
                 {
                     case ".gltf":
                         {
-                            var json = Encoding.UTF8.GetString(bytes);
-                            var root = gltfImporter.Import(new RuntimeContext(path), json, new ArraySegment<byte>());
-                            if (root == null)
-                            {
-                                return;
-                            }
-                            root.name = Path.GetFileNameWithoutExtension(path);
-                            Selection.activeGameObject = root;
+                            context.Json = Encoding.UTF8.GetString(bytes);
+                            gltfImporter.Import(context, new ArraySegment<byte>());
+                            context.Root.name = Path.GetFileNameWithoutExtension(path);
+                            Selection.activeGameObject = context.Root;
                         }
                         break;
 
                     case ".glb":
                         {
-                            var root = glbImporter.Import(new RuntimeContext(path), bytes);
-                            if (root == null)
-                            {
-                                return;
-                            }
-                            root.name = Path.GetFileNameWithoutExtension(path);
-                            Selection.activeGameObject = root;
+                            glbImporter.Import(context, bytes);
+                            context.Root.name = Path.GetFileNameWithoutExtension(path);
+                            Selection.activeGameObject = context.Root;
                         }
                         break;
 

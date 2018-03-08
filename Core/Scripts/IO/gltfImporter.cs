@@ -12,14 +12,6 @@ namespace UniGLTF
     {
         const float FRAME_WEIGHT = 100.0f;
 
-        public delegate void OnLoadCallback(IImporterContext ctx, string json,
-            Transform[] nodes,
-            List<Mesh> meshes,
-            List<Texture2D> textures
-            );
-
-        public delegate Material CreateMaterialFunc(IImporterContext ctx, int i, glTFMaterial gltfMaterial, List<TextureItem> textures);
-
         public static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
         {
             if (texture == null)
@@ -91,12 +83,6 @@ namespace UniGLTF
             }
         }
 
-        public struct TransformWithSkin
-        {
-            public Transform Transform;
-            public int? SkinIndex;
-        }
-
         /// StandardShader vaiables
         /// 
         /// _Color
@@ -128,137 +114,128 @@ namespace UniGLTF
         {
             if (shader == null) return null;
 
-            CreateMaterialFunc func= (ctx, i, x, textures) =>
-            {
-                var material = new Material(shader);
-                material.name = string.Format("material:{0:00}", i);
+            return (ctx, i) =>
+             {
+                 var material = new Material(shader);
+                 material.name = string.Format("material:{0:00}", i);
 
-                if (x != null)
-                {
-                    if (!string.IsNullOrEmpty(x.name))
-                    {
-                        material.name = x.name;
-                    }
+                 if (i >= 0 && i < ctx.GLTF.materials.Count)
+                 {
+                     var x = ctx.GLTF.materials[i];
+                     if (x != null)
+                     {
+                         if (!string.IsNullOrEmpty(x.name))
+                         {
+                             material.name = x.name;
+                         }
 
-                    if (x.pbrMetallicRoughness != null)
-                    {
-                        if (x.pbrMetallicRoughness.baseColorFactor != null)
-                        {
-                            var color = x.pbrMetallicRoughness.baseColorFactor;
-                            material.color = new Color(color[0], color[1], color[2], color[3]);
-                        }
+                         if (x.pbrMetallicRoughness != null)
+                         {
+                             if (x.pbrMetallicRoughness.baseColorFactor != null)
+                             {
+                                 var color = x.pbrMetallicRoughness.baseColorFactor;
+                                 material.color = new Color(color[0], color[1], color[2], color[3]);
+                             }
 
-                        if (x.pbrMetallicRoughness.baseColorTexture.index != -1)
-                        {
-                            var texture = textures[x.pbrMetallicRoughness.baseColorTexture.index];
-                            material.mainTexture = texture.Texture;
-                        }
+                             if (x.pbrMetallicRoughness.baseColorTexture.index != -1)
+                             {
+                                 var texture = ctx.Textures[x.pbrMetallicRoughness.baseColorTexture.index];
+                                 material.mainTexture = texture.Texture;
+                             }
 
-                        if (x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
-                        {
-                            material.EnableKeyword("_METALLICGLOSSMAP");
-                            var texture = textures[x.pbrMetallicRoughness.metallicRoughnessTexture.index];
-                            material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessOcclusionConverted(ctx));
-                        }
-                    }
+                             if (x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
+                             {
+                                 material.EnableKeyword("_METALLICGLOSSMAP");
+                                 var texture = ctx.Textures[x.pbrMetallicRoughness.metallicRoughnessTexture.index];
+                                 material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessOcclusionConverted());
+                             }
+                         }
 
-                    if (x.normalTexture.index != -1)
-                    {
-                        material.EnableKeyword("_NORMALMAP");
-                        var texture = textures[x.normalTexture.index];
-                        material.SetTexture("_BumpMap", texture.Texture);
-                    }
+                         if (x.normalTexture.index != -1)
+                         {
+                             material.EnableKeyword("_NORMALMAP");
+                             var texture = ctx.Textures[x.normalTexture.index];
+                             material.SetTexture("_BumpMap", texture.Texture);
+                         }
 
-                    if (x.occlusionTexture.index != -1)
-                    {
-                        var texture = textures[x.occlusionTexture.index];
-                        material.SetTexture("_OcclusionMap", texture.GetMetallicRoughnessOcclusionConverted(ctx));
-                    }
+                         if (x.occlusionTexture.index != -1)
+                         {
+                             var texture = ctx.Textures[x.occlusionTexture.index];
+                             material.SetTexture("_OcclusionMap", texture.GetMetallicRoughnessOcclusionConverted());
+                         }
 
-                    if (x.emissiveFactor != null
-                        || x.emissiveTexture.index != -1)
-                    {
-                        material.EnableKeyword("_EMISSION");
-                        material.globalIlluminationFlags &= ~MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+                         if (x.emissiveFactor != null
+                             || x.emissiveTexture.index != -1)
+                         {
+                             material.EnableKeyword("_EMISSION");
+                             material.globalIlluminationFlags &= ~MaterialGlobalIlluminationFlags.EmissiveIsBlack;
 
-                        if (x.emissiveFactor != null)
-                        {
-                            material.SetColor("_EmissionColor", new Color(x.emissiveFactor[0], x.emissiveFactor[1], x.emissiveFactor[2]));
-                        }
+                             if (x.emissiveFactor != null)
+                             {
+                                 material.SetColor("_EmissionColor", new Color(x.emissiveFactor[0], x.emissiveFactor[1], x.emissiveFactor[2]));
+                             }
 
-                        if (x.emissiveTexture.index != -1)
-                        {
-                            var texture = textures[x.emissiveTexture.index];
-                            material.SetTexture("_EmissionMap", texture.Texture);
-                        }
-                    }
-                }
+                             if (x.emissiveTexture.index != -1)
+                             {
+                                 var texture = ctx.Textures[x.emissiveTexture.index];
+                                 material.SetTexture("_EmissionMap", texture.Texture);
+                             }
+                         }
+                     }
+                 }
 
-                return material;
-            };
-
-            return func;
+                 return material;
+             };
         }
 
-        public static GameObject Import(IImporterContext ctx, string json,
-            ArraySegment<Byte> glbBinChunk,
-            OnLoadCallback callback = null,
-            CreateMaterialFunc createMaterial = null
-            )
+        public static void Import(ImporterContext ctx, ArraySegment<Byte> glbBinChunk)
         {
             // exclude not gltf-2.0
-            var parsed = json.ParseAsJson();
+            var parsed = ctx.Json.ParseAsJson();
             try
             {
                 if (parsed["asset"]["version"].GetString() != "2.0")
                 {
-                    Debug.LogWarningFormat("is not gltf-2.0: {0}", ctx.Path);
-                    return null;
+                    throw new UniGLTFException("is not gltf-2.0: {0}", ctx.Path);
                 }
             }
             catch (Exception)
             {
-                Debug.LogWarningFormat("{0}: fail to parse json", ctx.Path);
-                return null;
+                throw new UniGLTFException("{0}: fail to parse json", ctx.Path);
             }
 
             // parse json
-            glTF gltf = null;
             try
             {
-                gltf = JsonUtility.FromJson<glTF>(json);
+                ctx.GLTF = JsonUtility.FromJson<glTF>(ctx.Json);
             }
             catch (Exception)
             {
-                Debug.LogWarningFormat("{0}: fail to parse json", ctx.Path);
-                return null;
+                throw new UniGLTFException("{0}: fail to parse json", ctx.Path);
             }
-            if (gltf == null)
+            if (ctx.GLTF == null)
             {
-                Debug.LogWarningFormat("{0}: fail to parse json", ctx.Path);
-                return null;
+                throw new UniGLTFException("{0}: fail to parse json", ctx.Path);
             }
 
-            if (gltf.asset.version != "2.0")
+            if (ctx.GLTF.asset.version != "2.0")
             {
-                Debug.LogWarningFormat("unknown gltf version {0}", gltf.asset.version);
-                return null;
+                throw new UniGLTFException("unknown gltf version {0}", ctx.GLTF.asset.version);
             }
 
-            gltf.baseDir = Path.GetDirectoryName(ctx.Path);
-            //Debug.LogFormat("{0}: {1}", ctx.Path, gltf);
-
-            foreach (var buffer in gltf.buffers)
+            // parepare byte buffer
+            ctx.GLTF.baseDir = Path.GetDirectoryName(ctx.Path);
+            foreach (var buffer in ctx.GLTF.buffers)
             {
-                buffer.OpenStorage(gltf.baseDir, glbBinChunk);
+                buffer.OpenStorage(ctx.GLTF.baseDir, glbBinChunk);
             }
 
             // textures
-            var textures = ImportTextures(gltf)
+            ctx.Textures.AddRange(ImportTextures(ctx.GLTF)
                     .Select(x =>
                     {
-                        var samplerIndex = gltf.textures[x.TextureIndex].sampler;
-                        var sampler = gltf.samplers[samplerIndex];
+                        var samplerIndex = ctx.GLTF.textures[x.TextureIndex].sampler;
+                        var sampler = ctx.GLTF.samplers[samplerIndex];
 
                         if (x.Texture == null)
                         {
@@ -267,128 +244,113 @@ namespace UniGLTF
                         else
                         {
                             SetSampler(x.Texture, sampler);
-
-                            if (!x.IsAsset)
-                            {
-                                ctx.AddObjectToAsset(x.Texture.name, x.Texture);
-                            }
                         }
                         return x;
-                    })
-                    .ToList();
-
-            if (createMaterial == null)
-            {
-                createMaterial = CreateMaterialFuncFromShader(Shader.Find("Standard"));
-            }
+                    }));
 
             // materials
-            List<Material> materials = new List<Material>();
-            if (gltf.materials == null || !gltf.materials.Any())
+            if (ctx.CreateMaterial == null)
             {
-                materials.Add(createMaterial(ctx, 0, null, textures));
+                ctx.CreateMaterial = CreateMaterialFuncFromShader(Shader.Find("Standard"));
+            }
+            if (ctx.GLTF.materials == null || !ctx.GLTF.materials.Any())
+            {
+                ctx.Materials.Add(ctx.CreateMaterial(ctx, 0));
             }
             else
             {
-                for(int i=0; i<gltf.materials.Count; ++i)
+                for (int i = 0; i < ctx.GLTF.materials.Count; ++i)
                 {
-                    materials.Add(createMaterial(ctx, i, gltf.materials[i], textures));
+                    ctx.Materials.Add(ctx.CreateMaterial(ctx, i));
                 }
-            }
-            foreach (var material in materials)
-            {
-                ctx.AddObjectToAsset(material.name, material);
             }
 
             // meshes
-            var meshes = gltf.meshes.Select((x, i) =>
+            ctx.Meshes.AddRange(ctx.GLTF.meshes.Select((x, i) =>
             {
-                var meshWithMaterials = ImportMesh(gltf, i, x, materials);
+                var meshWithMaterials = ImportMesh(ctx, i);
                 var mesh = meshWithMaterials.Mesh;
                 if (string.IsNullOrEmpty(mesh.name))
                 {
                     mesh.name = string.Format("UniGLTF import#{0}", i);
                 }
-
-                ctx.AddObjectToAsset(mesh.name, mesh);
-
                 return meshWithMaterials;
-            }).ToArray();
+            }));
 
             // nodes
-            var _nodes = gltf.nodes.Select(x => ImportNode(x)).ToArray();
-
-            var nodes = _nodes.Select((go, i) =>
+            var nodeWithSkins = (ctx.GLTF.nodes.Select(x => new TransformWithSkin
             {
-                if (string.IsNullOrEmpty(go.name))
-                {
-                    go.name = string.Format("node{0:000}", i);
-                }
+                Transform = ImportNode(x).transform,
+            })).ToList();
+            {
+                ctx.Nodes.AddRange(nodeWithSkins.Select(x => x.Transform));
 
-                var nodeWithSkin = new TransformWithSkin
+                int i = 0;
+                for (var it = nodeWithSkins.GetEnumerator(); it.MoveNext(); ++i)
                 {
-                    Transform = go.transform,
-                };
-
-                var node = gltf.nodes[i];
-
-                //
-                // build hierachy
-                //
-                if (node.children != null)
-                {
-                    foreach (var child in node.children)
+                    var nodeWithSkin = it.Current;
+                    if (string.IsNullOrEmpty(nodeWithSkin.Transform.name))
                     {
-                        _nodes[child].transform.SetParent(_nodes[i].transform,
-                            false // node has local transform
-                            );
+                        nodeWithSkin.Transform.name = string.Format("node{0:000}", i);
                     }
-                }
 
-                //
-                // attach mesh
-                //
-                if (node.mesh != -1)
-                {
-                    var mesh = meshes[node.mesh];
-                    if (mesh.Mesh.blendShapeCount == 0 && node.skin == -1)
+                    //
+                    // build hierachy
+                    //
+                    var node = ctx.GLTF.nodes[i];
+                    if (node.children != null)
                     {
-                        // without blendshape and bone skinning
-                        var filter = go.AddComponent<MeshFilter>();
-                        filter.sharedMesh = mesh.Mesh;
-                        var renderer = go.AddComponent<MeshRenderer>();
-                        renderer.sharedMaterials = mesh.Materials;
-                    }
-                    else
-                    {
-                        var renderer = go.AddComponent<SkinnedMeshRenderer>();
-
-                        if (node.skin != -1)
+                        foreach (var child in node.children)
                         {
-                            nodeWithSkin.SkinIndex = node.skin;
+                            nodeWithSkins[child].Transform.SetParent(nodeWithSkin.Transform,
+                                false // node has local transform
+                                );
                         }
+                    }
 
-                        renderer.sharedMesh = mesh.Mesh;
-                        renderer.sharedMaterials = mesh.Materials;
+                    //
+                    // attach mesh
+                    //
+                    if (node.mesh != -1)
+                    {
+                        var mesh = ctx.Meshes[node.mesh];
+                        if (mesh.Mesh.blendShapeCount == 0 && node.skin == -1)
+                        {
+                            // without blendshape and bone skinning
+                            var filter = nodeWithSkin.GameObject.AddComponent<MeshFilter>();
+                            filter.sharedMesh = mesh.Mesh;
+                            var renderer = nodeWithSkin.GameObject.AddComponent<MeshRenderer>();
+                            renderer.sharedMaterials = mesh.Materials;
+                        }
+                        else
+                        {
+                            var renderer = nodeWithSkin.GameObject.AddComponent<SkinnedMeshRenderer>();
+
+                            if (node.skin != -1)
+                            {
+                                nodeWithSkin.SkinIndex = node.skin;
+                            }
+
+                            renderer.sharedMesh = mesh.Mesh;
+                            renderer.sharedMaterials = mesh.Materials;
+                        }
                     }
                 }
-
-                return nodeWithSkin;
-            }).ToArray();
+            }
 
             //
             // fix node's coordinate. z-back to z-forward
             //
-            var globalTransformMap = nodes.ToDictionary(x => x.Transform, x => new PosRot
+            var globalTransformMap = ctx.Nodes.ToDictionary(x => x, x => new PosRot
             {
-                Position = x.Transform.position,
-                Rotation = x.Transform.rotation,
+                Position = x.position,
+                Rotation = x.rotation,
             });
-            foreach (var x in gltf.rootnodes)
+            foreach (var x in ctx.GLTF.rootnodes)
             {
                 // fix nodes coordinate
                 // reverse Z in global
-                var t = nodes[x].Transform;
+                var t = ctx.Nodes[x];
                 //t.SetParent(root.transform, false);
 
                 foreach (var transform in t.Traverse())
@@ -400,7 +362,7 @@ namespace UniGLTF
             }
 
             // skinning
-            foreach (var x in nodes)
+            foreach (var x in nodeWithSkins)
             {
                 var skinnedMeshRenderer = x.Transform.GetComponent<SkinnedMeshRenderer>();
                 if (skinnedMeshRenderer != null)
@@ -411,13 +373,13 @@ namespace UniGLTF
                         if (mesh == null) throw new Exception();
                         if (skinnedMeshRenderer == null) throw new Exception();
 
-                        if (x.SkinIndex.Value < gltf.skins.Count)
+                        if (x.SkinIndex.Value < ctx.GLTF.skins.Count)
                         {
-                            var skin = gltf.skins[x.SkinIndex.Value];
+                            var skin = ctx.GLTF.skins[x.SkinIndex.Value];
 
                             skinnedMeshRenderer.sharedMesh = null;
 
-                            var joints = skin.joints.Select(y => nodes[y].Transform).ToArray();
+                            var joints = skin.joints.Select(y => ctx.Nodes[y]).ToArray();
                             skinnedMeshRenderer.bones = joints;
                             //skinnedMeshRenderer.rootBone = nodes[skin.skeleton].Transform;
 
@@ -430,7 +392,7 @@ namespace UniGLTF
                             var calculatedBindPoses = joints.Select(y => y.worldToLocalMatrix * hipsParent.localToWorldMatrix).ToArray();
                             mesh.bindposes = calculatedBindPoses;
 #else
-                                var bindPoses = gltf.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices)
+                                var bindPoses = ctx.GLTF.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices)
                                     .Select(y => y.ReverseZ())
                                     .ToArray()
                                     ;
@@ -444,47 +406,33 @@ namespace UniGLTF
                 }
             }
 
-            var root = new GameObject("_root_");
-            ctx.SetMainGameObject("root", root);
+            ctx.Root = new GameObject("_root_");
 
-            foreach (var x in gltf.rootnodes)
+            foreach (var x in ctx.GLTF.rootnodes)
             {
                 // fix nodes coordinate
                 // reverse Z in global
-                var t = nodes[x].Transform;
-                t.SetParent(root.transform, false);
+                var t = ctx.Nodes[x];
+                t.SetParent(ctx.Root.transform, false);
             }
 
             // animation
-            if (gltf.animations != null && gltf.animations.Any())
+            if (ctx.GLTF.animations != null && ctx.GLTF.animations.Any())
             {
-                var clip = new AnimationClip();
-                clip.name = ANIMATION_NAME;
-                clip.ClearCurves();
+                ctx.Animation = new AnimationClip();
+                ctx.Animation.name = ANIMATION_NAME;
+                ctx.Animation.ClearCurves();
 
-                ImportAnimation(root.transform, clip, gltf.animations, nodes.Select(x => x.Transform).ToArray(), gltf);
+                ImportAnimation(ctx, ctx.Animation);
 
-                clip.legacy = true;
-                clip.name = "legacy";
-                clip.wrapMode = WrapMode.Loop;
-                var animation = root.AddComponent<Animation>();
-                animation.clip = clip;
-
-                ctx.AddObjectToAsset(ANIMATION_NAME, clip);
+                ctx.Animation.legacy = true;
+                ctx.Animation.name = "legacy";
+                ctx.Animation.wrapMode = WrapMode.Loop;
+                var animation = ctx.Root.AddComponent<Animation>();
+                animation.clip = ctx.Animation;
             }
 
-            if (callback != null)
-            {
-                callback(ctx, json,
-                    nodes.Select(x => x.Transform).ToArray(),
-                    meshes.Select(x => x.Mesh).ToList(),
-                    textures.Select(x => x.Texture).ToList()
-                    );
-            }
-
-            Debug.LogFormat("Import {0}", ctx.Path);
-
-            return root;
+            //Debug.LogFormat("Import {0}", ctx.Path);
         }
 
         #region Import
@@ -527,6 +475,7 @@ namespace UniGLTF
             {
                 // local folder
                 var path = Path.Combine(gltf.baseDir, image.uri);
+                UnityEditor.AssetDatabase.ImportAsset(path);
                 var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 texture.name = string.IsNullOrEmpty(image.extra.name) ? Path.GetFileNameWithoutExtension(path) : image.extra.name;
                 return new TextureItem(texture, index, true);
@@ -566,8 +515,9 @@ namespace UniGLTF
             }
         }
 
-        public static MeshWithMaterials ImportMesh(glTF gltf, int meshIndex, glTFMesh gltfMesh, List<Material> materials)
+        public static MeshWithMaterials ImportMesh(ImporterContext ctx, int meshIndex)
         {
+            var gltfMesh = ctx.GLTF.meshes[meshIndex];
             glTFAttributes lastAttributes = null;
             var sharedAttributes = true;
             foreach (var prim in gltfMesh.primitives)
@@ -594,24 +544,24 @@ namespace UniGLTF
                 // multiple submesh sharing same VertexBuffer
                 {
                     var prim = gltfMesh.primitives.First();
-                    positions.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
+                    positions.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
 
                     // normal
                     if (prim.attributes.NORMAL != -1)
                     {
-                        normals.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
+                        normals.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
                     }
 
                     // tangent
                     if (prim.attributes.TANGENT != -1)
                     {
-                        tangents.AddRange(gltf.GetArrayFromAccessor<Vector4>(prim.attributes.TANGENT).Select(x => x.ReverseZ()));
+                        tangents.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector4>(prim.attributes.TANGENT).Select(x => x.ReverseZ()));
                     }
 
                     // uv
                     if (prim.attributes.TEXCOORD_0 != -1)
                     {
-                        uv.AddRange(gltf.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
+                        uv.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
                     }
                     else
                     {
@@ -622,8 +572,8 @@ namespace UniGLTF
                     // skin
                     if (prim.attributes.JOINTS_0 != -1 && prim.attributes.WEIGHTS_0 != -1)
                     {
-                        var joints0 = gltf.GetArrayFromAccessor<UShort4>(prim.attributes.JOINTS_0); // uint4
-                        var weights0 = gltf.GetArrayFromAccessor<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
+                        var joints0 = ctx.GLTF.GetArrayFromAccessor<UShort4>(prim.attributes.JOINTS_0); // uint4
+                        var weights0 = ctx.GLTF.GetArrayFromAccessor<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
 
                         for (int j = 0; j < joints0.Length; ++j)
                         {
@@ -664,17 +614,17 @@ namespace UniGLTF
                             if (primTarget.POSITION != -1)
                             {
                                 blendShape.Positions.AddRange(
-                                    gltf.GetArrayFromAccessor<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
+                                    ctx.GLTF.GetArrayFromAccessor<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
                             }
                             if (primTarget.NORMAL != -1)
                             {
                                 blendShape.Normals.AddRange(
-                                    gltf.GetArrayFromAccessor<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
+                                    ctx.GLTF.GetArrayFromAccessor<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
                             }
-                            if (primTarget.TANGENT!=-1)
+                            if (primTarget.TANGENT != -1)
                             {
                                 blendShape.Tangents.AddRange(
-                                    gltf.GetArrayFromAccessor<Vector3>(primTarget.TANGENT).Select(x => x.ReverseZ()).ToArray());
+                                    ctx.GLTF.GetArrayFromAccessor<Vector3>(primTarget.TANGENT).Select(x => x.ReverseZ()).ToArray());
                             }
                         }
                     }
@@ -688,7 +638,7 @@ namespace UniGLTF
                     }
                     else
                     {
-                        var indices = gltf.GetIndices(prim.indices).Select(x => x).ToArray();
+                        var indices = ctx.GLTF.GetIndices(prim.indices).Select(x => x).ToArray();
                         subMeshes.Add(indices);
                     }
 
@@ -718,24 +668,24 @@ namespace UniGLTF
                     var indexBuffer = prim.indices;
 
                     var positionCount = positions.Count;
-                    positions.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
+                    positions.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector3>(prim.attributes.POSITION).Select(x => x.ReverseZ()));
                     positionCount = positions.Count - positionCount;
 
                     // normal
                     if (prim.attributes.NORMAL != -1)
                     {
-                        normals.AddRange(gltf.GetArrayFromAccessor<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
+                        normals.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector3>(prim.attributes.NORMAL).Select(x => x.ReverseZ()));
                     }
 
                     if (prim.attributes.TANGENT != -1)
                     {
-                        tangents.AddRange(gltf.GetArrayFromAccessor<Vector4>(prim.attributes.TANGENT).Select(x => x.ReverseZ()));
+                        tangents.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector4>(prim.attributes.TANGENT).Select(x => x.ReverseZ()));
                     }
 
                     // uv
                     if (prim.attributes.TEXCOORD_0 != -1)
                     {
-                        uv.AddRange(gltf.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
+                        uv.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
                     }
                     else
                     {
@@ -746,8 +696,8 @@ namespace UniGLTF
                     // skin
                     if (prim.attributes.JOINTS_0 != -1 && prim.attributes.WEIGHTS_0 != -1)
                     {
-                        var joints0 = gltf.GetArrayFromAccessor<UShort4>(prim.attributes.JOINTS_0); // uint4
-                        var weights0 = gltf.GetArrayFromAccessor<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
+                        var joints0 = ctx.GLTF.GetArrayFromAccessor<UShort4>(prim.attributes.JOINTS_0); // uint4
+                        var weights0 = ctx.GLTF.GetArrayFromAccessor<Float4>(prim.attributes.WEIGHTS_0).Select(x => x.One()).ToArray();
 
                         for (int j = 0; j < joints0.Length; ++j)
                         {
@@ -787,24 +737,24 @@ namespace UniGLTF
                             if (primTarget.POSITION != -1)
                             {
                                 blendShape.Positions.AddRange(
-                                    gltf.GetArrayFromAccessor<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
+                                    ctx.GLTF.GetArrayFromAccessor<Vector3>(primTarget.POSITION).Select(x => x.ReverseZ()).ToArray());
                             }
                             if (primTarget.NORMAL != -1)
                             {
                                 blendShape.Normals.AddRange(
-                                    gltf.GetArrayFromAccessor<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
+                                    ctx.GLTF.GetArrayFromAccessor<Vector3>(primTarget.NORMAL).Select(x => x.ReverseZ()).ToArray());
                             }
                             if (primTarget.TANGENT != -1)
                             {
                                 blendShape.Tangents.AddRange(
-                                    gltf.GetArrayFromAccessor<Vector3>(primTarget.TANGENT).Select(x => x.ReverseZ()).ToArray());
+                                    ctx.GLTF.GetArrayFromAccessor<Vector3>(primTarget.TANGENT).Select(x => x.ReverseZ()).ToArray());
                             }
                         }
                     }
 
                     var indices =
                      (indexBuffer >= 0)
-                     ? gltf.GetIndices(indexBuffer).Select(x => x + indexOffset).ToArray()
+                     ? ctx.GLTF.GetIndices(indexBuffer).Select(x => x + indexOffset).ToArray()
                      : TriangleUtil.FlipTriangle(Enumerable.Range(0, positions.Count)).ToArray() // without index array
                      ;
                     subMeshes.Add(indices);
@@ -864,7 +814,7 @@ namespace UniGLTF
             var result = new MeshWithMaterials
             {
                 Mesh = mesh,
-                Materials = materialIndices.Select(x => materials[x]).ToArray()
+                Materials = materialIndices.Select(x => ctx.Materials[x]).ToArray()
             };
 
             if (blendShapes != null)
@@ -970,11 +920,11 @@ namespace UniGLTF
             return create();
         }
 
-        public static void ImportAnimation(Transform root, AnimationClip clip, List<glTFAnimation> animations, Transform[] nodes, glTF gltf)
+        public static void ImportAnimation(ImporterContext ctx, AnimationClip clip)
         {
-            for (int i = 0; i < animations.Count; ++i)
+            for (int i = 0; i < ctx.GLTF.animations.Count; ++i)
             {
-                var animation = animations[i];
+                var animation = ctx.GLTF.animations[i];
                 if (string.IsNullOrEmpty(animation.name))
                 {
                     animation.name = string.Format("animation:{0}", i);
@@ -982,8 +932,8 @@ namespace UniGLTF
 
                 foreach (var y in animation.channels)
                 {
-                    var targetTransform = nodes[y.target.node];
-                    var relativePath = targetTransform.RelativePathFrom(root);
+                    var targetTransform = ctx.Nodes[y.target.node];
+                    var relativePath = targetTransform.RelativePathFrom(ctx.Root.transform);
                     switch (y.target.path)
                     {
                         case glTFAnimationTarget.PATH_TRANSLATION:
@@ -993,8 +943,8 @@ namespace UniGLTF
                                 var curveZ = new AnimationCurve();
 
                                 var sampler = animation.samplers[y.sampler];
-                                var input = gltf.GetArrayFromAccessor<float>(sampler.input);
-                                var output = gltf.GetArrayFromAccessor<Vector3>(sampler.output);
+                                var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
+                                var output = ctx.GLTF.GetArrayFromAccessor<Vector3>(sampler.output);
                                 for (int j = 0; j < input.Length; ++j)
                                 {
                                     var time = input[j];
@@ -1018,8 +968,8 @@ namespace UniGLTF
                                 var curveW = new AnimationCurve();
 
                                 var sampler = animation.samplers[y.sampler];
-                                var input = gltf.GetArrayFromAccessor<float>(sampler.input);
-                                var output = gltf.GetArrayFromAccessor<Quaternion>(sampler.output);
+                                var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
+                                var output = ctx.GLTF.GetArrayFromAccessor<Quaternion>(sampler.output);
                                 for (int j = 0; j < input.Length; ++j)
                                 {
                                     var time = input[j];
@@ -1044,8 +994,8 @@ namespace UniGLTF
                                 var curveZ = new AnimationCurve();
 
                                 var sampler = animation.samplers[y.sampler];
-                                var input = gltf.GetArrayFromAccessor<float>(sampler.input);
-                                var output = gltf.GetArrayFromAccessor<Vector3>(sampler.output);
+                                var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
+                                var output = ctx.GLTF.GetArrayFromAccessor<Vector3>(sampler.output);
                                 for (int j = 0; j < input.Length; ++j)
                                 {
                                     var time = input[j];
@@ -1063,15 +1013,15 @@ namespace UniGLTF
 
                         case glTFAnimationTarget.PATH_WEIGHT:
                             {
-                                var node = gltf.nodes[y.target.node];
-                                var mesh = gltf.meshes[node.mesh];
+                                var node = ctx.GLTF.nodes[y.target.node];
+                                var mesh = ctx.GLTF.meshes[node.mesh];
                                 for (int k = 0; k < mesh.weights.Length; ++k)
                                 {
                                     //var weight = mesh.weights[k];
                                     var curve = new AnimationCurve();
                                     var sampler = animation.samplers[y.sampler];
-                                    var input = gltf.GetArrayFromAccessor<float>(sampler.input);
-                                    var output = gltf.GetArrayFromAccessor<float>(sampler.output);
+                                    var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
+                                    var output = ctx.GLTF.GetArrayFromAccessor<float>(sampler.output);
                                     for (int j = 0; j < input.Length; ++j)
                                     {
                                         curve.AddKey(input[j], output[j]);
@@ -1085,6 +1035,6 @@ namespace UniGLTF
                 }
             }
         }
-#endregion
+        #endregion
     }
 }

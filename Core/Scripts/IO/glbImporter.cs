@@ -71,9 +71,7 @@ namespace UniGLTF
             return chunks;
         }
 
-        public static GameObject Import(IImporterContext context, Byte[] bytes,
-            gltfImporter.OnLoadCallback callback=null, 
-            gltfImporter.CreateMaterialFunc createMaterial=null)
+        public static void Import(ImporterContext context, Byte[] bytes)
         {
             var chunks = ParseGlbChanks(bytes);
 
@@ -93,14 +91,9 @@ namespace UniGLTF
             }
 
             var jsonBytes = chunks[0].Bytes;
-            var json = Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count);
+            context.Json = Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count);
 
-            return gltfImporter.Import(context,
-                json, 
-                chunks[1].Bytes,
-                callback,
-                createMaterial
-                );
+            gltfImporter.Import(context, chunks[1].Bytes);
         }
     }
 }

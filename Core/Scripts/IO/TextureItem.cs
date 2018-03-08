@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Linq;
-
+using System.Collections.Generic;
 
 namespace UniGLTF
 {
@@ -10,6 +10,12 @@ namespace UniGLTF
         public Texture2D Texture;
         public bool IsAsset;
 
+        public IEnumerable<Texture2D> GetTexturesForSaveAssets()
+        {
+            if (!IsAsset) yield return Texture;
+            if (m_metallicRoughnessOcclusion != null) yield return m_metallicRoughnessOcclusion;
+        }
+
         public TextureItem(Texture2D texture, int index = -1, bool isAsset = false)
         {
             Texture = texture;
@@ -18,7 +24,7 @@ namespace UniGLTF
         }
 
         Texture2D m_metallicRoughnessOcclusion;
-        public Texture2D GetMetallicRoughnessOcclusionConverted(IImporterContext ctx)
+        public Texture2D GetMetallicRoughnessOcclusionConverted()
         {
             if (m_metallicRoughnessOcclusion == null)
             {
@@ -26,7 +32,6 @@ namespace UniGLTF
                 texture.SetPixels32(texture.GetPixels32().Select(ConvertMetallicRoughnessOcclusion).ToArray());
                 texture.name = this.Texture.name + ".metallicRoughnessOcclusion";
                 m_metallicRoughnessOcclusion = texture;
-                ctx.AddObjectToAsset(texture.name, texture);
             }
             return m_metallicRoughnessOcclusion;
         }
