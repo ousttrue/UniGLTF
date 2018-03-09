@@ -4,6 +4,31 @@ using System.Collections.Generic;
 
 namespace UniGLTF
 {
+    #region Draco
+    [Serializable]
+    public class glTF_KHR_draco_mesh_compression : JsonSerializableBase
+    {
+        public int bufferView;
+        public glTFAttributes attributes;
+
+        protected override void SerializeMembers(JsonFormatter f)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    [Serializable]
+    public class glTFPrimitivesExtensions : JsonSerializableBase
+    {
+        public glTF_KHR_draco_mesh_compression KHR_draco_mesh_compression;
+
+        protected override void SerializeMembers(JsonFormatter f)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    #endregion
+
     [Serializable]
     public class glTFAttributes : JsonSerializableBase
     {
@@ -68,6 +93,8 @@ namespace UniGLTF
         public int material;
 
         public List<gltfMorphTarget> targets = new List<gltfMorphTarget>();
+
+        public glTFPrimitivesExtensions extensions;
 
         public string ToJson()
         {
