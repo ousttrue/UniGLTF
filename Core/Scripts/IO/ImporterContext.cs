@@ -3,7 +3,9 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 namespace UniGLTF
 {
@@ -45,6 +47,37 @@ namespace UniGLTF
         public AnimationClip Animation;
         #endregion
 
+        string m_prefabPath;
+        string PrefabPath
+        {
+            get { return m_prefabPath; }
+        }
+        protected virtual string GetPrefabPath()
+        {
+            var dir = System.IO.Path.GetDirectoryName(Path);
+            var name = System.IO.Path.GetFileNameWithoutExtension(Path);
+            var prefabPath = string.Format("{0}/{1}.prefab", dir, name);
+#if UNITY_EDITOR
+            if (File.Exists(prefabPath))
+            {
+                // already exists
+                if (IsOwn(prefabPath))
+                {
+                    //Debug.LogFormat("already exist. own: {0}", prefabPath);
+                }
+                else
+                {
+                    // but unknown prefab
+                    var unique = AssetDatabase.GenerateUniqueAssetPath(prefabPath);
+                    //Debug.LogFormat("already exist: {0} => {1}", prefabPath, unique);
+                    prefabPath = unique;
+                }
+            }
+#endif
+            return prefabPath;
+        }
+
+#if UNITY_EDITOR
         #region Assets
         IEnumerable<UnityEngine.Object> GetSubAssets(string path)
         {
@@ -64,35 +97,6 @@ namespace UniGLTF
                 }
             }
             return false;
-        }
-
-        protected virtual string GetPrefabPath()
-        {
-            var dir = System.IO.Path.GetDirectoryName(Path);
-            var name = System.IO.Path.GetFileNameWithoutExtension(Path);
-            var prefabPath = string.Format("{0}/{1}.prefab", dir, name);
-            if (File.Exists(prefabPath))
-            {
-                // already exists
-                if (IsOwn(prefabPath))
-                {
-                    //Debug.LogFormat("already exist. own: {0}", prefabPath);
-                }
-                else
-                {
-                    // but unknown prefab
-                    var unique = AssetDatabase.GenerateUniqueAssetPath(prefabPath);
-                    //Debug.LogFormat("already exist: {0} => {1}", prefabPath, unique);
-                    prefabPath = unique;
-                }
-            }
-            return prefabPath;
-        }
-
-        string m_prefabPath;
-        string PrefabPath
-        {
-            get { return m_prefabPath; }
         }
 
         IEnumerable<UnityEngine.Object> ObjectsForSubAsset()
@@ -145,16 +149,19 @@ namespace UniGLTF
             AssetDatabase.ImportAsset(path);
         }
         #endregion
+#endif
 
         public void Destroy(bool destroySubAssets)
         {
             if (Root != null) GameObject.DestroyImmediate(Root);
             if (destroySubAssets)
             {
+#if UNITY_EDITOR
                 foreach (var o in ObjectsForSubAsset())
                 {
                     UnityEngine.Object.DestroyImmediate(o, true);
                 }
+#endif
             }
         }
     }
