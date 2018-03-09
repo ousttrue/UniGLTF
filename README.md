@@ -280,10 +280,7 @@ for Animator component. require humanoid avatar.
 
 ![duck_assets](doc/duck_assets.png)
 
-* [x] separate Unity-2017's ScriptedImporter
-* [ ] crash in unity2017's ScriptedImporter when reimport. workaround, move target file to out of Assets. Launch unity, then move the file to Assets folder.
-
-AssetPostprocessor version is more stable.
+ScriptedImporter removed.
 
 ## Humanoid Helper
 
