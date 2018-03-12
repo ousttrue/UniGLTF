@@ -188,7 +188,7 @@ namespace UniGLTF
              };
         }
 
-        public static void Import(ImporterContext ctx, ArraySegment<Byte> glbBinChunk)
+        public static void Import<T>(ImporterContext ctx, ArraySegment<Byte> glbBinChunk) where T: glTF
         {
             // exclude not gltf-2.0
             var parsed = ctx.Json.ParseAsJson();
@@ -207,7 +207,7 @@ namespace UniGLTF
             // parse json
             try
             {
-                ctx.GLTF = JsonUtility.FromJson<glTF>(ctx.Json);
+                ctx.GLTF = JsonUtility.FromJson<T>(ctx.Json);
             }
             catch (Exception)
             {

@@ -56,12 +56,12 @@ namespace UniGLTF
             };
             if (isGlb)
             {
-                glbImporter.Import(context, File.ReadAllBytes(srcPath));
+                glbImporter.Import<glTF>(context, File.ReadAllBytes(srcPath));
             }
             else
             {
                 context.Json = File.ReadAllText(srcPath, System.Text.Encoding.UTF8);
-                gltfImporter.Import(context, new ArraySegment<byte>());
+                gltfImporter.Import<glTF>(context, new ArraySegment<byte>());
             }
             return context;
         }

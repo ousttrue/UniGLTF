@@ -44,6 +44,7 @@ namespace UniGLTF
         }
     }
 
+    [Serializable]
     public class glTF : JsonSerializableBase
     {
         public string baseDir

@@ -71,7 +71,7 @@ namespace UniGLTF
             return chunks;
         }
 
-        public static void Import(ImporterContext context, Byte[] bytes)
+        public static void Import<T>(ImporterContext context, Byte[] bytes) where T: glTF
         {
             var chunks = ParseGlbChanks(bytes);
 
@@ -93,7 +93,7 @@ namespace UniGLTF
             var jsonBytes = chunks[0].Bytes;
             context.Json = Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count);
 
-            gltfImporter.Import(context, chunks[1].Bytes);
+            gltfImporter.Import<T>(context, chunks[1].Bytes);
         }
     }
 }

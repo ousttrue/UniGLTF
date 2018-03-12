@@ -26,7 +26,7 @@ namespace UniGLTF
                     case ".gltf":
                         {
                             context.Json = Encoding.UTF8.GetString(bytes);
-                            gltfImporter.Import(context, new ArraySegment<byte>());
+                            gltfImporter.Import<glTF>(context, new ArraySegment<byte>());
                             context.Root.name = Path.GetFileNameWithoutExtension(path);
                             Selection.activeGameObject = context.Root;
                         }
@@ -34,7 +34,7 @@ namespace UniGLTF
 
                     case ".glb":
                         {
-                            glbImporter.Import(context, bytes);
+                            glbImporter.Import<glTF>(context, bytes);
                             context.Root.name = Path.GetFileNameWithoutExtension(path);
                             Selection.activeGameObject = context.Root;
                         }
