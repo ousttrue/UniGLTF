@@ -266,7 +266,9 @@ namespace UniGLTF
             }
 
             // meshes
-            if (ctx.GLTF.meshes.SelectMany(x => x.primitives).Any(x => x.extensions.KHR_draco_mesh_compression != null))
+            if (ctx.GLTF.meshes
+                .SelectMany(x => x.primitives)
+                .Any(x => x.extensions.KHR_draco_mesh_compression != null))
             {
                 throw new UniGLTFException("draco is not supported");
             }
@@ -283,148 +285,33 @@ namespace UniGLTF
             }));
 
             // nodes
-            var nodeWithSkins = (ctx.GLTF.nodes.Select(x => new TransformWithSkin
-            {
-                Transform = ImportNode(x).transform,
-            })).ToList();
-            {
-                ctx.Nodes.AddRange(nodeWithSkins.Select(x => x.Transform));
+            ctx.Nodes.AddRange(ctx.GLTF.nodes.Select(x => ImportNode(x).transform));
 
-                int i = 0;
-                for (var it = nodeWithSkins.GetEnumerator(); it.MoveNext(); ++i)
-                {
-                    var nodeWithSkin = it.Current;
-                    if (string.IsNullOrEmpty(nodeWithSkin.Transform.name))
-                    {
-                        nodeWithSkin.Transform.name = string.Format("node{0:000}", i);
-                    }
+            var nodes = ctx.Nodes.Select((x, i) => BuildHierarchy(ctx, i)).ToList();
 
-                    //
-                    // build hierachy
-                    //
-                    var node = ctx.GLTF.nodes[i];
-                    if (node.children != null)
-                    {
-                        foreach (var child in node.children)
-                        {
-                            nodeWithSkins[child].Transform.SetParent(nodeWithSkin.Transform,
-                                false // node has local transform
-                                );
-                        }
-                    }
-
-                    //
-                    // attach mesh
-                    //
-                    if (node.mesh != -1)
-                    {
-                        var mesh = ctx.Meshes[node.mesh];
-                        if (mesh.Mesh.blendShapeCount == 0 && node.skin == -1)
-                        {
-                            // without blendshape and bone skinning
-                            var filter = nodeWithSkin.GameObject.AddComponent<MeshFilter>();
-                            filter.sharedMesh = mesh.Mesh;
-                            var renderer = nodeWithSkin.GameObject.AddComponent<MeshRenderer>();
-                            renderer.sharedMaterials = mesh.Materials;
-                        }
-                        else
-                        {
-                            var renderer = nodeWithSkin.GameObject.AddComponent<SkinnedMeshRenderer>();
-
-                            if (node.skin != -1)
-                            {
-                                nodeWithSkin.SkinIndex = node.skin;
-                                if (node.extra.skinRootBone != -1)
-                                {
-                                    renderer.rootBone = ctx.Nodes[node.extra.skinRootBone];
-                                }
-                            }
-
-                            renderer.sharedMesh = mesh.Mesh;
-                            renderer.sharedMaterials = mesh.Materials;
-                        }
-                    }
-                }
-            }
-
-            //
-            // fix node's coordinate. z-back to z-forward
-            //
-            var globalTransformMap = ctx.Nodes.ToDictionary(x => x, x => new PosRot
-            {
-                Position = x.position,
-                Rotation = x.rotation,
-            });
-            foreach (var x in ctx.GLTF.rootnodes)
-            {
-                // fix nodes coordinate
-                // reverse Z in global
-                var t = ctx.Nodes[x];
-                //t.SetParent(root.transform, false);
-
-                foreach (var transform in t.Traverse())
-                {
-                    var g = globalTransformMap[transform];
-                    transform.position = g.Position.ReverseZ();
-                    transform.rotation = g.Rotation.ReverseZ();
-                }
-            }
+            gltfImporter.FixCoordinate(ctx, nodes);
 
             // skinning
-            foreach (var x in nodeWithSkins)
+            for (int i = 0; i < nodes.Count; ++i)
             {
-                var skinnedMeshRenderer = x.Transform.GetComponent<SkinnedMeshRenderer>();
-                if (skinnedMeshRenderer != null)
-                {
-                    var mesh = skinnedMeshRenderer.sharedMesh;
-                    if (x.SkinIndex.HasValue)
-                    {
-                        if (mesh == null) throw new Exception();
-                        if (skinnedMeshRenderer == null) throw new Exception();
-
-                        if (x.SkinIndex.Value < ctx.GLTF.skins.Count)
-                        {
-                            var skin = ctx.GLTF.skins[x.SkinIndex.Value];
-
-                            skinnedMeshRenderer.sharedMesh = null;
-
-                            var joints = skin.joints.Select(y => ctx.Nodes[y]).ToArray();
-                            skinnedMeshRenderer.bones = joints;
-                            //skinnedMeshRenderer.rootBone = nodes[skin.skeleton].Transform;
-
-                            if (skin.inverseBindMatrices != -1)
-                            {
-                                // BlendShape only ?
-#if false
-                            // https://docs.unity3d.com/ScriptReference/Mesh-bindposes.html
-                            var hipsParent = nodes[0].Transform;
-                            var calculatedBindPoses = joints.Select(y => y.worldToLocalMatrix * hipsParent.localToWorldMatrix).ToArray();
-                            mesh.bindposes = calculatedBindPoses;
-#else
-                                var bindPoses = ctx.GLTF.GetArrayFromAccessor<Matrix4x4>(skin.inverseBindMatrices)
-                                    .Select(y => y.ReverseZ())
-                                    .ToArray()
-                                    ;
-                                mesh.bindposes = bindPoses;
-#endif
-                            }
-
-                            skinnedMeshRenderer.sharedMesh = mesh;
-                        }
-                    }
-                }
+                gltfImporter.SetupSkinning(ctx, nodes, i);
             }
 
+            // connect root
             ctx.Root = new GameObject("_root_");
-
             foreach (var x in ctx.GLTF.rootnodes)
             {
-                // fix nodes coordinate
-                // reverse Z in global
-                var t = ctx.Nodes[x];
+                var t = nodes[x].Transform;
                 t.SetParent(ctx.Root.transform, false);
             }
 
+            ImportAnimation(ctx);
+
+            //Debug.LogFormat("Import {0}", ctx.Path);
+        }
+
+        static void ImportAnimation(ImporterContext ctx)
+        {
             // animation
             if (ctx.GLTF.animations != null && ctx.GLTF.animations.Any())
             {
@@ -440,8 +327,6 @@ namespace UniGLTF
                 var animation = ctx.Root.AddComponent<Animation>();
                 animation.clip = ctx.Animation;
             }
-
-            //Debug.LogFormat("Import {0}", ctx.Path);
         }
 
         #region Import
@@ -1228,6 +1113,6 @@ namespace UniGLTF
                 .OrderBy(x => x.Parents)
                 .First().Transform;
         }
-        #endregion
+#endregion
     }
 }
