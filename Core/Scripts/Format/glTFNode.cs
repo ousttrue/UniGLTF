@@ -5,7 +5,18 @@ using System.Linq;
 namespace UniGLTF
 {
     [Serializable]
-    public class glTFNode : IJsonSerializable
+    public class glTFNode_extra_rootBone: JsonSerializableBase
+    {
+        public int skinRootBone = -1; // for Unity's SkinnedMeshRenderer
+
+        protected override void SerializeMembers(JsonFormatter f)
+        {
+            f.KeyValue(() => skinRootBone);
+        }
+    }
+
+    [Serializable]
+    public class glTFNode : JsonSerializableBase
     {
         public string name = "";
         public int[] children;
@@ -17,14 +28,10 @@ namespace UniGLTF
         public int skin = -1;
         public int camera = -1;
 
-        public string ToJson()
+        public glTFNode_extra_rootBone extra = new glTFNode_extra_rootBone();
+
+        protected override void SerializeMembers(JsonFormatter f)
         {
-            var f = new JsonFormatter();
-            f.BeginMap();
-            if (!string.IsNullOrEmpty(name))
-            {
-                f.KeyValue(() => name);
-            }
             if (children != null && children.Any())
             {
                 f.Key("children"); f.BeginList();
@@ -34,37 +41,20 @@ namespace UniGLTF
                 }
                 f.EndList();
             }
-            if (matrix != null)
-            {
-                f.KeyValue(() => matrix);
-            }
-            if (translation != null)
-            {
-                f.KeyValue(() => translation);
-            }
-            if (rotation != null)
-            {
-                f.KeyValue(() => rotation);
-            }
-            if (scale != null)
-            {
-                f.KeyValue(() => scale);
-            }
 
-            if (mesh >= 0)
-            {
-                f.KeyValue(() => mesh);
-            }
+            if (!string.IsNullOrEmpty(name)) f.KeyValue(() => name);
+            if (matrix != null) f.KeyValue(() => matrix);
+            if (translation != null) f.KeyValue(() => translation);
+            if (rotation != null) f.KeyValue(() => rotation);
+            if (scale != null) f.KeyValue(() => scale);
+
+            if (mesh >= 0) f.KeyValue(() => mesh);
+            if (camera >= 0) f.KeyValue(() => camera);
             if (skin >= 0)
             {
                 f.KeyValue(() => skin);
+                f.KeyValue(() => extra);
             }
-            if (camera >= 0)
-            {
-                f.KeyValue(() => camera);
-            }
-            f.EndMap();
-            return f.ToString();
         }
     }
 }

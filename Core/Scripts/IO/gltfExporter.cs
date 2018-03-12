@@ -244,6 +244,10 @@ namespace UniGLTF
             {
                 node.mesh = meshes.IndexOf(skinnredMeshRenderer.sharedMesh);
                 node.skin = skins.IndexOf(skinnredMeshRenderer);
+                if (skinnredMeshRenderer.rootBone != null)
+                {
+                    node.extra.skinRootBone = nodes.IndexOf(skinnredMeshRenderer.rootBone);
+                }
             }
 
             return node;

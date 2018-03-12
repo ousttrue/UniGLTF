@@ -188,7 +188,7 @@ namespace UniGLTF
              };
         }
 
-        public static void Import<T>(ImporterContext ctx, ArraySegment<Byte> glbBinChunk) where T: glTF
+        public static void Import<T>(ImporterContext ctx, ArraySegment<Byte> glbBinChunk) where T : glTF
         {
             // exclude not gltf-2.0
             var parsed = ctx.Json.ParseAsJson();
@@ -333,7 +333,10 @@ namespace UniGLTF
 
                             if (node.skin != -1)
                             {
-                                nodeWithSkin.SkinIndex = node.skin;
+                                if (node.extra.skinRootBone != -1)
+                                {
+                                    nodeWithSkin.RootBone = ctx.Nodes[node.extra.skinRootBone];
+                                }
                             }
 
                             renderer.sharedMesh = mesh.Mesh;
@@ -406,6 +409,7 @@ namespace UniGLTF
                             }
 
                             skinnedMeshRenderer.sharedMesh = mesh;
+                            skinnedMeshRenderer.rootBone = x.RootBone;
                         }
                     }
                 }
@@ -1039,6 +1043,42 @@ namespace UniGLTF
                     }
                 }
             }
+        }
+
+        public static Transform FindRootBone(Mesh mesh, Transform[] bones)
+        {
+            var weightMap = new HashSet<Transform>();
+            foreach (var x in mesh.boneWeights)
+            {
+                if (x.weight0 > 0) weightMap.Add(bones[x.boneIndex0]);
+                if (x.weight1 > 0) weightMap.Add(bones[x.boneIndex1]);
+                if (x.weight2 > 0) weightMap.Add(bones[x.boneIndex2]);
+                if (x.weight3 > 0) weightMap.Add(bones[x.boneIndex3]);
+            }
+            if (weightMap.Count == 0)
+            {
+                return null;
+            }
+
+            // 
+            var roots = bones
+                // すべてのWeightを子孫にもつボーンを探す
+                .Where(x => weightMap.All(y => y.Ancestors().Any(z => z == x)))
+                .ToArray();
+
+            if (roots.Length == 0)
+            {
+                return null;
+            }
+
+            return roots
+                .Select(x => new
+                {
+                    Transform = x,
+                    Parents = x.Ancestors().Count(),
+                })
+                .OrderBy(x => x.Parents)
+                .First().Transform;
         }
         #endregion
     }
