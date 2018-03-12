@@ -14,7 +14,6 @@ namespace UniGLTF
         public Transform Transform;
         public GameObject GameObject { get { return Transform.gameObject; } }
         public int? SkinIndex;
-        public Transform RootBone;
     }
 
     public delegate Material CreateMaterialFunc(ImporterContext ctx, int i);
