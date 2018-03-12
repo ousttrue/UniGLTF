@@ -333,6 +333,7 @@ namespace UniGLTF
 
                             if (node.skin != -1)
                             {
+                                nodeWithSkin.SkinIndex = node.skin;
                                 if (node.extra.skinRootBone != -1)
                                 {
                                     nodeWithSkin.RootBone = ctx.Nodes[node.extra.skinRootBone];
