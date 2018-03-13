@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 
@@ -6,7 +8,7 @@ namespace UniGLTF
 {
     public static class Pin
     {
-        public static Pin<T> Create<T>(ArraySegment<T> src)where T: struct
+        public static Pin<T> Create<T>(ArraySegment<T> src) where T : struct
         {
             return new Pin<T>(src);
         }
@@ -40,7 +42,7 @@ namespace UniGLTF
         {
             get
             {
-                var ptr=m_pinnedArray.AddrOfPinnedObject();
+                var ptr = m_pinnedArray.AddrOfPinnedObject();
                 return new IntPtr(ptr.ToInt64() + m_src.Offset);
             }
         }
@@ -102,6 +104,24 @@ namespace UniGLTF
             var dst = new byte[src.Count];
             Array.Copy(src.Array, src.Offset, dst, 0, src.Count);
             return dst;
+        }
+
+        public static T[] SelectInplace<T>(this T[] src, Func<T, T> pred)
+        {
+            for (int i = 0; i < src.Length; ++i)
+            {
+                src[i] = pred(src[i]);
+            }
+            return src;
+        }
+    }
+
+    public static class ListExtensions
+    {
+        public static void Assign<T>(this List<T> dst, T[] src, Func<T, T> pred)
+        {
+            dst.Capacity = src.Length;
+            dst.AddRange(src.Select(pred));
         }
     }
 }
