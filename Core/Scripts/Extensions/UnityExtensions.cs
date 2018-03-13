@@ -24,7 +24,7 @@ namespace UniGLTF
         }
     }
 
-    class BlendShape
+    public class BlendShape
     {
         public string Name;
 

@@ -426,8 +426,9 @@ namespace UniGLTF
             }
         }
 
-        class MeshContext
+        public class MeshContext
         {
+            public string name;
             public Vector3[] positions;
             public Vector3[] normals;
             public Vector4[] tangents;
@@ -439,6 +440,12 @@ namespace UniGLTF
         }
 
         public static MeshWithMaterials ImportMesh(ImporterContext ctx, int meshIndex)
+        {
+            var meshContext = ReadMesh(ctx, meshIndex);
+            return BuildMesh(ctx, meshContext);
+        }
+
+        public static MeshContext ReadMesh(ImporterContext ctx, int meshIndex)
         {
             var gltfMesh = ctx.GLTF.meshes[meshIndex];
             glTFAttributes lastAttributes = null;
@@ -457,7 +464,17 @@ namespace UniGLTF
                 ? _ImportMeshSharingVertexBuffer(ctx, gltfMesh)
                 : _ImportMeshIndependentVertexBuffer(ctx, gltfMesh)
                 ;
+            meshContext.name = gltfMesh.name;
+            if (string.IsNullOrEmpty(meshContext.name))
+            {
+                meshContext.name = string.Format("UniGLTF import#{0}", meshIndex);
+            }
 
+            return meshContext;
+        }
+
+        public static MeshWithMaterials BuildMesh(ImporterContext ctx, MeshContext meshContext)
+        {        
             if (!meshContext.materialIndices.Any())
             {
                 meshContext.materialIndices.Add(0);
@@ -465,7 +482,7 @@ namespace UniGLTF
 
             //Debug.Log(prims.ToJson());
             var mesh = new Mesh();
-            mesh.name = gltfMesh.name;
+            mesh.name = meshContext.name;
 
             if (meshContext.positions.Length > UInt16.MaxValue)
             {
