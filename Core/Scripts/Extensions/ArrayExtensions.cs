@@ -96,5 +96,12 @@ namespace UniGLTF
             }
             return size;
         }
+
+        public static Byte[] ToArray(this ArraySegment<byte> src)
+        {
+            var dst = new byte[src.Count];
+            Array.Copy(src.Array, src.Offset, dst, 0, src.Count);
+            return dst;
+        }
     }
 }

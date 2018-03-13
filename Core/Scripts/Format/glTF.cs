@@ -91,47 +91,73 @@ namespace UniGLTF
             return new ArraySegment<byte>(segment.Array, segment.Offset + view.byteOffset, view.byteLength);
         }
 
-        public int[] GetIndices(int index)
+        IEnumerable<int> _GetIndices(int index, out int count)
         {
             var accessor = accessors[index];
+            count = accessor.count;
             var view = bufferViews[accessor.bufferView];
             switch ((glComponentType)accessor.componentType)
             {
                 case glComponentType.UNSIGNED_BYTE:
                     {
-                        var indices = GetAttrib<Byte>(accessor, view);
-                        return TriangleUtil.FlipTriangle(indices).ToArray();
+                        return GetAttrib<Byte>(accessor, view).Cast<int>();
                     }
 
                 case glComponentType.UNSIGNED_SHORT:
                     {
-                        var indices = GetAttrib<UInt16>(accessor, view);
-                        return TriangleUtil.FlipTriangle(indices).ToArray();
+                        return GetAttrib<UInt16>(accessor, view).Cast<int>();
                     }
-
-                /*
-            case glComponentType.INT:
-                {
-                    var indices = GetAttrib<Int32>(accessor, view);
-                    return FlipTriangle(indices).ToArray();
-                }
-                */
 
                 case glComponentType.UNSIGNED_INT:
                     {
-                        var indices = GetAttrib<UInt32>(accessor, view);
-                        return TriangleUtil.FlipTriangle(indices).ToArray();
+                        return GetAttrib<UInt32>(accessor, view).Cast<int>();
                     }
             }
-
             throw new NotImplementedException("GetIndices: unknown componenttype: " + accessor.componentType);
         }
+        public int[] GetIndices(int index, Func<int, int> mod = null)
+        {
+            int count;
+            var result = _GetIndices(index, out count);
+            var indices = new int[count];
 
-        public T[] GetArrayFromAccessor<T>(int index) where T : struct
+            // flip triangles
+            var it = result.GetEnumerator();
+            if (mod == null)
+            {
+                for (int i = 0; i < count; i += 3)
+                {
+                    it.MoveNext(); indices[i + 2] = it.Current;
+                    it.MoveNext(); indices[i + 1] = it.Current;
+                    it.MoveNext(); indices[i] = it.Current;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i += 3)
+                {
+                    it.MoveNext(); indices[i + 2] = mod(it.Current);
+                    it.MoveNext(); indices[i + 1] = mod(it.Current);
+                    it.MoveNext(); indices[i] = mod(it.Current);
+                }
+            }
+
+            return indices;
+        }
+
+        public T[] GetArrayFromAccessor<T>(int index, Func<T, T> mod=null) where T : struct
         {
             var vertexAccessor = accessors[index];
             var view = bufferViews[vertexAccessor.bufferView];
-            return GetAttrib<T>(vertexAccessor, view);
+            var result= GetAttrib<T>(vertexAccessor, view);
+            if (mod != null)
+            {
+                for (int i = 0; i < result.Length; ++i)
+                {
+                    result[i] = mod(result[i]);
+                }
+            }
+            return result;
         }
         #endregion
 
