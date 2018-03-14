@@ -58,7 +58,7 @@ namespace UniGLTF
             var name = System.IO.Path.GetFileNameWithoutExtension(Path);
             var prefabPath = string.Format("{0}/{1}.prefab", dir, name);
 #if UNITY_EDITOR
-            if (File.Exists(prefabPath))
+            if (!Application.isPlaying && File.Exists(prefabPath))
             {
                 // already exists
                 if (IsOwn(prefabPath))
