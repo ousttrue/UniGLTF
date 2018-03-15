@@ -187,6 +187,11 @@ namespace UniGLTF
 
         public ArraySegment<byte> GetBytes()
         {
+            if (m_bytes == null)
+            {
+                return new ArraySegment<byte>();
+            }
+
             return new ArraySegment<byte>(m_bytes);
         }
     }

@@ -45,7 +45,7 @@ namespace UniGLTF
     }
 
     [Serializable]
-    public class glTF : JsonSerializableBase
+    public class glTF : JsonSerializableBase, IEquatable<glTF>
     {
         public string baseDir
         {
@@ -145,11 +145,11 @@ namespace UniGLTF
             return indices;
         }
 
-        public T[] GetArrayFromAccessor<T>(int index, Func<T, T> mod=null) where T : struct
+        public T[] GetArrayFromAccessor<T>(int index, Func<T, T> mod = null) where T : struct
         {
             var vertexAccessor = accessors[index];
             var view = bufferViews[vertexAccessor.bufferView];
-            var result= GetAttrib<T>(vertexAccessor, view);
+            var result = GetAttrib<T>(vertexAccessor, view);
             if (mod != null)
             {
                 for (int i = 0; i < result.Length; ++i)
@@ -162,10 +162,7 @@ namespace UniGLTF
         #endregion
 
         public List<glTFTexture> textures = new List<glTFTexture>();
-        public List<glTFTextureSampler> samplers = new List<glTFTextureSampler>()
-        {
-            new glTFTextureSampler(),
-        };
+        public List<glTFTextureSampler> samplers = new List<glTFTextureSampler>();
         public List<glTFImage> images = new List<glTFImage>();
         public List<glTFMaterial> materials = new List<glTFMaterial>();
         public List<glTFMesh> meshes = new List<glTFMesh>();
@@ -209,11 +206,17 @@ namespace UniGLTF
             if (images.Any())
             {
                 f.Key("images"); f.Value(images);
+                if (samplers.Count == 0)
+                {
+                    samplers.Add(new glTFTextureSampler());
+                }
             }
+
             if (samplers.Any())
             {
                 f.Key("samplers"); f.Value(samplers);
             }
+
             if (textures.Any())
             {
                 f.Key("textures"); f.Value(textures);
@@ -248,6 +251,22 @@ namespace UniGLTF
             {
                 f.Key("animations"); f.Value(animations);
             }
+        }
+
+        public bool Equals(glTF other)
+        {
+            return 
+                textures.SequenceEqual(other.textures)
+                && samplers.SequenceEqual(other.samplers)
+                && images.SequenceEqual(other.images)
+                && materials.SequenceEqual(other.materials)
+                && meshes.SequenceEqual(other.meshes)
+                && nodes.SequenceEqual(other.nodes)
+                && skins.SequenceEqual(other.skins)
+                && scene==other.scene
+                && scenes.SequenceEqual(other.scenes)
+                && animations.SequenceEqual(other.animations)
+                ;
         }
     }
 }
