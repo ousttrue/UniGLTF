@@ -17,14 +17,6 @@ public class UniGLTFTest
         return root.gameObject;
     }
 
-    void _AssertAreEqual(GameObject l, GameObject r)
-    {
-        Assert.AreEqual(l.name, r.name);
-        Assert.AreEqual(l.transform.localPosition, r.transform.localPosition);
-        Assert.AreEqual(l.transform.localRotation, r.transform.localRotation);
-        Assert.AreEqual(l.transform.localScale, r.transform.localScale);
-    }
-
     void AssertAreEqual(Transform go, Transform other)
     {
         var lt = go.Traverse().GetEnumerator();
@@ -37,7 +29,7 @@ public class UniGLTFTest
                 throw new Exception("rt shorter");
             }
 
-            _AssertAreEqual(lt.Current.gameObject, rt.Current.gameObject);
+            MonoBehaviourComparator.AssertAreEquals(lt.Current.gameObject, rt.Current.gameObject);
         }
 
         if (rt.MoveNext())
