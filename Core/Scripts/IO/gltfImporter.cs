@@ -559,7 +559,7 @@ namespace UniGLTF
         // each subMesh use a independent VertexBuffer.
         private static MeshContext _ImportMeshIndependentVertexBuffer(ImporterContext ctx, glTFMesh gltfMesh)
         {
-            Debug.LogWarning("_ImportMeshIndependentVertexBuffer");
+            //Debug.LogWarning("_ImportMeshIndependentVertexBuffer");
 
             var targets = gltfMesh.primitives[0].targets;
             for (int i = 1; i < gltfMesh.primitives.Count; ++i)
@@ -674,6 +674,11 @@ namespace UniGLTF
                 // material
                 meshContext.materialIndices.Add(prim.material);
             }
+
+            meshContext.positions = positions.ToArray();
+            meshContext.normals = normals.ToArray();
+            meshContext.tangents = tangents.ToArray();
+            meshContext.uv = uv.ToArray();
 
             return meshContext;
         }
