@@ -270,7 +270,7 @@ namespace UniGLTF
                 .SelectMany(x => x.primitives)
                 .Any(x => x.extensions.KHR_draco_mesh_compression != null))
             {
-                throw new UniGLTFException("draco is not supported");
+                throw new DracoIsNotSupportedException();
             }
 
             ctx.Meshes.AddRange(ctx.GLTF.meshes.Select((x, i) =>

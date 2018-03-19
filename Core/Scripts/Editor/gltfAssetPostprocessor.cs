@@ -35,6 +35,13 @@ namespace UniGLTF
                         context.Destroy(false);
                     }
                 }
+                catch (DracoIsNotSupportedException)
+                {
+                    Debug.LogWarningFormat("{0}: {1}",
+                        path,
+                        DracoIsNotSupportedException.message
+                        );
+                }
                 catch (Exception ex)
                 {
                     Debug.LogErrorFormat("import error: {0}", path);
