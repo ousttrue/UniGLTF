@@ -100,17 +100,17 @@ namespace UniGLTF
             {
                 case glComponentType.UNSIGNED_BYTE:
                     {
-                        return GetAttrib<Byte>(accessor, view).Cast<int>();
+                        return GetAttrib<Byte>(accessor, view).Select(x =>(int)(x));
                     }
 
                 case glComponentType.UNSIGNED_SHORT:
                     {
-                        return GetAttrib<UInt16>(accessor, view).Cast<int>();
+                        return GetAttrib<UInt16>(accessor, view).Select(x => (int)(x));
                     }
 
                 case glComponentType.UNSIGNED_INT:
                     {
-                        return GetAttrib<UInt32>(accessor, view).Cast<int>();
+                        return GetAttrib<UInt32>(accessor, view).Select(x => (int)(x));
                     }
             }
             throw new NotImplementedException("GetIndices: unknown componenttype: " + accessor.componentType);
