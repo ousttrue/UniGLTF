@@ -35,11 +35,11 @@ namespace UniGLTF
                         context.Destroy(false);
                     }
                 }
-                catch (DracoIsNotSupportedException)
+                catch (UniGLTFNotSupportedException ex)
                 {
                     Debug.LogWarningFormat("{0}: {1}",
                         path,
-                        DracoIsNotSupportedException.message
+                        ex.Message
                         );
                 }
                 catch (Exception ex)

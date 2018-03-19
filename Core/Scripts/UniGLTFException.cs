@@ -9,9 +9,9 @@ namespace UniGLTF
         public UniGLTFException(string msg) : base(msg) { }
     }
 
-    public class DracoIsNotSupportedException : UniGLTFException
+    public class UniGLTFNotSupportedException : UniGLTFException
     {
-        public const string message = "draco is not supported";
-        public DracoIsNotSupportedException() : base(message) { }
+        public UniGLTFNotSupportedException(string fmt, params object[] args) : this(string.Format(fmt, args)) { }
+        public UniGLTFNotSupportedException(string msg) : base(msg) { }
     }
 }

@@ -196,12 +196,12 @@ namespace UniGLTF
             {
                 if (parsed["asset"]["version"].GetString() != "2.0")
                 {
-                    throw new UniGLTFException("is not gltf-2.0: {0}", ctx.Path);
+                    throw new UniGLTFNotSupportedException("is not gltf-2.0");
                 }
             }
             catch (Exception)
             {
-                throw new UniGLTFException("{0}: fail to parse json", ctx.Path);
+                throw new UniGLTFNotSupportedException("unknown json");
             }
 
             // parse json
@@ -211,16 +211,16 @@ namespace UniGLTF
             }
             catch (Exception)
             {
-                throw new UniGLTFException("{0}: fail to parse json", ctx.Path);
+                throw new UniGLTFException("fail to parse json");
             }
             if (ctx.GLTF == null)
             {
-                throw new UniGLTFException("{0}: fail to parse json", ctx.Path);
+                throw new UniGLTFException("fail to parse json");
             }
 
             if (ctx.GLTF.asset.version != "2.0")
             {
-                throw new UniGLTFException("unknown gltf version {0}", ctx.GLTF.asset.version);
+                throw new UniGLTFNotSupportedException("unknown gltf version {0}", ctx.GLTF.asset.version);
             }
 
             // parepare byte buffer
@@ -270,7 +270,7 @@ namespace UniGLTF
                 .SelectMany(x => x.primitives)
                 .Any(x => x.extensions.KHR_draco_mesh_compression != null))
             {
-                throw new DracoIsNotSupportedException();
+                throw new UniGLTFNotSupportedException("draco is not supported");
             }
 
             ctx.Meshes.AddRange(ctx.GLTF.meshes.Select((x, i) =>
