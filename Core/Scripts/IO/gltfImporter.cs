@@ -352,7 +352,7 @@ namespace UniGLTF
 
             // set sampler
             var samplerIndex = gltf.textures[x.TextureIndex].sampler;
-            var sampler = gltf.samplers[samplerIndex];
+            var sampler = gltf.GetSampler(samplerIndex);
             gltfImporter.SetSampler(x.Texture, sampler);
 
             return x;
