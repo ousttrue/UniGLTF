@@ -117,7 +117,7 @@ namespace UniGLTF
             return (ctx, i) =>
              {
                  var material = new Material(shader);
-                 material.name = string.Format("material:{0:00}", i);
+                 material.name = string.Format("material_{0:00}", i);
 
                  if (i >= 0 && i < ctx.GLTF.materials.Count)
                  {
@@ -126,8 +126,9 @@ namespace UniGLTF
                      {
                          if (!string.IsNullOrEmpty(x.name))
                          {
-                             material.name = x.name;
+                             material.name = ctx.GLTF.GetUniqueMaterialName(i);
                          }
+                         Debug.LogFormat("{0}: {1}", i, material.name);
 
                          if (x.pbrMetallicRoughness != null)
                          {
@@ -261,7 +262,9 @@ namespace UniGLTF
             {
                 for (int i = 0; i < ctx.GLTF.materials.Count; ++i)
                 {
-                    ctx.Materials.Add(ctx.CreateMaterial(ctx, i));
+                    var index = i;
+                    var material = ctx.CreateMaterial(ctx, index);
+                    ctx.Materials.Add(material);
                 }
             }
 

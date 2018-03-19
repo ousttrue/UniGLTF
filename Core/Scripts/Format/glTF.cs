@@ -100,7 +100,7 @@ namespace UniGLTF
             {
                 case glComponentType.UNSIGNED_BYTE:
                     {
-                        return GetAttrib<Byte>(accessor, view).Select(x =>(int)(x));
+                        return GetAttrib<Byte>(accessor, view).Select(x => (int)(x));
                     }
 
                 case glComponentType.UNSIGNED_SHORT:
@@ -162,7 +162,7 @@ namespace UniGLTF
         #endregion
 
         public List<glTFTexture> textures = new List<glTFTexture>();
-       
+
         public List<glTFTextureSampler> samplers = new List<glTFTextureSampler>();
         public glTFTextureSampler GetSampler(int index)
         {
@@ -175,7 +175,21 @@ namespace UniGLTF
         }
 
         public List<glTFImage> images = new List<glTFImage>();
+
         public List<glTFMaterial> materials = new List<glTFMaterial>();
+        public string GetUniqueMaterialName(int index)
+        {
+            if (materials.Any(x => string.IsNullOrEmpty(x.name))
+                || materials.Select(x => x.name).Distinct().Count() != materials.Count)
+            {
+                return String.Format("{0:00}_{1}", index, materials[index].name);
+            }
+            else
+            {
+                return materials[index].name;
+            }
+        }
+
         public List<glTFMesh> meshes = new List<glTFMesh>();
         public List<glTFNode> nodes = new List<glTFNode>();
         public List<glTFSkin> skins = new List<glTFSkin>();

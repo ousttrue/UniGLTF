@@ -64,7 +64,7 @@ namespace UniGLTF
             var dir = System.IO.Path.GetDirectoryName(Path);
             var name = System.IO.Path.GetFileNameWithoutExtension(Path);
             var prefabPath = string.Format("{0}/{1}.prefab", dir, name);
-#if UNITY_EDITOR
+#if false
             if (!Application.isPlaying && File.Exists(prefabPath))
             {
                 // already exists
@@ -82,6 +82,14 @@ namespace UniGLTF
             }
 #endif
             return prefabPath;
+        }
+        string GetMaterialDir()
+        {
+            var path = String.Format("{0}/{1}.Materials",
+                System.IO.Path.GetDirectoryName(PrefabPath),
+                System.IO.Path.GetFileNameWithoutExtension(PrefabPath))
+                ;
+            return path;
         }
         #endregion
 
@@ -123,38 +131,77 @@ namespace UniGLTF
             if (Animation != null) yield return Animation;
         }
 
+        void EnsureFolder(string assetPath)
+        {
+            var fullPath = assetPath.AssetPathToFullPath();
+            if (!Directory.Exists(fullPath))
+            {
+                AssetDatabase.CreateFolder(
+                    System.IO.Path.GetDirectoryName(assetPath),
+                    System.IO.Path.GetFileName(assetPath)
+                    );
+            }
+        }
+
         public void SaveAsAsset()
         {
-            var path = PrefabPath;
-            if (File.Exists(path))
+            var prefabPath = PrefabPath;
+            if (File.Exists(prefabPath))
             {
                 // clear SubAssets
-                foreach (var x in GetSubAssets(path).Where(x => !(x is GameObject) && !(x is Component)))
+                foreach (var x in GetSubAssets(prefabPath).Where(x => !(x is GameObject) && !(x is Component)))
                 {
                     GameObject.DestroyImmediate(x, true);
                 }
             }
 
             // Add SubAsset
+            var materialDir = GetMaterialDir();
+            EnsureFolder(materialDir);
+
+            var paths = new List<string>(){
+                prefabPath
+            };
             foreach (var o in ObjectsForSubAsset())
             {
-                AssetDatabase.AddObjectToAsset(o, path);
+                if (o is Material)
+                {
+                    var materialPath = string.Format("{0}/{1}.asset",
+                        materialDir,
+                        o.name
+                        );
+                    AssetDatabase.CreateAsset(o, materialPath);
+                    paths.Add(materialPath);
+                }
+                /*
+                else if(o is Texture2D)
+                {
+
+                }
+                */
+                else
+                {
+                    // save as subasset
+                    AssetDatabase.AddObjectToAsset(o, prefabPath);
+                }
             }
 
             // Create or upate Main Asset
-            if (File.Exists(path))
+            if (File.Exists(prefabPath))
             {
-                Debug.LogFormat("replace prefab: {0}", path);
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                Debug.LogFormat("replace prefab: {0}", prefabPath);
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
                 PrefabUtility.ReplacePrefab(Root, prefab, ReplacePrefabOptions.ReplaceNameBased);
             }
             else
             {
-                Debug.LogFormat("create prefab: {0}", path);
-                PrefabUtility.CreatePrefab(path, Root);
+                Debug.LogFormat("create prefab: {0}", prefabPath);
+                PrefabUtility.CreatePrefab(prefabPath, Root);
             }
-
-            AssetDatabase.ImportAsset(path);
+            foreach (var x in paths)
+            {
+                AssetDatabase.ImportAsset(x);
+            }
         }
         #endregion
 #endif
