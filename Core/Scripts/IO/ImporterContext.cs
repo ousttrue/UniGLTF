@@ -29,7 +29,6 @@ namespace UniGLTF
             {
                 if (m_path == value) return;
                 m_path = value;
-                m_prefabPath = GetPrefabPath();
             }
         }
         public String Json; // source
@@ -47,10 +46,18 @@ namespace UniGLTF
         public AnimationClip Animation;
         #endregion
 
+        #region PrefabPath
         string m_prefabPath;
         string PrefabPath
         {
-            get { return m_prefabPath; }
+            get
+            {
+                if (string.IsNullOrEmpty(m_prefabPath))
+                {
+                    m_prefabPath = GetPrefabPath();
+                }
+                return m_prefabPath;
+            }
         }
         protected virtual string GetPrefabPath()
         {
@@ -76,6 +83,7 @@ namespace UniGLTF
 #endif
             return prefabPath;
         }
+        #endregion
 
 #if UNITY_EDITOR
         #region Assets
