@@ -115,7 +115,7 @@ namespace UniGLTF
             return false;
         }
 
-        IEnumerable<UnityEngine.Object> ObjectsForSubAsset()
+        protected virtual IEnumerable<UnityEngine.Object> ObjectsForSubAsset()
         {
             HashSet<Texture2D> textures = new HashSet<Texture2D>();
             foreach (var x in Textures.SelectMany(y => y.GetTexturesForSaveAssets()))

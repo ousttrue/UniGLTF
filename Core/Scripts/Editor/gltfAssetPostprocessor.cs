@@ -14,26 +14,29 @@ namespace UniGLTF
         {
             foreach (string path in importedAssets)
             {
-                ImporterContext context = null;
+                ImporterContext context = new ImporterContext
+                {
+                    Path = path,
+                };
                 var ext = Path.GetExtension(path).ToLower();
                 try
                 {
                     if (ext == ".gltf")
                     {
-                        context = ImportGltf(path, false);
+                        context.Json = File.ReadAllText(context.Path, System.Text.Encoding.UTF8);
+                        gltfImporter.Import<glTF>(context, new ArraySegment<byte>());
                     }
                     else if (ext == ".glb")
                     {
-                        context = ImportGltf(path, true);
+                        glbImporter.Import<glTF>(context, File.ReadAllBytes(context.Path));
                     }
-                    if (context != null)
+                    else
                     {
-                        context.SaveAsAsset();
+                        continue;
                     }
-                    if (context != null)
-                    {
-                        context.Destroy(false);
-                    }
+
+                    context.SaveAsAsset();
+                    context.Destroy(false);
                 }
                 catch (UniGLTFNotSupportedException ex)
                 {
@@ -52,25 +55,6 @@ namespace UniGLTF
                     }
                 }
             }
-        }
-
-        static ImporterContext ImportGltf(string srcPath, bool isGlb)
-        {
-            Debug.LogFormat("ImportGltf: {0}", srcPath);
-            var context = new ImporterContext
-            {
-                Path = srcPath,
-            };
-            if (isGlb)
-            {
-                glbImporter.Import<glTF>(context, File.ReadAllBytes(srcPath));
-            }
-            else
-            {
-                context.Json = File.ReadAllText(srcPath, System.Text.Encoding.UTF8);
-                gltfImporter.Import<glTF>(context, new ArraySegment<byte>());
-            }
-            return context;
         }
     }
 }
