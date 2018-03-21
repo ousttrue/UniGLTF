@@ -83,11 +83,13 @@ namespace UniGLTF
 #endif
             return prefabPath;
         }
-        string GetMaterialDir()
+        string GetAssetFolder(string suffix)
         {
-            var path = String.Format("{0}/{1}.Materials",
+            var path = String.Format("{0}/{1}{2}",
                 System.IO.Path.GetDirectoryName(PrefabPath),
-                System.IO.Path.GetFileNameWithoutExtension(PrefabPath))
+                System.IO.Path.GetFileNameWithoutExtension(PrefabPath),
+                suffix
+                )
                 ;
             return path;
         }
@@ -156,8 +158,10 @@ namespace UniGLTF
             }
 
             // Add SubAsset
-            var materialDir = GetMaterialDir();
+            var materialDir = GetAssetFolder(".Materials");
             EnsureFolder(materialDir);
+            var textureDir = GetAssetFolder(".Textures");
+            EnsureFolder(textureDir);
 
             var paths = new List<string>(){
                 prefabPath
@@ -173,12 +177,15 @@ namespace UniGLTF
                     AssetDatabase.CreateAsset(o, materialPath);
                     paths.Add(materialPath);
                 }
-                /*
                 else if(o is Texture2D)
                 {
-
+                    var texturePath = string.Format("{0}/{1}.asset",
+                        textureDir,
+                        o.name
+                        );
+                    AssetDatabase.CreateAsset(o, texturePath);
+                    paths.Add(texturePath);
                 }
-                */
                 else
                 {
                     // save as subasset

@@ -128,7 +128,7 @@ namespace UniGLTF
                          {
                              material.name = ctx.GLTF.GetUniqueMaterialName(i);
                          }
-                         Debug.LogFormat("{0}: {1}", i, material.name);
+                         //Debug.LogFormat("{0}: {1}", i, material.name);
 
                          if (x.pbrMetallicRoughness != null)
                          {
