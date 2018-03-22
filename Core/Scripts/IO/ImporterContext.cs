@@ -9,13 +9,6 @@ using UnityEditor;
 
 namespace UniGLTF
 {
-    public class TransformWithSkin
-    {
-        public Transform Transform;
-        public GameObject GameObject { get { return Transform.gameObject; } }
-        public int? SkinIndex;
-    }
-
     public delegate Material CreateMaterialFunc(ImporterContext ctx, int i);
 
     public class ImporterContext

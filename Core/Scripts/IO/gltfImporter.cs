@@ -949,6 +949,12 @@ namespace UniGLTF
             }
         }
 
+        public class TransformWithSkin
+        {
+            public Transform Transform;
+            public GameObject GameObject { get { return Transform.gameObject; } }
+            public int? SkinIndex;
+        }
         public static void SetupSkinning(ImporterContext context, List<TransformWithSkin> nodes, int i)
         {
             var x = nodes[i];
