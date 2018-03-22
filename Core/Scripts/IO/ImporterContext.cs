@@ -81,7 +81,7 @@ namespace UniGLTF
                 }
             }
 #endif
-            return prefabPath;
+            return prefabPath.Replace("\\", "/");
         }
         string GetAssetFolder(string suffix)
         {
