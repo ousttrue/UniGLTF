@@ -74,8 +74,12 @@ namespace UniGLTF
         public static void Import<T>(ImporterContext context, Byte[] bytes) where T: glTF
         {
             var chunks = ParseGlbChanks(bytes);
+            if (chunks == null)
+            {
+                throw new Exception("empty chunk");
+            }
 
-            if(chunks.Count!=2)
+            if (chunks.Count!=2)
             {
                 throw new Exception("unknown chunk count: "+chunks.Count);
             }

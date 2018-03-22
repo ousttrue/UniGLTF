@@ -36,6 +36,16 @@ namespace UniGLTF
         public List<TextureItem> Textures = new List<TextureItem>();
         public List<Material> Materials = new List<Material>();
         public List<MeshWithMaterials> Meshes = new List<MeshWithMaterials>();
+        public void ShowMeshes()
+        {
+            foreach (var x in Meshes)
+            {
+                if (x.Renderer != null)
+                {
+                    x.Renderer.enabled = true;
+                }
+            }
+        }
         public AnimationClip Animation;
         #endregion
 
@@ -140,6 +150,8 @@ namespace UniGLTF
 
         public void SaveAsAsset()
         {
+            ShowMeshes();
+
             var prefabPath = PrefabPath;
             if (File.Exists(prefabPath))
             {

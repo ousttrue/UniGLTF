@@ -28,6 +28,7 @@ namespace UniGLTF
                             context.Json = Encoding.UTF8.GetString(bytes);
                             gltfImporter.Import<glTF>(context, new ArraySegment<byte>());
                             context.Root.name = Path.GetFileNameWithoutExtension(path);
+                            context.ShowMeshes();
                             Selection.activeGameObject = context.Root;
                         }
                         break;
@@ -36,6 +37,7 @@ namespace UniGLTF
                         {
                             glbImporter.Import<glTF>(context, bytes);
                             context.Root.name = Path.GetFileNameWithoutExtension(path);
+                            context.ShowMeshes();
                             Selection.activeGameObject = context.Root;
                         }
                         break;

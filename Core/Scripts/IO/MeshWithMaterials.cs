@@ -3,9 +3,10 @@
 
 namespace UniGLTF
 {
-    public struct MeshWithMaterials
+    public class MeshWithMaterials
     {
         public Mesh Mesh;
         public Material[] Materials;
+        public Renderer Renderer; // SkinnedMeshRenderer or MeshRenderer
     }
 }
