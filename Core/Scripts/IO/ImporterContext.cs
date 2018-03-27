@@ -15,6 +15,10 @@ namespace UniGLTF
     {
         #region Source
         String m_path;
+
+        /// <summary>
+        /// GLTF or GLB path
+        /// </summary>
         public String Path
         {
             get { return m_path; }
@@ -24,7 +28,15 @@ namespace UniGLTF
                 m_path = value;
             }
         }
-        public String Json; // source
+
+        /// <summary>
+        /// JSON source
+        /// </summary>
+        public String Json;
+
+        /// <summary>
+        /// GLTF parsed from JSON
+        /// </summary>
         public glTF GLTF; // parsed
         #endregion
 
@@ -49,6 +61,7 @@ namespace UniGLTF
         public AnimationClip Animation;
         #endregion
 
+#if UNITY_EDITOR
         #region PrefabPath
         string m_prefabPath;
         string PrefabPath
@@ -98,7 +111,6 @@ namespace UniGLTF
         }
         #endregion
 
-#if UNITY_EDITOR
         #region Assets
         IEnumerable<UnityEngine.Object> GetSubAssets(string path)
         {
