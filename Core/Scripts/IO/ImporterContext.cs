@@ -189,7 +189,7 @@ namespace UniGLTF
                 {
                     var materialPath = string.Format("{0}/{1}.asset",
                         materialDir,
-                        o.name
+                        o.name.EscapeFilePath()
                         );
                     AssetDatabase.CreateAsset(o, materialPath);
                     paths.Add(materialPath);
@@ -198,7 +198,7 @@ namespace UniGLTF
                 {
                     var texturePath = string.Format("{0}/{1}.asset",
                         textureDir,
-                        o.name
+                        o.name.EscapeFilePath()
                         );
                     AssetDatabase.CreateAsset(o, texturePath);
                     paths.Add(texturePath);

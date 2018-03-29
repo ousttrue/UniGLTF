@@ -48,5 +48,26 @@ namespace UniGLTF
             //Debug.LogWarningFormat("{0} is starts with {1}", path, basePath);
             return path;
         }
+
+        static readonly char[] EscapeChars = new char[]
+        {
+            '\\',
+            '/',
+            ':',
+            '*',
+            '?',
+            '"',
+            '<',
+            '>',
+            '|',
+        };
+        public static string EscapeFilePath(this string path)
+        {
+            foreach(var x in EscapeChars)
+            {
+                path = path.Replace(x, '+');
+            }
+            return path;
+        }
     }
 }
