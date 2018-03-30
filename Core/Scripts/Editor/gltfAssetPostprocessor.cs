@@ -21,19 +21,21 @@ namespace UniGLTF
                 var ext = Path.GetExtension(path).ToLower();
                 try
                 {
+                    var dataChunk=default(ArraySegment<byte>);
                     if (ext == ".gltf")
                     {
                         context.Json = File.ReadAllText(context.Path, System.Text.Encoding.UTF8);
-                        gltfImporter.Import<glTF>(context, new ArraySegment<byte>());
+                        dataChunk=new ArraySegment<byte>();
                     }
                     else if (ext == ".glb")
                     {
-                        glbImporter.Import<glTF>(context, File.ReadAllBytes(context.Path));
+                        dataChunk = context.ParseGlb<glTF>(File.ReadAllBytes(context.Path));
                     }
                     else
                     {
                         continue;
                     }
+                    gltfImporter.Import<glTF>(context, dataChunk);
 
                     context.SaveAsAsset();
                     context.Destroy(false);

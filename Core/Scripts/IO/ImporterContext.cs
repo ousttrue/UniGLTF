@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System.Text;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -33,12 +34,46 @@ namespace UniGLTF
         /// JSON source
         /// </summary>
         public String Json;
-
         /// <summary>
         /// GLTF parsed from JSON
         /// </summary>
         public glTF GLTF; // parsed
         #endregion
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="bytes"></param>
+        public ArraySegment<Byte> ParseGlb<T>(Byte[] bytes) where T: glTF
+        {
+            var chunks = glbImporter.ParseGlbChanks(bytes);
+
+            if (chunks.Count != 2)
+            {
+                throw new Exception("unknown chunk count: " + chunks.Count);
+            }
+
+            if (chunks[0].ChunkType != GlbChunkType.JSON)
+            {
+                throw new Exception("chunk 0 is not JSON");
+            }
+
+            if (chunks[1].ChunkType != GlbChunkType.BIN)
+            {
+                throw new Exception("chunk 1 is not BIN");
+            }
+
+            var jsonBytes = chunks[0].Bytes;
+            Json = Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count);
+
+            GLTF = JsonUtility.FromJson<T>(Json);
+            if (GLTF.asset.version != "2.0")
+            {
+                throw new UniGLTFException("unknown gltf version {0}", GLTF.asset.version);
+            }
+
+            return chunks[1].Bytes;
+        }
 
         public CreateMaterialFunc CreateMaterial;
 

@@ -35,7 +35,8 @@ namespace UniGLTF
 
                     case ".glb":
                         {
-                            glbImporter.Import<glTF>(context, bytes);
+                            var dataChunk=context.ParseGlb<glTF>(bytes);
+                            gltfImporter.Import<glTF>(context, dataChunk);
                             context.Root.name = Path.GetFileNameWithoutExtension(path);
                             context.ShowMeshes();
                             Selection.activeGameObject = context.Root;

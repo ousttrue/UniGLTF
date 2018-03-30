@@ -71,6 +71,7 @@ namespace UniGLTF
             return chunks;
         }
 
+        /*
         public static void Import<T>(ImporterContext context, Byte[] bytes) where T: glTF
         {
             var chunks = ParseGlbChanks(bytes);
@@ -99,5 +100,6 @@ namespace UniGLTF
 
             gltfImporter.Import<T>(context, chunks[1].Bytes);
         }
+        */
     }
 }
