@@ -28,7 +28,7 @@ namespace UniGLTF
         {
             if (m_metallicRoughnessOcclusion == null)
             {
-                var texture = CopyTexture(true);
+                var texture = CopyTexture();
                 texture.SetPixels32(texture.GetPixels32().Select(ConvertMetallicRoughnessOcclusion).ToArray());
                 texture.name = this.Texture.name + ".metallicRoughnessOcclusion";
                 m_metallicRoughnessOcclusion = texture;
@@ -69,12 +69,27 @@ namespace UniGLTF
             };
         }
 
-        public Texture2D CopyTexture(bool linear=false)
+        public Texture2D CopyTexture()
         {
+            Texture2D copyTexture = null;
             var renderTexture = new RenderTexture(Texture.width, Texture.height, 0, RenderTextureFormat.ARGB32);
-            Graphics.Blit(Texture, renderTexture);
-            var copyTexture = new Texture2D(Texture.width, Texture.height, TextureFormat.ARGB32, false, linear);
-            copyTexture.ReadPixels(new Rect(0, 0, Texture.width, Texture.height), 0, 0);
+            if (QualitySettings.activeColorSpace == ColorSpace.Linear)
+            {
+                var sRGBWrite = GL.sRGBWrite;
+                GL.sRGBWrite = false;
+                {
+                    Graphics.Blit(Texture, renderTexture);
+                    copyTexture = new Texture2D(Texture.width, Texture.height, TextureFormat.ARGB32, false, true);
+                    copyTexture.ReadPixels(new Rect(0, 0, Texture.width, Texture.height), 0, 0);
+                }
+                GL.sRGBWrite = sRGBWrite;
+            }
+            else
+            {
+                Graphics.Blit(Texture, renderTexture);
+                copyTexture = new Texture2D(Texture.width, Texture.height, TextureFormat.ARGB32, false, false);
+                copyTexture.ReadPixels(new Rect(0, 0, Texture.width, Texture.height), 0, 0);
+            }
 
             RenderTexture.active = null;
             if (Application.isEditor)
