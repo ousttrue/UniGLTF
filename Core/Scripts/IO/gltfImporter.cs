@@ -512,7 +512,9 @@ namespace UniGLTF
             }
             else
             {
+#if UNITY_5_6_OR_NEWER
                 mesh.RecalculateTangents();
+#endif
             }
             if (meshContext.uv!=null && meshContext.uv.Length>0)
             {
