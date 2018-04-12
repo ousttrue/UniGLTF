@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
+using System;
 
 namespace UniGLTF
 {
@@ -69,28 +70,33 @@ namespace UniGLTF
             };
         }
 
+
+        class sRGBScope : IDisposable
+        {
+            bool sRGBWrite;
+            public sRGBScope()
+            {
+                sRGBWrite = GL.sRGBWrite;
+                GL.sRGBWrite = true;
+            }
+
+            public void Dispose()
+            {
+                GL.sRGBWrite = sRGBWrite;
+            }
+        }
+
+
         public Texture2D CopyTexture()
         {
             Texture2D copyTexture = null;
-            var renderTexture = new RenderTexture(Texture.width, Texture.height, 0, RenderTextureFormat.ARGB32);
-            if (QualitySettings.activeColorSpace == ColorSpace.Linear)
-            {
-                var sRGBWrite = GL.sRGBWrite;
-                GL.sRGBWrite = false;
-                {
-                    Graphics.Blit(Texture, renderTexture);
-                    copyTexture = new Texture2D(Texture.width, Texture.height, TextureFormat.ARGB32, false, true);
-                    copyTexture.ReadPixels(new Rect(0, 0, Texture.width, Texture.height), 0, 0);
-                }
-                GL.sRGBWrite = sRGBWrite;
-            }
-            else
+            var renderTexture = new RenderTexture(Texture.width, Texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            using (var scope = new sRGBScope())
             {
                 Graphics.Blit(Texture, renderTexture);
                 copyTexture = new Texture2D(Texture.width, Texture.height, TextureFormat.ARGB32, false, false);
                 copyTexture.ReadPixels(new Rect(0, 0, Texture.width, Texture.height), 0, 0);
             }
-
             RenderTexture.active = null;
             if (Application.isEditor)
             {
