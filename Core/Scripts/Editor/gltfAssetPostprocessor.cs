@@ -26,16 +26,17 @@ namespace UniGLTF
                     {
                         context.Json = File.ReadAllText(context.Path, System.Text.Encoding.UTF8);
                         dataChunk=new ArraySegment<byte>();
+                        gltfImporter.Import<glTF>(context, dataChunk);
                     }
                     else if (ext == ".glb")
                     {
                         dataChunk = context.ParseGlb<glTF>(File.ReadAllBytes(context.Path));
+                        gltfImporter.Import<glTF>(context, dataChunk);
                     }
                     else
                     {
                         continue;
                     }
-                    gltfImporter.Import<glTF>(context, dataChunk);
 
                     context.SaveAsAsset();
                     context.Destroy(false);

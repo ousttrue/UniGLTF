@@ -134,7 +134,7 @@ namespace UniGLTF
 #endif
             return prefabPath.Replace("\\", "/");
         }
-        string GetAssetFolder(string suffix)
+        public string GetAssetFolder(string suffix)
         {
             var path = String.Format("{0}/{1}{2}",
                 System.IO.Path.GetDirectoryName(PrefabPath),

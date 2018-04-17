@@ -232,6 +232,36 @@ namespace UniGLTF
             }
 
             // textures
+#if UNITY_EDITOR
+            if (ctx.GLTF.baseDir.StartsWith("Assets/")){
+                for (int i = 0; i < ctx.GLTF.textures.Count; ++i)
+                {
+                    var x = ctx.GLTF.textures[i];
+                    var image = ctx.GLTF.images[x.source];
+                    if (string.IsNullOrEmpty(image.uri))
+                    {
+                        // glb buffer
+                        var folder = ctx.GetAssetFolder(".Textures").AssetPathToFullPath();
+                        if (!Directory.Exists(folder))
+                        {
+                            Directory.CreateDirectory(folder);
+                        }
+
+                        var textureName = string.IsNullOrEmpty(image.extra.name) ? string.Format("buffer#{0:00}", i) : image.extra.name;
+                        var path = Path.Combine(folder, textureName + ".png");
+                        var byteSegment = ctx.GLTF.GetViewBytes(image.bufferView);
+                        //Debug.LogFormat("write to {0}", path);
+                        File.WriteAllBytes(path, byteSegment.ToArray());
+                        var assetPath = path.ToUnityRelativePath();
+                        UnityEditor.AssetDatabase.ImportAsset(assetPath);
+
+                        image.uri = assetPath.Substring(ctx.GLTF.baseDir.Length+1);
+                        int a = 0;
+                    }
+                }
+            }
+#endif
+
             ctx.Textures.AddRange(ImportTextures(ctx.GLTF)
                     .Select(x =>
                     {
@@ -360,12 +390,15 @@ namespace UniGLTF
 
             return x;
         }
+
         static TextureItem _ImportTexture(glTF gltf, int index)
         {
             var image = gltf.images[index];
             if (string.IsNullOrEmpty(image.uri))
             {
-                // use buffer view
+                //
+                // use buffer view (GLB)
+                //
                 var texture = new Texture2D(2, 2);
                 texture.name = string.IsNullOrEmpty(image.extra.name) ? string.Format("buffer#{0:00}", index) : image.extra.name;
                 var byteSegment = gltf.GetViewBytes(image.bufferView);
@@ -377,7 +410,9 @@ namespace UniGLTF
             }
             else if (image.uri.StartsWith("data:"))
             {
-                // embeded
+                //
+                // embeded Base64Encoded
+                //
                 var bytes = UriByteBuffer.ReadEmbeded(image.uri);
                 var texture = new Texture2D(2, 2);
                 texture.name = string.IsNullOrEmpty(image.extra.name) ? "embeded" : image.extra.name;
@@ -387,9 +422,11 @@ namespace UniGLTF
 #if UNITY_EDITOR
             else if (gltf.baseDir.StartsWith("Assets/"))
             {
-                // local folder
+                //
+                // file from local folder
+                //
                 var path = Path.Combine(gltf.baseDir, image.uri);
-                UnityEditor.AssetDatabase.ImportAsset(path);
+                UnityEditor.AssetDatabase.ImportAsset(path.ToUnityRelativePath());
                 var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 texture.name = string.IsNullOrEmpty(image.extra.name) ? Path.GetFileNameWithoutExtension(path) : image.extra.name;
                 return new TextureItem(texture, index, true);
@@ -397,7 +434,9 @@ namespace UniGLTF
 #endif
             else
             {
-                // external
+                //
+                // file from external folder
+                //
                 var path = Path.Combine(gltf.baseDir, image.uri);
                 var bytes = File.ReadAllBytes(path);
                 var texture = new Texture2D(2, 2);
