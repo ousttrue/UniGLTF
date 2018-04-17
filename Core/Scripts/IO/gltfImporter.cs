@@ -189,79 +189,8 @@ namespace UniGLTF
              };
         }
 
-        public static void Import<T>(ImporterContext ctx, ArraySegment<Byte> glbBinChunk) where T : glTF
+        public static void Import<T>(ImporterContext ctx) where T : glTF
         {
-            // exclude not gltf-2.0
-            var parsed = ctx.Json.ParseAsJson();
-            try
-            {
-                if (parsed["asset"]["version"].GetString() != "2.0")
-                {
-                    throw new UniGLTFNotSupportedException("is not gltf-2.0");
-                }
-            }
-            catch (Exception)
-            {
-                throw new UniGLTFNotSupportedException("unknown json");
-            }
-
-            // parse json
-            try
-            {
-                ctx.GLTF = JsonUtility.FromJson<T>(ctx.Json);
-            }
-            catch (Exception)
-            {
-                throw new UniGLTFException("fail to parse json");
-            }
-            if (ctx.GLTF == null)
-            {
-                throw new UniGLTFException("fail to parse json");
-            }
-
-            if (ctx.GLTF.asset.version != "2.0")
-            {
-                throw new UniGLTFNotSupportedException("unknown gltf version {0}", ctx.GLTF.asset.version);
-            }
-
-            // parepare byte buffer
-            ctx.GLTF.baseDir = Path.GetDirectoryName(ctx.Path);
-            foreach (var buffer in ctx.GLTF.buffers)
-            {
-                buffer.OpenStorage(ctx.GLTF.baseDir, glbBinChunk);
-            }
-
-            // textures
-#if UNITY_EDITOR
-            if (ctx.GLTF.baseDir.StartsWith("Assets/")){
-                for (int i = 0; i < ctx.GLTF.textures.Count; ++i)
-                {
-                    var x = ctx.GLTF.textures[i];
-                    var image = ctx.GLTF.images[x.source];
-                    if (string.IsNullOrEmpty(image.uri))
-                    {
-                        // glb buffer
-                        var folder = ctx.GetAssetFolder(".Textures").AssetPathToFullPath();
-                        if (!Directory.Exists(folder))
-                        {
-                            Directory.CreateDirectory(folder);
-                        }
-
-                        var textureName = string.IsNullOrEmpty(image.extra.name) ? string.Format("buffer#{0:00}", i) : image.extra.name;
-                        var path = Path.Combine(folder, textureName + ".png");
-                        var byteSegment = ctx.GLTF.GetViewBytes(image.bufferView);
-                        //Debug.LogFormat("write to {0}", path);
-                        File.WriteAllBytes(path, byteSegment.ToArray());
-                        var assetPath = path.ToUnityRelativePath();
-                        UnityEditor.AssetDatabase.ImportAsset(assetPath);
-
-                        image.uri = assetPath.Substring(ctx.GLTF.baseDir.Length+1);
-                        int a = 0;
-                    }
-                }
-            }
-#endif
-
             ctx.Textures.AddRange(ImportTextures(ctx.GLTF)
                     .Select(x =>
                     {

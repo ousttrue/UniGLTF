@@ -54,9 +54,9 @@ public class UniGLTFTest
                 exporter.Export();
 
                 // import
-                context.Json = gltf.ToJson();
+                context.ParseJson<glTF>(gltf.ToJson(), new ArraySegment<byte>());
                 Debug.LogFormat("{0}", context.Json);
-                gltfImporter.Import<glTF>(context, new ArraySegment<byte>());
+                gltfImporter.Import<glTF>(context);
 
                 AssertAreEqual(go.transform, context.Root.transform);
             }

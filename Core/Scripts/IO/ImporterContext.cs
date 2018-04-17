@@ -44,7 +44,7 @@ namespace UniGLTF
         /// 
         /// </summary>
         /// <param name="bytes"></param>
-        public ArraySegment<Byte> ParseGlb<T>(Byte[] bytes) where T: glTF
+        public void ParseGlb<T>(Byte[] bytes) where T: glTF
         {
             var chunks = glbImporter.ParseGlbChanks(bytes);
 
@@ -64,7 +64,12 @@ namespace UniGLTF
             }
 
             var jsonBytes = chunks[0].Bytes;
-            Json = Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count);
+            ParseJson<T>(Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count), chunks[1].Bytes);
+        }
+
+        public void ParseJson<T>(string json, ArraySegment<byte> glbBinChunk)where T: glTF
+        {
+            Json = json;
 
             GLTF = JsonUtility.FromJson<T>(Json);
             if (GLTF.asset.version != "2.0")
@@ -72,7 +77,12 @@ namespace UniGLTF
                 throw new UniGLTFException("unknown gltf version {0}", GLTF.asset.version);
             }
 
-            return chunks[1].Bytes;
+            // parepare byte buffer
+            GLTF.baseDir = System.IO.Path.GetDirectoryName(Path);
+            foreach (var buffer in GLTF.buffers)
+            {
+                buffer.OpenStorage(GLTF.baseDir, glbBinChunk);
+            }
         }
 
         public CreateMaterialFunc CreateMaterial;
