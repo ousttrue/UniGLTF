@@ -5,7 +5,6 @@
 * Unityt5.6.3
 * glTF-2.0
 
-![metalroughness](doc/metalroughness.png)
 ![duck](doc/duck.png)
 ![duck_prefab](doc/duck_prefab.png)
 ![animation](doc/animation.gif)
@@ -124,6 +123,8 @@ Exclude SciFiHelmet(70074vertices), all model can import.
 * [x] Unity-5.6 compatibility
 
 ### material & texture
+
+![metalroughness](doc/metalroughness.png)
 
 |features     |importer|exporter|memo     |
 |-------------|--------|--------|---------|
