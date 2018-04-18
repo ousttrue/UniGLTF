@@ -1095,9 +1095,9 @@ namespace UniGLTF
                                     var sampler = animation.samplers[y.sampler];
                                     var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
                                     var output = ctx.GLTF.GetArrayFromAccessor<float>(sampler.output);
-                                    for (int j = 0; j < input.Length; ++j)
+                                    for (int j = 0, l=k; j < input.Length; ++j, l+=mesh.weights.Length)
                                     {
-                                        curve.AddKey(input[j], output[j]);
+                                        curve.AddKey(input[j], output[l] * 100);
                                     }
 
                                     clip.SetCurve(relativePath, typeof(SkinnedMeshRenderer), "blendShape." + k, curve);
