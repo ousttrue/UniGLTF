@@ -21,7 +21,6 @@ namespace UniGLTF
                 var ext = Path.GetExtension(path).ToLower();
                 try
                 {
-                    var dataChunk=default(ArraySegment<byte>);
                     if (ext == ".gltf")
                     {
                         context.ParseJson<glTF>(File.ReadAllText(context.Path, System.Text.Encoding.UTF8), new ArraySegment<byte>());
