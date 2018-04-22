@@ -239,12 +239,12 @@ namespace UniGLTF
         public void Value(Single x)
         {
             CommaCheck();
-            m_w.Write(x.ToString());
+            m_w.Write(x.ToString("R"));
         }
         public void Value(Double x)
         {
             CommaCheck();
-            m_w.Write(x.ToString());
+            m_w.Write(x.ToString("R"));
         }
         public void Value(Vector3 v)
         {
