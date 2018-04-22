@@ -265,6 +265,15 @@ namespace UniGLTF
             }
             EndList();
         }
+        public void Value(List<string> a)
+        {
+            BeginList();
+            foreach (var x in a)
+            {
+                Value(x);
+            }
+            EndList();
+        }
 
         public void Value(double[] a)
         {
