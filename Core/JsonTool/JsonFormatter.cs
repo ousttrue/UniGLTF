@@ -256,6 +256,26 @@ namespace UniGLTF
             EndMap();
         }
 
+        public void Value(string[] a)
+        {
+            BeginList();
+            foreach (var x in a)
+            {
+                Value(x);
+            }
+            EndList();
+        }
+
+        public void Value(double[] a)
+        {
+            BeginList();
+            foreach (var x in a)
+            {
+                Value(x);
+            }
+            EndList();
+        }
+
         public void Value(float[] a)
         {
             BeginList();

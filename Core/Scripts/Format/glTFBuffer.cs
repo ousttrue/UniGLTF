@@ -87,8 +87,8 @@ namespace UniGLTF
         public string type;
         public glComponentType componentType;
         public int count;
-        public float[] max;
-        public float[] min;
+        public double[] max;
+        public double[] min;
 
         public string ToJson()
         {
