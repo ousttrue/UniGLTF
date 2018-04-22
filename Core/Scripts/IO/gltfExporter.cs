@@ -375,10 +375,7 @@ namespace UniGLTF
             var imageIndex = gltf.images.Count;
             gltf.images.Add(new glTFImage
             {
-                extra = new extraName
-                {
-                    name = texture.name,
-                },
+                name = texture.name,
                 bufferView = viewIndex,
                 mimeType = bytesWithPath.Mime,
             });

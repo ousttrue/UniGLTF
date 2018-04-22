@@ -23,16 +23,15 @@ namespace UniGLTF
     [Serializable]
     public class glTFImage : JsonSerializableBase
     {
+        public string name;
         public string uri;
 
         public int bufferView;
         public string mimeType;
 
-        public extraName extra = new extraName();
-
         protected override void SerializeMembers(JsonFormatter f)
         {
-            f.KeyValue(() => extra);
+            f.KeyValue(() => name);
             if (!string.IsNullOrEmpty(uri))
             {
                 f.KeyValue(() => uri);

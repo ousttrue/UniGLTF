@@ -44,7 +44,7 @@ namespace UniGLTF
         /// 
         /// </summary>
         /// <param name="bytes"></param>
-        public void ParseGlb<T>(Byte[] bytes) where T: glTF
+        public void ParseGlb<T>(Byte[] bytes) where T : glTF
         {
             var chunks = glbImporter.ParseGlbChanks(bytes);
 
@@ -67,7 +67,7 @@ namespace UniGLTF
             ParseJson<T>(Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count), chunks[1].Bytes);
         }
 
-        public void ParseJson<T>(string json, ArraySegment<byte> glbBinChunk)where T: glTF
+        public void ParseJson<T>(string json, ArraySegment<byte> glbBinChunk) where T : glTF
         {
             Json = json;
 
@@ -75,6 +75,28 @@ namespace UniGLTF
             if (GLTF.asset.version != "2.0")
             {
                 throw new UniGLTFException("unknown gltf version {0}", GLTF.asset.version);
+            }
+
+            // Version Compatibility
+            var parsed = Json.ParseAsJson();
+            for (int i = 0; i < GLTF.images.Count; ++i)
+            {
+                if (string.IsNullOrEmpty(GLTF.images[i].name))
+                {
+                    try
+                    {
+                        var extraName = parsed["images"][i]["extra"]["name"].GetString();
+                        if (!string.IsNullOrEmpty(extraName))
+                        {
+                            Debug.LogFormat("restore texturename: {0}", extraName);
+                            GLTF.images[i].name = extraName;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // do nothing
+                    }
+                }
             }
 
             // parepare byte buffer
@@ -239,7 +261,7 @@ namespace UniGLTF
                     AssetDatabase.CreateAsset(o, materialPath);
                     paths.Add(materialPath);
                 }
-                else if(o is Texture2D)
+                else if (o is Texture2D)
                 {
                     var texturePath = string.Format("{0}/{1}.asset",
                         textureDir,

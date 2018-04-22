@@ -49,7 +49,7 @@ namespace UniGLTF
                                     //Directory.CreateDirectory(folder);
                                 }
 
-                                var textureName = string.IsNullOrEmpty(image.extra.name) ? string.Format("buffer#{0:00}", i) : image.extra.name;
+                                var textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("buffer#{0:00}", i);
                                 var png = Path.Combine(folder, textureName + ".png");
                                 var byteSegment = context.GLTF.GetViewBytes(image.bufferView);
                                 File.WriteAllBytes(png, byteSegment.ToArray());

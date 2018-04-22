@@ -329,7 +329,7 @@ namespace UniGLTF
                 // use buffer view (GLB)
                 //
                 var texture = new Texture2D(2, 2);
-                texture.name = string.IsNullOrEmpty(image.extra.name) ? string.Format("buffer#{0:00}", index) : image.extra.name;
+                texture.name = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("buffer#{0:00}", index);
                 var byteSegment = gltf.GetViewBytes(image.bufferView);
 
                 var bytes = byteSegment.ToArray();
@@ -344,7 +344,7 @@ namespace UniGLTF
                 //
                 var bytes = UriByteBuffer.ReadEmbeded(image.uri);
                 var texture = new Texture2D(2, 2);
-                texture.name = string.IsNullOrEmpty(image.extra.name) ? "embeded" : image.extra.name;
+                texture.name = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("embeded#{0:00}", index);
                 texture.LoadImage(bytes);
                 return new TextureItem(texture, index, false);
             }
@@ -357,7 +357,7 @@ namespace UniGLTF
                 var path = Path.Combine(gltf.baseDir, image.uri);
                 UnityEditor.AssetDatabase.ImportAsset(path.ToUnityRelativePath());
                 var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                texture.name = string.IsNullOrEmpty(image.extra.name) ? Path.GetFileNameWithoutExtension(path) : image.extra.name;
+                texture.name = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(path);
                 return new TextureItem(texture, index, true);
             }
 #endif
@@ -369,7 +369,7 @@ namespace UniGLTF
                 var path = Path.Combine(gltf.baseDir, image.uri);
                 var bytes = File.ReadAllBytes(path);
                 var texture = new Texture2D(2, 2);
-                texture.name = string.IsNullOrEmpty(image.extra.name) ? Path.GetFileNameWithoutExtension(path) : image.extra.name;
+                texture.name = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(path);
                 texture.LoadImage(bytes);
                 return new TextureItem(texture, index, false);
             }
@@ -404,7 +404,7 @@ namespace UniGLTF
             public Vector3[] normals;
             public Vector4[] tangents;
             public Vector2[] uv;
-            public List<BoneWeight> boneWeights=new List<BoneWeight>();
+            public List<BoneWeight> boneWeights = new List<BoneWeight>();
             public List<int[]> subMeshes = new List<int[]>();
             public List<int> materialIndices = new List<int>();
             public List<BlendShape> blendShapes = new List<BlendShape>();
@@ -445,7 +445,7 @@ namespace UniGLTF
         }
 
         public static MeshWithMaterials BuildMesh(ImporterContext ctx, MeshContext meshContext)
-        {        
+        {
             if (!meshContext.materialIndices.Any())
             {
                 meshContext.materialIndices.Add(0);
@@ -460,23 +460,23 @@ namespace UniGLTF
 #if UNITY_2017_3_OR_NEWER
                 mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 #else
-                Debug.LogWarningFormat("vertices {0} exceed 65535. not implemented. Unity2017.3 supports large mesh", 
+                Debug.LogWarningFormat("vertices {0} exceed 65535. not implemented. Unity2017.3 supports large mesh",
                     meshContext.positions.Length);
 #endif
             }
 
-            mesh.vertices=meshContext.positions;
-            if (meshContext.normals!=null && meshContext.normals.Length>0)
+            mesh.vertices = meshContext.positions;
+            if (meshContext.normals != null && meshContext.normals.Length > 0)
             {
-                mesh.normals=meshContext.normals;
+                mesh.normals = meshContext.normals;
             }
             else
             {
                 mesh.RecalculateNormals();
             }
-            if (meshContext.tangents!=null && meshContext.tangents.Length>0)
+            if (meshContext.tangents != null && meshContext.tangents.Length > 0)
             {
-                mesh.tangents=meshContext.tangents;
+                mesh.tangents = meshContext.tangents;
             }
             else
             {
@@ -484,11 +484,11 @@ namespace UniGLTF
                 mesh.RecalculateTangents();
 #endif
             }
-            if (meshContext.uv!=null && meshContext.uv.Length>0)
+            if (meshContext.uv != null && meshContext.uv.Length > 0)
             {
-                mesh.uv=meshContext.uv;
+                mesh.uv = meshContext.uv;
             }
-            if (meshContext.boneWeights!=null && meshContext.boneWeights.Count>0)
+            if (meshContext.boneWeights != null && meshContext.boneWeights.Count > 0)
             {
                 mesh.boneWeights = meshContext.boneWeights.ToArray();
             }
@@ -513,7 +513,7 @@ namespace UniGLTF
                         {
                             mesh.AddBlendShapeFrame(blendShape.Name, FRAME_WEIGHT,
                                 blendShape.Positions.ToArray(),
-                                (meshContext.normals!=null && meshContext.normals.Length == mesh.vertexCount) ? blendShape.Normals.ToArray() : null,
+                                (meshContext.normals != null && meshContext.normals.Length == mesh.vertexCount) ? blendShape.Normals.ToArray() : null,
                                 null
                                 );
                         }
@@ -663,7 +663,7 @@ namespace UniGLTF
 
             {
                 var prim = gltfMesh.primitives.First();
-                context.positions= ctx.GLTF.GetArrayFromAccessor<Vector3>(prim.attributes.POSITION).SelectInplace(x => x.ReverseZ());
+                context.positions = ctx.GLTF.GetArrayFromAccessor<Vector3>(prim.attributes.POSITION).SelectInplace(x => x.ReverseZ());
 
                 // normal
                 if (prim.attributes.NORMAL != -1)
@@ -674,13 +674,13 @@ namespace UniGLTF
                 // tangent
                 if (prim.attributes.TANGENT != -1)
                 {
-                    context.tangents=ctx.GLTF.GetArrayFromAccessor<Vector4>(prim.attributes.TANGENT).SelectInplace(x => x.ReverseZ());
+                    context.tangents = ctx.GLTF.GetArrayFromAccessor<Vector4>(prim.attributes.TANGENT).SelectInplace(x => x.ReverseZ());
                 }
 
                 // uv
                 if (prim.attributes.TEXCOORD_0 != -1)
                 {
-                    context.uv=ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).SelectInplace(x => x.ReverseY());
+                    context.uv = ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).SelectInplace(x => x.ReverseY());
                 }
                 else
                 {
@@ -1095,7 +1095,7 @@ namespace UniGLTF
                                     var sampler = animation.samplers[y.sampler];
                                     var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
                                     var output = ctx.GLTF.GetArrayFromAccessor<float>(sampler.output);
-                                    for (int j = 0, l=k; j < input.Length; ++j, l+=mesh.weights.Length)
+                                    for (int j = 0, l = k; j < input.Length; ++j, l += mesh.weights.Length)
                                     {
                                         curve.AddKey(input[j], output[l] * 100);
                                     }
@@ -1144,6 +1144,6 @@ namespace UniGLTF
                 .OrderBy(x => x.Parents)
                 .First().Transform;
         }
-#endregion
+        #endregion
     }
 }
