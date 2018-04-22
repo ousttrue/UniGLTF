@@ -886,9 +886,9 @@ namespace UniGLTF
                     if (node.skin != -1)
                     {
                         nodeWithSkin.SkinIndex = node.skin;
-                        if (node.extra.skinRootBone != -1)
+                        if (node.extras.skinRootBone != -1)
                         {
-                            renderer.rootBone = context.Nodes[node.extra.skinRootBone];
+                            renderer.rootBone = context.Nodes[node.extras.skinRootBone];
                         }
                     }
 

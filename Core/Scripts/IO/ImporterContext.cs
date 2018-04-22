@@ -78,6 +78,18 @@ namespace UniGLTF
             }
 
             // Version Compatibility
+            RestoreOlderVersionValues();
+
+            // parepare byte buffer
+            GLTF.baseDir = System.IO.Path.GetDirectoryName(Path);
+            foreach (var buffer in GLTF.buffers)
+            {
+                buffer.OpenStorage(GLTF.baseDir, glbBinChunk);
+            }
+        }
+
+        void RestoreOlderVersionValues()
+        {
             var parsed = Json.ParseAsJson();
             for (int i = 0; i < GLTF.images.Count; ++i)
             {
@@ -119,12 +131,19 @@ namespace UniGLTF
                     // do nothing
                 }
             }
-
-            // parepare byte buffer
-            GLTF.baseDir = System.IO.Path.GetDirectoryName(Path);
-            foreach (var buffer in GLTF.buffers)
+            for (int i = 0; i < GLTF.nodes.Count; ++i)
             {
-                buffer.OpenStorage(GLTF.baseDir, glbBinChunk);
+                var node = GLTF.nodes[i];
+                try
+                {
+                    var extra = parsed["nodes"][i]["extra"]["skinRootBone"].GetInt32();
+                    //Debug.LogFormat("restore extra: {0}", extra);
+                    node.extras.skinRootBone = extra;
+                }
+                catch (Exception)
+                {
+                    // do nothing
+                }
             }
         }
 

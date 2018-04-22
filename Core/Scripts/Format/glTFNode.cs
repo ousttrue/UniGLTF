@@ -28,7 +28,7 @@ namespace UniGLTF
         public int skin = -1;
         public int camera = -1;
 
-        public glTFNode_extra_rootBone extra = new glTFNode_extra_rootBone();
+        public glTFNode_extra_rootBone extras = new glTFNode_extra_rootBone();
 
         protected override void SerializeMembers(JsonFormatter f)
         {
@@ -53,7 +53,7 @@ namespace UniGLTF
             if (skin >= 0)
             {
                 f.KeyValue(() => skin);
-                f.KeyValue(() => extra);
+                f.KeyValue(() => extras);
             }
         }
     }
