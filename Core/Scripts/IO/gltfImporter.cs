@@ -614,9 +614,9 @@ namespace UniGLTF
                     {
                         //var name = string.Format("target{0}", i++);
                         var primTarget = prim.targets[i];
-                        var blendShape = new BlendShape(string.IsNullOrEmpty(prim.targets[i].extra.name)
-                            ? i.ToString()
-                            : prim.targets[i].extra.name)
+                        var blendShape = new BlendShape(!string.IsNullOrEmpty(prim.extras.targetNames[i])
+                            ? prim.extras.targetNames[i]
+                            : i.ToString())
                             ;
                         if (primTarget.POSITION != -1)
                         {
@@ -718,9 +718,9 @@ namespace UniGLTF
                 if (prim.targets != null && prim.targets.Count > 0)
                 {
                     context.blendShapes.AddRange(prim.targets.Select((x, i) => new BlendShape(
-                        string.IsNullOrEmpty(prim.targets[i].extra.name)
-                        ? i.ToString()
-                        : prim.targets[i].extra.name)));
+                        i < prim.extras.targetNames.Count && !string.IsNullOrEmpty(prim.extras.targetNames[i])
+                        ? prim.extras.targetNames[i]
+                        : i.ToString())));
                     for (int i = 0; i < prim.targets.Count; ++i)
                     {
                         //var name = string.Format("target{0}", i++);

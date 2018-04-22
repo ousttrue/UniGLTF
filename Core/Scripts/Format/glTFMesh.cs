@@ -73,17 +73,40 @@ namespace UniGLTF
     }
 
     [Serializable]
-    public class gltfMorphTarget : glTFAttributes
+    public class gltfMorphTarget : JsonSerializableBase
     {
-        public extraName extra = new extraName();
+        public int POSITION = -1;
+        public int NORMAL = -1;
+        public int TANGENT = -1;
 
         protected override void SerializeMembers(JsonFormatter f)
         {
-            f.KeyValue(() => extra);
-            base.SerializeMembers(f);
+            f.KeyValue(() => POSITION);
+            f.KeyValue(() => NORMAL);
+            f.KeyValue(() => TANGENT);
         }
     }
 
+    [Serializable]
+    public class extrasTargetNames : JsonSerializableBase
+    {
+        public List<string> targetNames = new List<string>();
+
+        protected override void SerializeMembers(JsonFormatter f)
+        {
+            f.Key("targetNames");
+            f.BeginList();
+            foreach(var x in targetNames)
+            {
+                f.Value(x);
+            }
+            f.EndList();
+        }
+    }
+
+    /// <summary>
+    /// https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/schema/mesh.primitive.schema.json
+    /// </summary>
     [Serializable]
     public class glTFPrimitives: IJsonSerializable
     {
@@ -93,6 +116,7 @@ namespace UniGLTF
         public int material;
 
         public List<gltfMorphTarget> targets = new List<gltfMorphTarget>();
+        public extrasTargetNames extras = new extrasTargetNames();
 
         public glTFPrimitivesExtensions extensions;
 
@@ -104,9 +128,10 @@ namespace UniGLTF
             f.KeyValue(() => indices);
             f.Key("attributes"); f.Value(attributes);
             f.KeyValue(() => material);
-            if (targets != null)
+            if (targets != null && targets.Count>0)
             {
                 f.Key("targets"); f.Value(targets);
+                f.KeyValue(() => extras);
             }
             f.EndMap();
             return f.ToString();

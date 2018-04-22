@@ -88,7 +88,7 @@ namespace UniGLTF
                         var extraName = parsed["images"][i]["extra"]["name"].GetString();
                         if (!string.IsNullOrEmpty(extraName))
                         {
-                            Debug.LogFormat("restore texturename: {0}", extraName);
+                            //Debug.LogFormat("restore texturename: {0}", extraName);
                             GLTF.images[i].name = extraName;
                         }
                     }
@@ -96,6 +96,27 @@ namespace UniGLTF
                     {
                         // do nothing
                     }
+                }
+            }
+            for (int i = 0; i < GLTF.meshes.Count; ++i)
+            {
+                var mesh = GLTF.meshes[i];
+                try
+                {
+                    for (int j = 0; j < mesh.primitives.Count; ++j)
+                    {
+                        var primitive = mesh.primitives[j];
+                        for (int k = 0; k < primitive.targets.Count; ++k)
+                        {
+                            var extraName = parsed["meshes"][i]["primitives"][j]["targets"][k]["extra"]["name"].GetString();
+                            //Debug.LogFormat("restore morphName: {0}", extraName);
+                            primitive.extras.targetNames.Add(extraName);
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    // do nothing
                 }
             }
 

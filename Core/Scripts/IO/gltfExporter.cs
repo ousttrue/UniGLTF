@@ -544,16 +544,14 @@ namespace UniGLTF
                         //
                         // first primitive has whole blendShape
                         //
-                        gltf.meshes.Last().primitives[0].targets.Add(new gltfMorphTarget
+                        var primitive = gltf.meshes.Last().primitives[0];
+                        primitive.targets.Add(new gltfMorphTarget
                         {
-                            extra = new extraName
-                            {
-                                name = mesh.GetBlendShapeName(j)
-                            },
                             POSITION = blendShapePositionAccessorIndex,
                             NORMAL = blendShapeNormalAccessorIndex,
                             TANGENT = blendShapeTangentAccessorIndex,
                         });
+                        primitive.extras.targetNames.Add(mesh.GetBlendShapeName(j));
                     }
                 }
             }
