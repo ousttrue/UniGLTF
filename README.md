@@ -27,7 +27,7 @@
 ### developer
 
 * create Unity new project
-* clone UniGLTF repose in Assets folder
+* clone UniGLTF repository in Assets folder
 
 ## Usage
 
@@ -38,6 +38,18 @@ or
 * menu [Assets] - [gltf] - [import]
 
 ## Json
+
+### Extras
+
+### MorphName
+
+* json.meshes[i].primitives[j].extras.targetNames[k]
+* string
+
+### SkinMeshRoot
+
+* json.nodes[i].extras.skinRootBone
+* int(nodeIndex)
 
 ### Deserialize
 
