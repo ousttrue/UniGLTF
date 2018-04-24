@@ -88,7 +88,7 @@ namespace UniGLTF
 
             glTF.asset=new glTFAssets
             {
-                generator = "UniGLTF",
+                generator = "UniGLTF-"+UniGLTFVersion.VERSION,
                 version = "2.0",
             };
         }
