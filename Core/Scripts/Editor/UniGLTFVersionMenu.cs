@@ -1,42 +1,12 @@
 ﻿using System.IO;
 using UnityEditor;
-using UnityEngine;
+
 
 namespace UniGLTF
 {
     public static class UniGLTFVersionMenu
     {
-        static string FindUniGLTF(string path)
-        {
-            if (path.EndsWith("/UniGLTF"))
-            {
-                return path;
-            }
-
-            foreach (var x in Directory.GetDirectories(path))
-            {
-                var dir = FindUniGLTF(x.Replace("\\", "/"));
-                if (!string.IsNullOrEmpty(dir))
-                {
-                    return dir;
-                }
-            }
-
-            return null;
-        }
-
-        static string m_path;
-        static string path
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(m_path))
-                {
-                    m_path = FindUniGLTF(Application.dataPath.Replace("\\", "/")) + "/Core/Scripts/UniGLTFVersion.cs";
-                }
-                return m_path;
-            }
-        }
+        static string path = "Assets/UniGLTF/Core/Scripts/UniGLTFVersion.cs";
 
         const string template = @"
 namespace UniGLTF
