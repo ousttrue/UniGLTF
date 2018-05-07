@@ -36,6 +36,7 @@ namespace UniGLTF
         public int NORMAL = -1;
         public int TANGENT = -1;
         public int TEXCOORD_0 = -1;
+        public int COLOR_0 = -1;
         public int JOINTS_0 = -1;
         public int WEIGHTS_0 = -1;
 
@@ -56,6 +57,7 @@ namespace UniGLTF
                 && NORMAL == rhs.NORMAL
                 && TANGENT == rhs.TANGENT
                 && TEXCOORD_0 == rhs.TEXCOORD_0
+                && COLOR_0 == rhs.COLOR_0
                 && JOINTS_0 == rhs.JOINTS_0
                 && WEIGHTS_0 == rhs.WEIGHTS_0
                 ;
@@ -64,11 +66,12 @@ namespace UniGLTF
         protected override void SerializeMembers(JsonFormatter f)
         {
             f.KeyValue(() => POSITION);
-            f.KeyValue(() => NORMAL);
-            f.KeyValue(() => TANGENT);
-            f.KeyValue(() => TEXCOORD_0);
-            f.KeyValue(() => JOINTS_0);
-            f.KeyValue(() => WEIGHTS_0);
+            if (NORMAL != -1) f.KeyValue(() => NORMAL);
+            if (TANGENT != -1) f.KeyValue(() => TANGENT);
+            if (TEXCOORD_0 != -1) f.KeyValue(() => TEXCOORD_0);
+            if (COLOR_0 != -1) f.KeyValue(() => COLOR_0);
+            if (JOINTS_0 != -1) f.KeyValue(() => JOINTS_0);
+            if (WEIGHTS_0 != -1) f.KeyValue(() => WEIGHTS_0);
         }
     }
 

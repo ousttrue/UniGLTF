@@ -44,6 +44,7 @@ namespace UniGLTF
             { typeof(Vector4), new ComponentVec(glComponentType.FLOAT, 4) },
             { typeof(UShort4), new ComponentVec(glComponentType.UNSIGNED_SHORT, 4) },
             { typeof(Matrix4x4), new ComponentVec(glComponentType.FLOAT, 16) },
+            { typeof(Color), new ComponentVec(glComponentType.FLOAT, 4) },
         };
 
         static glComponentType GetComponentType<T>()

@@ -439,6 +439,11 @@ namespace UniGLTF
             var bytesBuffer = new ArrayByteBuffer();
             var bufferIndex = gltf.AddBuffer(bytesBuffer);
 
+            if (go.transform.childCount == 0)
+            {
+                throw new UniGLTFException("root node required");
+            }
+
             var unityNodes = go.transform.Traverse()
                 .Skip(1) // exclude root object for the symmetry with the importer
                 .ToList();
@@ -479,6 +484,7 @@ namespace UniGLTF
                 var normalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.normals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
                 var tangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.tangents.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
                 var uvAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.uv.Select(y => y.ReverseY()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                var colorAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.colors, glBufferTarget.ARRAY_BUFFER);
 
                 var boneweights = mesh.boneWeights;
                 var weightAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new Vector4(y.weight0, y.weight1, y.weight2, y.weight3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
@@ -499,6 +505,10 @@ namespace UniGLTF
                 if (uvAccessorIndex != -1)
                 {
                     attributes.TEXCOORD_0 = uvAccessorIndex;
+                }
+                if (colorAccessorIndex != -1)
+                {
+                    attributes.COLOR_0 = colorAccessorIndex;
                 }
                 if (weightAccessorIndex != -1)
                 {

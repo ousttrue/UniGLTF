@@ -404,6 +404,7 @@ namespace UniGLTF
             public Vector3[] normals;
             public Vector4[] tangents;
             public Vector2[] uv;
+            public Color[] colors;
             public List<BoneWeight> boneWeights = new List<BoneWeight>();
             public List<int[]> subMeshes = new List<int[]>();
             public List<int> materialIndices = new List<int>();
@@ -488,6 +489,10 @@ namespace UniGLTF
             {
                 mesh.uv = meshContext.uv;
             }
+            if(meshContext.colors!=null && meshContext.colors.Length > 0)
+            {
+                mesh.colors = meshContext.colors;
+            }
             if (meshContext.boneWeights != null && meshContext.boneWeights.Count > 0)
             {
                 mesh.boneWeights = meshContext.boneWeights.ToArray();
@@ -549,6 +554,7 @@ namespace UniGLTF
             var normals = new List<Vector3>();
             var tangents = new List<Vector4>();
             var uv = new List<Vector2>();
+            var colors = new List<Color>();
             var meshContext = new MeshContext();
             foreach (var prim in gltfMesh.primitives)
             {
@@ -579,6 +585,12 @@ namespace UniGLTF
                 {
                     // for inconsistent attributes in primitives
                     uv.AddRange(new Vector2[positionCount]);
+                }
+
+                // color
+                if (prim.attributes.COLOR_0 != -1)
+                {
+                    colors.AddRange(ctx.GLTF.GetArrayFromAccessor<Color>(prim.attributes.COLOR_0));
                 }
 
                 // skin
@@ -686,6 +698,12 @@ namespace UniGLTF
                 {
                     // for inconsistent attributes in primitives
                     context.uv = new Vector2[context.positions.Length];
+                }
+
+                // color
+                if (prim.attributes.COLOR_0 != -1)
+                {
+                    context.colors = ctx.GLTF.GetArrayFromAccessor<Color>(prim.attributes.COLOR_0);
                 }
 
                 // skin
