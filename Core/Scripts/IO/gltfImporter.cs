@@ -213,8 +213,10 @@ namespace UniGLTF
             {
                 ctx.CreateMaterial = CreateMaterialFuncFromShader(Shader.Find("Standard"));
             }
+
             if (ctx.GLTF.materials == null || !ctx.GLTF.materials.Any())
             {
+                // no material
                 ctx.Materials.Add(ctx.CreateMaterial(ctx, 0));
             }
             else
@@ -223,6 +225,12 @@ namespace UniGLTF
                 {
                     var index = i;
                     var material = ctx.CreateMaterial(ctx, index);
+
+                    var originalName = material.name;
+                    for(int j=1;  ctx.Materials.FirstOrDefault(x => x.name == material.name); ++j)
+                    {
+                        material.name = string.Format("{0}(1)", originalName, j);
+                    }
                     ctx.Materials.Add(material);
                 }
             }
