@@ -27,6 +27,7 @@ namespace UniGLTF
         public const string PATH_ROTATION = "rotation";
         public const string PATH_SCALE = "scale";
         public const string PATH_WEIGHT = "weights";
+        public const string NOT_IMPLEMENTED = "NotImplemented";
 
         public static int GetElementCount(string target)
         {

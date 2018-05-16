@@ -275,7 +275,7 @@ namespace UniGLTF
             }
             else
             {
-                throw new NotImplementedException(property);
+                return glTFAnimationTarget.NOT_IMPLEMENTED;
             }
         }
 
@@ -329,6 +329,9 @@ namespace UniGLTF
 
                 var nodeIndex = GetNodeIndex(root, nodes, binding.path);
                 var target = PropertyToTarget(binding.propertyName);
+                if (target == glTFAnimationTarget.NOT_IMPLEMENTED) {
+                    continue;
+                }
                 var samplerIndex = animation.Animation.AddChannelAndGetSampler(nodeIndex, target);
                 var sampler = animation.Animation.samplers[samplerIndex];
 
