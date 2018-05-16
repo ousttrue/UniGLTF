@@ -350,7 +350,14 @@ namespace UniGLTF
                 for (int i = 0; i < keys.Length; ++i, j += elementCount)
                 {
                     values.Input[i] = keys[i].time;
-                    values.Output[j] = keys[i].value;
+                    if (binding.propertyName == "m_LocalPosition.z" ||
+                        binding.propertyName == "m_LocalRotation.z" ||
+                        binding.propertyName == "m_LocalRotation.w")
+                    {
+                        values.Output[j] = -keys[i].value;
+                    } else {
+                        values.Output[j] = keys[i].value;
+                    }
                 }
             }
 
