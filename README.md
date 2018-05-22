@@ -21,11 +21,6 @@
 
 * import [unitypackage](https://github.com/ousttrue/UniGLTF/releases)
 
-### developer
-
-* create Unity new project
-* clone UniGLTF repository in Assets folder
-
 ## Usage
 
 * drop gltf folder or glb file into Assets folder
@@ -36,9 +31,20 @@ or
 
 ## Json
 
-### Extras
+```
+             imoprt         export
+Unity Hierarchy <=============> GLTF
+    node                          nodes
+        MeshFilter+MeshRenderer   meshes
+        SkinnedMeshRendrerer      meshes + skins
+            Materials             materials
+                Textures          textures
 
-### MorphName
+        Animation
+            AnimationClip(legacy) animations
+```
+
+### BlendShapeName
 
 * json.meshes[i].primitives[j].extras.targetNames[k]
 * string
