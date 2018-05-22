@@ -4,6 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 
 namespace UniGLTF
@@ -83,6 +86,26 @@ namespace UniGLTF
             }
         }
 
+#if UNITY_EDITOR
+        public static void MarkTextureAssetAsNormalMap(string assetPath)
+        {
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                return;
+            }
+
+            var textureImporter = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+            if (null == textureImporter)
+            {
+                return;
+            }
+
+            Debug.LogFormat("[MarkTextureAssetAsNormalMap] {0}", assetPath);
+            textureImporter.textureType = TextureImporterType.NormalMap;
+            textureImporter.SaveAndReimport();
+        }
+#endif
+
         /// StandardShader vaiables
         /// 
         /// _Color
@@ -156,6 +179,13 @@ namespace UniGLTF
                          {
                              material.EnableKeyword("_NORMALMAP");
                              var texture = ctx.Textures[x.normalTexture.index];
+#if UNITY_EDITOR
+                             var textureAssetPath = AssetDatabase.GetAssetPath(texture.Texture);
+                             if (!string.IsNullOrEmpty(textureAssetPath))
+                             {
+                                 MarkTextureAssetAsNormalMap(textureAssetPath);
+                             }
+#endif
                              material.SetTexture("_BumpMap", texture.Texture);
                          }
 

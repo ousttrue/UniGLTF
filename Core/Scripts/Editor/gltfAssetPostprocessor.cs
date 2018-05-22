@@ -55,8 +55,8 @@ namespace UniGLTF
                                 File.WriteAllBytes(png, byteSegment.ToArray());
                                 var assetPath = png.ToUnityRelativePath();
                                 //Debug.LogFormat("import asset {0}", assetPath);
-                                UnityEditor.AssetDatabase.ImportAsset(assetPath, UnityEditor.ImportAssetOptions.ForceUpdate);
-                                UnityEditor.AssetDatabase.Refresh();
+                                UnityEditor.AssetDatabase.ImportAsset(assetPath);
+                                //UnityEditor.AssetDatabase.Refresh();
                                 image.uri = assetPath.Substring(context.GLTF.baseDir.Length + 1);
                             }
                         }
