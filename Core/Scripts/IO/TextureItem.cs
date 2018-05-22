@@ -29,7 +29,7 @@ namespace UniGLTF
         {
             if (m_metallicRoughnessOcclusion == null)
             {
-                var texture = CopyTexture();
+                var texture = CopyTexture(Texture);
                 texture.SetPixels32(texture.GetPixels32().Select(ConvertMetallicRoughnessOcclusion).ToArray());
                 texture.name = this.Texture.name + ".metallicRoughnessOcclusion";
                 m_metallicRoughnessOcclusion = texture;
@@ -87,15 +87,15 @@ namespace UniGLTF
         }
 
 
-        public Texture2D CopyTexture()
+        public static Texture2D CopyTexture(Texture2D src)
         {
-            Texture2D copyTexture = null;
-            var renderTexture = new RenderTexture(Texture.width, Texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            Texture2D dst = null;
+            var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             using (var scope = new sRGBScope())
             {
-                Graphics.Blit(Texture, renderTexture);
-                copyTexture = new Texture2D(Texture.width, Texture.height, TextureFormat.ARGB32, false, false);
-                copyTexture.ReadPixels(new Rect(0, 0, Texture.width, Texture.height), 0, 0);
+                Graphics.Blit(src, renderTexture);
+                dst = new Texture2D(src.width, src.height, TextureFormat.ARGB32, false, false);
+                dst.ReadPixels(new Rect(0, 0, src.width, src.height), 0, 0);
             }
             RenderTexture.active = null;
             if (Application.isEditor)
@@ -106,7 +106,7 @@ namespace UniGLTF
             {
                 GameObject.Destroy(renderTexture);
             }
-            return copyTexture;
+            return dst;
         }
     }
 }

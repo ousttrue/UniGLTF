@@ -192,7 +192,7 @@ namespace UniGLTF
                 */
                 {
                     Path = "";
-                    Bytes = new TextureItem(texture).CopyTexture().EncodeToPNG();
+                    Bytes = TextureItem.CopyTexture(texture).EncodeToPNG();
                     Mime = "image/png";
                 }
             }
