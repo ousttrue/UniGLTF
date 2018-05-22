@@ -70,36 +70,5 @@ namespace UniGLTF
 
             return chunks;
         }
-
-        /*
-        public static void Import<T>(ImporterContext context, Byte[] bytes) where T: glTF
-        {
-            var chunks = ParseGlbChanks(bytes);
-            if (chunks == null)
-            {
-                throw new Exception("empty chunk");
-            }
-
-            if (chunks.Count!=2)
-            {
-                throw new Exception("unknown chunk count: "+chunks.Count);
-            }
-
-            if (chunks[0].ChunkType != GlbChunkType.JSON)
-            {
-                throw new Exception("chunk 0 is not JSON");
-            }
-
-            if (chunks[1].ChunkType != GlbChunkType.BIN)
-            {
-                throw new Exception("chunk 1 is not BIN");
-            }
-
-            var jsonBytes = chunks[0].Bytes;
-            context.Json = Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count);
-
-            gltfImporter.Import<T>(context, chunks[1].Bytes);
-        }
-        */
     }
 }

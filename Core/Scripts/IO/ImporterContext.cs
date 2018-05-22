@@ -40,6 +40,11 @@ namespace UniGLTF
         public glTF GLTF; // parsed
         #endregion
 
+        public void ParseGlb(Byte[] bytes)
+        {
+            ParseGlb<glTF>(bytes);
+        }
+
         /// <summary>
         /// 
         /// </summary>
