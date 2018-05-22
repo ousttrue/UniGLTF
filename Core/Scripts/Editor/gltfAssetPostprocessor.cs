@@ -49,17 +49,21 @@ namespace UniGLTF
                                     //Directory.CreateDirectory(folder);
                                 }
 
-                                var textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("buffer#{0:00}", i);
-                                var png = Path.Combine(folder, textureName + ".png");
+                                // name & bytes
+                                var textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", i);
                                 var byteSegment = context.GLTF.GetViewBytes(image.bufferView);
+
+                                // path
+                                var png = Path.Combine(folder, textureName + ".png");
                                 File.WriteAllBytes(png, byteSegment.ToArray());
+
                                 var assetPath = png.ToUnityRelativePath();
                                 //Debug.LogFormat("import asset {0}", assetPath);
                                 UnityEditor.AssetDatabase.ImportAsset(assetPath);
-                                //UnityEditor.AssetDatabase.Refresh();
                                 image.uri = assetPath.Substring(context.GLTF.baseDir.Length + 1);
                             }
                         }
+                        UnityEditor.AssetDatabase.Refresh();
 
                         EditorApplication.delayCall += () =>
                         {

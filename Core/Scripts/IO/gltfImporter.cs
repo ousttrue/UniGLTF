@@ -15,77 +15,6 @@ namespace UniGLTF
     {
         const float FRAME_WEIGHT = 100.0f;
 
-        public static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
-        {
-            if (texture == null)
-            {
-                return;
-            }
-
-            switch (sampler.wrapS)
-            {
-#if UNITY_2017_OR_NEWER
-                case glWrap.CLAMP_TO_EDGE:
-                    texture.wrapModeU = TextureWrapMode.Clamp;
-                    break;
-
-                case glWrap.REPEAT:
-                    texture.wrapModeU = TextureWrapMode.Repeat;
-                    break;
-
-                case glWrap.MIRRORED_REPEAT:
-                    texture.wrapModeU = TextureWrapMode.Mirror;
-                    break;
-#else
-                case glWrap.CLAMP_TO_EDGE:
-                case glWrap.MIRRORED_REPEAT:
-                    texture.wrapMode = TextureWrapMode.Clamp;
-                    break;
-
-                case glWrap.REPEAT:
-                    texture.wrapMode = TextureWrapMode.Repeat;
-                    break;
-#endif
-
-                default:
-                    throw new NotImplementedException();
-            }
-
-#if UNITY_2017_OR_NEWER
-            switch (sampler.wrapT)
-            {
-                case glWrap.CLAMP_TO_EDGE:
-                    texture.wrapModeV = TextureWrapMode.Clamp;
-                    break;
-
-                case glWrap.REPEAT:
-                    texture.wrapModeV = TextureWrapMode.Repeat;
-                    break;
-
-                case glWrap.MIRRORED_REPEAT:
-                    texture.wrapModeV = TextureWrapMode.Mirror;
-                    break;
-
-                default:
-                    throw new NotImplementedException();
-            }
-#endif
-
-            switch (sampler.magFilter)
-            {
-                case glFilter.NEAREST:
-                    texture.filterMode = FilterMode.Point;
-                    break;
-
-                case glFilter.LINEAR:
-                    texture.filterMode = FilterMode.Bilinear;
-                    break;
-
-                default:
-                    throw new NotImplementedException();
-            }
-        }
-
 #if UNITY_EDITOR
         public static void MarkTextureAssetAsNormalMap(string assetPath)
         {
@@ -100,7 +29,7 @@ namespace UniGLTF
                 return;
             }
 
-            Debug.LogFormat("[MarkTextureAssetAsNormalMap] {0}", assetPath);
+            //Debug.LogFormat("[MarkTextureAssetAsNormalMap] {0}", assetPath);
             textureImporter.textureType = TextureImporterType.NormalMap;
             textureImporter.SaveAndReimport();
         }
@@ -221,22 +150,22 @@ namespace UniGLTF
 
         public static void Import<T>(ImporterContext ctx) where T : glTF
         {
-            ctx.Textures.AddRange(ImportTextures(ctx.GLTF)
-                    .Select(x =>
-                    {
-                        var samplerIndex = ctx.GLTF.textures[x.TextureIndex].sampler;
-                        var sampler = ctx.GLTF.samplers[samplerIndex];
+            // textures
+            if (ctx.GLTF.textures != null)
+            {
+                ctx.Textures.AddRange(ctx.GLTF.textures.Select((x, i) => new TextureItem(ctx.GLTF, i)));
+            }
+            foreach(var x in ctx.Textures)
+            {
+                if (!x.IsAsset)
+                {
+                    x.GetImageBytes();
+                }
 
-                        if (x.Texture == null)
-                        {
-                            Debug.LogWarningFormat("May be import order, not yet texture is not imported. Later, manualy reimport {0}", ctx.Path);
-                        }
-                        else
-                        {
-                            SetSampler(x.Texture, sampler);
-                        }
-                        return x;
-                    }));
+                x.GetOrCreateTexture();
+
+                x.SetSampler();
+            }
 
             // materials
             if (ctx.CreateMaterial == null)
@@ -330,89 +259,6 @@ namespace UniGLTF
         }
 
         #region Import
-        static IEnumerable<TextureItem> ImportTextures(glTF gltf)
-        {
-            if (gltf.textures == null)
-            {
-                return new TextureItem[] { };
-            }
-            else
-            {
-                return gltf.textures.Select(x => ImportTexture(gltf, x.source));
-            }
-        }
-
-        public static TextureItem ImportTexture(glTF gltf, int index)
-        {
-            var x = _ImportTexture(gltf, index);
-            if (x.Texture == null)
-            {
-                throw new UniGLTFException("May be import order, not yet texture is not imported. Later, manualy reimport");
-            }
-
-            // set sampler
-            var samplerIndex = gltf.textures[x.TextureIndex].sampler;
-            var sampler = gltf.GetSampler(samplerIndex);
-            gltfImporter.SetSampler(x.Texture, sampler);
-
-            return x;
-        }
-
-        static TextureItem _ImportTexture(glTF gltf, int index)
-        {
-            var image = gltf.images[index];
-            if (string.IsNullOrEmpty(image.uri))
-            {
-                //
-                // use buffer view (GLB)
-                //
-                var texture = new Texture2D(2, 2);
-                texture.name = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("buffer#{0:00}", index);
-                var byteSegment = gltf.GetViewBytes(image.bufferView);
-
-                var bytes = byteSegment.ToArray();
-
-                texture.LoadImage(bytes, true);
-                return new TextureItem(texture, index, false);
-            }
-            else if (image.uri.StartsWith("data:"))
-            {
-                //
-                // embeded Base64Encoded
-                //
-                var bytes = UriByteBuffer.ReadEmbeded(image.uri);
-                var texture = new Texture2D(2, 2);
-                texture.name = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("embeded#{0:00}", index);
-                texture.LoadImage(bytes);
-                return new TextureItem(texture, index, false);
-            }
-#if UNITY_EDITOR
-            else if (gltf.baseDir.StartsWith("Assets/"))
-            {
-                //
-                // file from local folder
-                //
-                var path = Path.Combine(gltf.baseDir, image.uri);
-                UnityEditor.AssetDatabase.ImportAsset(path.ToUnityRelativePath());
-                var texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                texture.name = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(path);
-                return new TextureItem(texture, index, true);
-            }
-#endif
-            else
-            {
-                //
-                // file from external folder
-                //
-                var path = Path.Combine(gltf.baseDir, image.uri);
-                var bytes = File.ReadAllBytes(path);
-                var texture = new Texture2D(2, 2);
-                texture.name = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(path);
-                texture.LoadImage(bytes);
-                return new TextureItem(texture, index, false);
-            }
-        }
-
         [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
         struct Float4
         {
