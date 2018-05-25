@@ -157,14 +157,7 @@ namespace UniGLTF
             }
             foreach(var x in ctx.Textures)
             {
-                if (!x.IsAsset)
-                {
-                    x.GetImageBytes();
-                }
-
-                x.GetOrCreateTexture();
-
-                x.SetSampler();
+                x.Process();
             }
 
             // materials

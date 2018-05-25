@@ -50,6 +50,16 @@ namespace UniGLTF
 #endif
         }
 
+        public void Process()
+        {
+            if (!IsAsset)
+            {
+                GetImageBytes();
+            }
+            GetOrCreateTexture();
+            SetSampler();
+        }
+
         Byte[] m_imageBytes;
         string m_textureName;
         public void GetImageBytes()
