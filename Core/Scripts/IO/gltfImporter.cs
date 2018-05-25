@@ -179,9 +179,9 @@ namespace UniGLTF
                     var material = ctx.CreateMaterial(ctx, index);
 
                     var originalName = material.name;
-                    for(int j=1;  ctx.Materials.FirstOrDefault(x => x.name == material.name); ++j)
+                    for(int j=1;  ctx.Materials.Any(x => x.name == material.name); ++j)
                     {
-                        material.name = string.Format("{0}(1)", originalName, j);
+                        material.name = string.Format("{0}({1})", originalName, j);
                     }
                     ctx.Materials.Add(material);
                 }
@@ -195,7 +195,7 @@ namespace UniGLTF
                 throw new UniGLTFNotSupportedException("draco is not supported");
             }
 
-            ctx.Meshes.AddRange(ctx.GLTF.meshes.Select((x, i) =>
+            foreach(var mesh in ctx.GLTF.meshes.Select((x, i) =>
             {
                 var meshWithMaterials = ImportMesh(ctx, i);
                 var mesh = meshWithMaterials.Mesh;
@@ -204,7 +204,16 @@ namespace UniGLTF
                     mesh.name = string.Format("UniGLTF import#{0}", i);
                 }
                 return meshWithMaterials;
-            }));
+            }))
+            {
+                var originalName = mesh.Mesh.name;
+                for (int j = 1; ctx.Materials.Any(x => x.name == mesh.Mesh.name); ++j)
+                {
+                    mesh.Mesh.name = string.Format("{0}({1})", originalName, j);
+                }
+
+                ctx.Meshes.Add(mesh);
+            }
 
             // nodes
             ctx.Nodes.AddRange(ctx.GLTF.nodes.Select(x => ImportNode(x).transform));

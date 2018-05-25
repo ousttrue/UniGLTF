@@ -273,6 +273,8 @@ namespace UniGLTF
             }
         }
 
+        public bool MeshAsSubAsset = false;
+
         public void SaveAsAsset()
         {
             ShowMeshes();
@@ -292,6 +294,12 @@ namespace UniGLTF
             EnsureFolder(materialDir);
             var textureDir = GetAssetFolder(".Textures");
             EnsureFolder(textureDir);
+
+            var meshDir = GetAssetFolder(".Meshes");
+            if (!MeshAsSubAsset)
+            {
+                EnsureFolder(meshDir);
+            }
 
             var paths = new List<string>(){
                 prefabPath
@@ -315,6 +323,15 @@ namespace UniGLTF
                         );
                     AssetDatabase.CreateAsset(o, texturePath);
                     paths.Add(texturePath);
+                }
+                else if (o is Mesh && !MeshAsSubAsset)
+                {
+                    var meshPath = string.Format("{0}/{1}.asset",
+                        meshDir,
+                        o.name.EscapeFilePath()
+                        );
+                    AssetDatabase.CreateAsset(o, meshPath);
+                    paths.Add(meshPath);
                 }
                 else
                 {
