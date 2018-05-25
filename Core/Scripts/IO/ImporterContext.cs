@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Text;
+using UniGLTF.SimpleJSON;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -95,14 +96,14 @@ namespace UniGLTF
 
         void RestoreOlderVersionValues()
         {
-            var parsed = Json.ParseAsJson();
+            var parsed = JSON.Parse(Json);
             for (int i = 0; i < GLTF.images.Count; ++i)
             {
                 if (string.IsNullOrEmpty(GLTF.images[i].name))
                 {
                     try
                     {
-                        var extraName = parsed["images"][i]["extra"]["name"].GetString();
+                        var extraName = parsed["images"][i]["extra"]["name"].Value;
                         if (!string.IsNullOrEmpty(extraName))
                         {
                             //Debug.LogFormat("restore texturename: {0}", extraName);
@@ -125,7 +126,7 @@ namespace UniGLTF
                         var primitive = mesh.primitives[j];
                         for (int k = 0; k < primitive.targets.Count; ++k)
                         {
-                            var extraName = parsed["meshes"][i]["primitives"][j]["targets"][k]["extra"]["name"].GetString();
+                            var extraName = parsed["meshes"][i]["primitives"][j]["targets"][k]["extra"]["name"].Value;
                             //Debug.LogFormat("restore morphName: {0}", extraName);
                             primitive.extras.targetNames.Add(extraName);
                         }
@@ -141,7 +142,7 @@ namespace UniGLTF
                 var node = GLTF.nodes[i];
                 try
                 {
-                    var extra = parsed["nodes"][i]["extra"]["skinRootBone"].GetInt32();
+                    var extra = parsed["nodes"][i]["extra"]["skinRootBone"].AsInt;
                     //Debug.LogFormat("restore extra: {0}", extra);
                     node.extras.skinRootBone = extra;
                 }
