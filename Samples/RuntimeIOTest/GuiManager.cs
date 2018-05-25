@@ -12,6 +12,7 @@ namespace UniGLTF
 
         GameObject m_root;
 
+#if UNITY_EDITOR
         void Start()
         {
             m_importButton.onClick.AddListener(OnClick);
@@ -43,5 +44,6 @@ namespace UniGLTF
 
             m_root = context.Root;
         }
+#endif
     }
 }
