@@ -446,7 +446,7 @@ namespace UniGLTF
 
         public static Exported FromGameObject(glTF gltf, GameObject go)
         {
-            var bytesBuffer = new ArrayByteBuffer();
+            var bytesBuffer = new ArrayByteBuffer(new byte[50 * 1024 * 1024]);
             var bufferIndex = gltf.AddBuffer(bytesBuffer);
 
             if (go.transform.childCount == 0)

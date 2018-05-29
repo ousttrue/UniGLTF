@@ -23,7 +23,7 @@ namespace UniGLTF
     /// <summary>
     /// for buffer with uri read
     /// </summary>
-    public class UriByteBuffer: IBytesBuffer
+    public class UriByteBuffer : IBytesBuffer
     {
         public string Uri
         {
@@ -130,6 +130,7 @@ namespace UniGLTF
         }
 
         Byte[] m_bytes;
+        int m_used;
 
         public ArrayByteBuffer(Byte[] bytes = null)
         {
@@ -142,47 +143,42 @@ namespace UniGLTF
             using (var pin = Pin.Create(array))
             {
                 var elementSize = Marshal.SizeOf(typeof(T));
-                var view=Extend(pin.Ptr, array.Count * elementSize, elementSize, target);
+                var view = Extend(pin.Ptr, array.Count * elementSize, elementSize, target);
                 return view;
             }
         }
 
         public glTFBufferView Extend(IntPtr p, int bytesLength, int stride, glBufferTarget target)
         {
-            if (m_bytes == null)
+            var tmp = m_bytes;
+            // alignment
+            var padding = m_used % stride == 0 ? 0 : stride - m_used % stride;
+
+            if (m_bytes == null || m_used + padding + bytesLength > m_bytes.Length)
             {
-                m_bytes = new byte[bytesLength];
-                Marshal.Copy(p, m_bytes, 0, bytesLength);
-                return new glTFBufferView
+                // recreate buffer
+                m_bytes = new Byte[m_used + padding + bytesLength];
+                if (m_used > 0)
                 {
-                    buffer = 0,
-                    byteLength = bytesLength,
-                    byteOffset = 0,
-                    byteStride = stride,
-                    target = target,
-                };
-            }
-            else
-            {
-                var tmp = m_bytes;
-                // alignment
-                var padding = tmp.Length % stride == 0 ? 0 : stride - tmp.Length % stride;
-                m_bytes = new Byte[m_bytes.Length + padding + bytesLength];
-                Buffer.BlockCopy(tmp, 0, m_bytes, 0, tmp.Length);
-                if(tmp.Length + padding + bytesLength > m_bytes.Length)
-                {
-                    throw new ArgumentOutOfRangeException();
+                    Buffer.BlockCopy(tmp, 0, m_bytes, 0, m_used);
                 }
-                Marshal.Copy(p, m_bytes, tmp.Length+padding, bytesLength);
-                return new glTFBufferView
-                {
-                    buffer = 0,
-                    byteLength = bytesLength,
-                    byteOffset = tmp.Length+padding,
-                    byteStride = stride,
-                    target = target,
-                };
             }
+            if (m_used + padding + bytesLength > m_bytes.Length)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            Marshal.Copy(p, m_bytes, m_used + padding, bytesLength);
+            var result=new glTFBufferView
+            {
+                buffer = 0,
+                byteLength = bytesLength,
+                byteOffset = m_used + padding,
+                byteStride = stride,
+                target = target,
+            };
+            m_used = m_used + padding + bytesLength;
+            return result;
         }
 
         public ArraySegment<byte> GetBytes()
