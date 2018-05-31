@@ -68,4 +68,23 @@ public class UniGLTFTest
             context.Destroy(true);
         }
     }
+
+    void BufferTest(int size, Byte[] init=null)
+    {
+        var storage = new ArrayByteBuffer(init);
+        var buffer = new glTFBuffer(storage);
+
+        var bytes = new ArraySegment<Byte>(new byte[size]);
+        var view = buffer.Storage.Extend(bytes, glBufferTarget.NONE);
+
+        Assert.AreEqual(size, buffer.byteLength);
+    }
+
+    [Test]
+    public void BufferTest()
+    {
+        BufferTest(0);
+        BufferTest(128);
+        BufferTest(256);
+    }
 }
