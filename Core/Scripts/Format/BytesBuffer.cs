@@ -188,7 +188,7 @@ namespace UniGLTF
                 return new ArraySegment<byte>();
             }
 
-            return new ArraySegment<byte>(m_bytes);
+            return new ArraySegment<byte>(m_bytes, 0, m_used);
         }
     }
 }
