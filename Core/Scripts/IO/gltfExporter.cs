@@ -124,7 +124,7 @@ namespace UniGLTF
 
         public void WriteTo(string path)
         {
-            var buffer = glTF.buffers[0].Storage;
+            var buffer = glTF.buffers[0];
 
             var json = glTF.ToJson();
 
@@ -378,7 +378,7 @@ namespace UniGLTF
             var bytesWithPath = new BytesWithPath(texture); ;
 
             // add view
-            var view = gltf.buffers[bufferIndex].Storage.Extend(bytesWithPath.Bytes, glBufferTarget.NONE);
+            var view = gltf.buffers[bufferIndex].Append(bytesWithPath.Bytes, glBufferTarget.NONE);
             var viewIndex = gltf.AddBufferView(view);
 
             // add image
@@ -662,9 +662,6 @@ namespace UniGLTF
             }
             #endregion
 #endif
-
-            // glb buffer
-            gltf.buffers[bufferIndex].UpdateByteLength();
 
             return new Exported
             {

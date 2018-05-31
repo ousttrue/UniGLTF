@@ -115,7 +115,7 @@ namespace UniGLTF
                 return -1;
             }
 
-            var view = gltf.buffers[bufferIndex].Storage.Extend(array, target);
+            var view = gltf.buffers[bufferIndex].Append(array, target);
             var viewIndex = gltf.bufferViews.Count;
             gltf.bufferViews.Add(view);
             var accessorIndex = gltf.accessors.Count;

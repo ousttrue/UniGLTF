@@ -78,7 +78,7 @@ namespace UniGLTF
         {
             var attrib = new T[accessor.count];
             //
-            var segment = buffers[view.buffer].Storage.GetBytes();
+            var segment = buffers[view.buffer].GetBytes();
             var bytes = new ArraySegment<Byte>(segment.Array, segment.Offset + view.byteOffset + accessor.byteOffset, accessor.count * view.byteStride);
             bytes.MarshalCoyTo(attrib);
             return attrib;
@@ -87,7 +87,7 @@ namespace UniGLTF
         public ArraySegment<Byte> GetViewBytes(int bufferView)
         {
             var view = bufferViews[bufferView];
-            var segment = buffers[view.buffer].Storage.GetBytes();
+            var segment = buffers[view.buffer].GetBytes();
             return new ArraySegment<byte>(segment.Array, segment.Offset + view.byteOffset, view.byteLength);
         }
 

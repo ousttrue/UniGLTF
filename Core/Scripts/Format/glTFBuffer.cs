@@ -7,11 +7,8 @@ namespace UniGLTF
     [Serializable]
     public class glTFBuffer : IJsonSerializable
     {
-        public IBytesBuffer Storage
-        {
-            get;
-            private set;
-        }
+        IBytesBuffer Storage;
+
         public void OpenStorage(string baseDir, ArraySegment<Byte> glbDataBytes)
         {
             if (string.IsNullOrEmpty(uri))
@@ -31,9 +28,21 @@ namespace UniGLTF
 
         public string uri;
         public int byteLength;
-        public void UpdateByteLength()
+
+        public glTFBufferView Append<T>(T[] array, glBufferTarget target) where T : struct
         {
+            return Append(new ArraySegment<T>(array), target);
+        }
+        public glTFBufferView Append<T>(ArraySegment<T> segment, glBufferTarget target) where T : struct
+        {
+            var view = Storage.Extend(segment, target);
             byteLength = Storage.GetBytes().Count;
+            return view;
+        }
+
+        public ArraySegment<Byte> GetBytes()
+        {
+            return Storage.GetBytes();
         }
 
         public string ToJson()
