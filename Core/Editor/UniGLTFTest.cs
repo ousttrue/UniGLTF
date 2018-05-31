@@ -1,5 +1,7 @@
 ﻿using NUnit.Framework;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UniGLTF;
 using UnityEngine;
 
@@ -69,26 +71,37 @@ public class UniGLTFTest
         }
     }
 
-    void BufferTest(int size, int init=0)
+    void BufferTest(int init, params int[] size)
     {
         var initBytes = init == 0 ? null : new byte[init];
         var storage = new ArrayByteBuffer(initBytes);
         var buffer = new glTFBuffer(storage);
 
-        var bytes = new ArraySegment<Byte>(new byte[size]);
-        buffer.Append(bytes, glBufferTarget.NONE);
-        Assert.AreEqual(size, buffer.byteLength);
+        var values = new List<byte>();
+        int offset = 0;
+        foreach(var x in size)
+        {
+            var nums = Enumerable.Range(offset, x).Select(y => (Byte)y).ToArray();
+            values.AddRange(nums);
+            var bytes = new ArraySegment<Byte>(nums);
+            offset += x;
+            buffer.Append(bytes, glBufferTarget.NONE);
+        }
+
+        Assert.AreEqual(values.Count, buffer.byteLength);
+        Assert.True(Enumerable.SequenceEqual(values, buffer.GetBytes().ToArray()));
     }
 
     [Test]
     public void BufferTest()
     {
-        BufferTest(0);
-        BufferTest(128);
-        BufferTest(256);
+        BufferTest(0, 0, 100, 200);
+        BufferTest(0, 128);
+        BufferTest(0, 256);
 
-        BufferTest(0, 1024);
-        BufferTest(128, 1024);
-        BufferTest(256, 1024);
+        BufferTest(1024, 0);
+        BufferTest(1024, 128);
+        BufferTest(1024, 2048);
+        BufferTest(1024, 900, 900);
     }
 }
