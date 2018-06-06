@@ -145,18 +145,12 @@ namespace UniGLTF
             return indices;
         }
 
-        public T[] GetArrayFromAccessor<T>(int index, Func<T, T> mod = null) where T : struct
+        public T[] GetArrayFromAccessor<T>(int index) where T : struct
         {
+
             var vertexAccessor = accessors[index];
             var view = bufferViews[vertexAccessor.bufferView];
             var result = GetAttrib<T>(vertexAccessor, view);
-            if (mod != null)
-            {
-                for (int i = 0; i < result.Length; ++i)
-                {
-                    result[i] = mod(result[i]);
-                }
-            }
             return result;
         }
         #endregion
