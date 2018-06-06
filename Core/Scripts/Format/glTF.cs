@@ -115,7 +115,7 @@ namespace UniGLTF
             }
             throw new NotImplementedException("GetIndices: unknown componenttype: " + accessor.componentType);
         }
-        public int[] GetIndices(int index, Func<int, int> mod = null)
+        public int[] GetIndices(int index)
         {
             int count;
             var result = _GetIndices(index, out count);
@@ -123,22 +123,12 @@ namespace UniGLTF
 
             // flip triangles
             var it = result.GetEnumerator();
-            if (mod == null)
             {
                 for (int i = 0; i < count; i += 3)
                 {
                     it.MoveNext(); indices[i + 2] = it.Current;
                     it.MoveNext(); indices[i + 1] = it.Current;
                     it.MoveNext(); indices[i] = it.Current;
-                }
-            }
-            else
-            {
-                for (int i = 0; i < count; i += 3)
-                {
-                    it.MoveNext(); indices[i + 2] = mod(it.Current);
-                    it.MoveNext(); indices[i + 1] = mod(it.Current);
-                    it.MoveNext(); indices[i] = mod(it.Current);
                 }
             }
 
