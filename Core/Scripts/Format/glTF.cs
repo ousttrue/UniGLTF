@@ -115,10 +115,10 @@ namespace UniGLTF
             }
             throw new NotImplementedException("GetIndices: unknown componenttype: " + accessor.componentType);
         }
-        public int[] GetIndices(int index)
+        public int[] GetIndices(int accessorIndex)
         {
             int count;
-            var result = _GetIndices(index, out count);
+            var result = _GetIndices(accessorIndex, out count);
             var indices = new int[count];
 
             // flip triangles
@@ -135,10 +135,10 @@ namespace UniGLTF
             return indices;
         }
 
-        public T[] GetArrayFromAccessor<T>(int index) where T : struct
+        public T[] GetArrayFromAccessor<T>(int accessorIndex) where T : struct
         {
 
-            var vertexAccessor = accessors[index];
+            var vertexAccessor = accessors[accessorIndex];
             var view = bufferViews[vertexAccessor.bufferView];
             var result = GetAttrib<T>(vertexAccessor, view);
             return result;
