@@ -195,24 +195,24 @@ namespace UniGLTF
                 throw new UniGLTFNotSupportedException("draco is not supported");
             }
 
-            foreach(var mesh in ctx.GLTF.meshes.Select((x, i) =>
+            for(int i=0; i<ctx.GLTF.meshes.Count; ++i)
             {
                 var meshWithMaterials = ImportMesh(ctx, i);
+
                 var mesh = meshWithMaterials.Mesh;
+
+                // mesh name
                 if (string.IsNullOrEmpty(mesh.name))
                 {
                     mesh.name = string.Format("UniGLTF import#{0}", i);
                 }
-                return meshWithMaterials;
-            }))
-            {
-                var originalName = mesh.Mesh.name;
-                for (int j = 1; ctx.Materials.Any(x => x.name == mesh.Mesh.name); ++j)
+                var originalName = mesh.name;
+                for (int j = 1; ctx.Materials.Any(x => x.name == mesh.name); ++j)
                 {
-                    mesh.Mesh.name = string.Format("{0}({1})", originalName, j);
+                    mesh.name = string.Format("{0}({1})", originalName, j);
                 }
 
-                ctx.Meshes.Add(mesh);
+                ctx.Meshes.Add(meshWithMaterials);
             }
 
             // nodes
