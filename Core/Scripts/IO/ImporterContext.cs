@@ -9,8 +9,58 @@ using UniGLTF.SimpleJSON;
 using UnityEditor;
 #endif
 
+
 namespace UniGLTF
 {
+    public interface IShaderStore
+    {
+        Shader GetShader(ImporterContext context, int materialIndex);
+    }
+
+    class ShaderStore : IShaderStore
+    {
+        Shader m_default;
+        Shader Default
+        {
+            get
+            {
+                if (m_default == null)
+                {
+                    m_default = Shader.Find("Standard");
+                }
+                return m_default;
+            }
+        }
+
+        Shader m_vcolor;
+        Shader VColor
+        {
+            get
+            {
+                if (m_vcolor == null)
+                {
+                    m_vcolor = Shader.Find("UniGLTF/StandardVColor");
+                }
+                return m_vcolor;
+            }
+        }
+
+        public ShaderStore()
+        {
+
+        }
+
+        public Shader GetShader(ImporterContext context, int materialIndex)
+        {
+            if (context.HasVertexColor(materialIndex))
+            {
+                return VColor;
+            }
+
+            return Default;
+        }
+    }
+
     public delegate Material CreateMaterialFunc(ImporterContext ctx, int i);
 
     public class ImporterContext
@@ -155,6 +205,16 @@ namespace UniGLTF
 
         public CreateMaterialFunc CreateMaterial;
 
+        public bool HasVertexColor(int materialIndex)
+        {
+            if(materialIndex<0 || materialIndex >= GLTF.materials.Count)
+            {
+                return false;
+            }
+
+            var hasVertexColor = GLTF.meshes.SelectMany(x => x.primitives).Any(x => x.material == materialIndex && x.HasVertexColor);
+            return hasVertexColor;
+        }
         #region Imported
         public GameObject Root;
         public List<Transform> Nodes = new List<Transform>();

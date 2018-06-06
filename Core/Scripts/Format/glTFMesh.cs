@@ -116,6 +116,14 @@ namespace UniGLTF
         public int mode;
         public int indices = -1;
         public glTFAttributes attributes;
+        public bool HasVertexColor
+        {
+            get
+            {
+                return attributes.COLOR_0 != -1;
+            }
+        }
+
         public int material;
 
         public List<gltfMorphTarget> targets = new List<gltfMorphTarget>();

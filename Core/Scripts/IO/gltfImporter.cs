@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -62,13 +61,13 @@ namespace UniGLTF
         /// _SrcBlend
         /// _DstBlend
         /// _ZWrite
-        public static CreateMaterialFunc CreateMaterialFuncFromShader(Shader shader)
+        public static CreateMaterialFunc CreateMaterialFuncFromShader(IShaderStore shaderStore)
         {
-            if (shader == null) return null;
+            if (shaderStore == null) return null;
 
             return (ctx, i) =>
-             {
-                 var material = new Material(shader);
+            {
+                 var material = new Material(shaderStore.GetShader(ctx, i));
                  material.name = string.Format("material_{0:00}", i);
 
                  if (i >= 0 && i < ctx.GLTF.materials.Count)
@@ -145,7 +144,7 @@ namespace UniGLTF
                  }
 
                  return material;
-             };
+            };
         }
 
         public static void Import<T>(ImporterContext ctx) where T : glTF
@@ -163,7 +162,7 @@ namespace UniGLTF
             // materials
             if (ctx.CreateMaterial == null)
             {
-                ctx.CreateMaterial = CreateMaterialFuncFromShader(Shader.Find("Standard"));
+                ctx.CreateMaterial = CreateMaterialFuncFromShader(new ShaderStore());
             }
 
             if (ctx.GLTF.materials == null || !ctx.GLTF.materials.Any())
