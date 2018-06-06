@@ -705,37 +705,10 @@ namespace UniGLTF
             }
             if (node.matrix != null && node.matrix.Length > 0)
             {
-                var values = node.matrix;
-#if UNITY_2017_OR_NEWER
-                var col0 = new Vector4(values[0], values[1], values[2], values[3]);
-                var col1 = new Vector4(values[4], values[5], values[6], values[7]);
-                var col2 = new Vector4(values[8], values[9], values[10], values[11]);
-                var col3 = new Vector4(values[12], values[13], values[14], values[15]);
-                var m = new Matrix4x4(col0, col1, col2, col3);
-                go.transform.localRotation = m.rotation;
-                go.transform.localPosition = m.GetColumn(3);
-#else
-                // https://forum.unity.com/threads/how-to-assign-matrix4x4-to-transform.121966/
-                var m = new Matrix4x4();
-                m.m00 = values[0];
-                m.m10 = values[1];
-                m.m20 = values[2];
-                m.m30 = values[3];
-                m.m01 = values[4];
-                m.m11 = values[5];
-                m.m21 = values[6];
-                m.m31 = values[7];
-                m.m02 = values[8];
-                m.m12 = values[9];
-                m.m22 = values[10];
-                m.m32 = values[11];
-                m.m03 = values[12];
-                m.m13 = values[13];
-                m.m23 = values[14];
-                m.m33 = values[15];
+                var m = UnityExtensions.MatrixFromArray(node.matrix);
                 go.transform.localRotation = m.ExtractRotation();
                 go.transform.localPosition = m.ExtractPosition();
-#endif
+                go.transform.localScale = m.ExtractScale();
             }
             return go;
         }

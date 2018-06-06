@@ -90,16 +90,33 @@ namespace UniGLTF
 
         public static Matrix4x4 ReverseZ(this Matrix4x4 m)
         {
-#if false
-//#if UNITY_2017_1_OR_NEWER
-            m.SetTRS(m.GetColumn(3).ReverseZ(), m.rotation.ReverseZ(), Vector3.one);
-#else
-            // ToDo
-            m.SetTRS(m.ExtractPosition().ReverseZ(), m.ExtractRotation().ReverseZ(), Vector3.one);
-#endif
+            m.SetTRS(m.ExtractPosition().ReverseZ(), m.ExtractRotation().ReverseZ(), m.ExtractScale());
             return m;
         }
 
+        public static Matrix4x4 MatrixFromArray(float[] values)
+        {
+            var m = new Matrix4x4();
+            m.m00 = values[0];
+            m.m10 = values[1];
+            m.m20 = values[2];
+            m.m30 = values[3];
+            m.m01 = values[4];
+            m.m11 = values[5];
+            m.m21 = values[6];
+            m.m31 = values[7];
+            m.m02 = values[8];
+            m.m12 = values[9];
+            m.m22 = values[10];
+            m.m32 = values[11];
+            m.m03 = values[12];
+            m.m13 = values[13];
+            m.m23 = values[14];
+            m.m33 = values[15];
+            return m;
+        }
+
+        // https://forum.unity.com/threads/how-to-assign-matrix4x4-to-transform.121966/
         public static Quaternion ExtractRotation(this Matrix4x4 matrix)
         {
             Vector3 forward;
