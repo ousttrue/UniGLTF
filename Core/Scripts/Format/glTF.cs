@@ -76,10 +76,14 @@ namespace UniGLTF
 
         T[] GetAttrib<T>(glTFAccessor accessor, glTFBufferView view) where T : struct
         {
-            var attrib = new T[accessor.count];
+            return GetAttrib<T>(accessor.count, accessor.byteOffset, view);
+        }
+        T[] GetAttrib<T>(int count, int byteOffset, glTFBufferView view) where T : struct
+        { 
+            var attrib = new T[count];
             //
             var segment = buffers[view.buffer].GetBytes();
-            var bytes = new ArraySegment<Byte>(segment.Array, segment.Offset + view.byteOffset + accessor.byteOffset, accessor.count * view.byteStride);
+            var bytes = new ArraySegment<Byte>(segment.Array, segment.Offset + view.byteOffset + byteOffset, count * view.byteStride);
             bytes.MarshalCoyTo(attrib);
             return attrib;
         }
@@ -91,9 +95,8 @@ namespace UniGLTF
             return new ArraySegment<byte>(segment.Array, segment.Offset + view.byteOffset, view.byteLength);
         }
 
-        IEnumerable<int> _GetIndices(int index, out int count)
+        IEnumerable<int> _GetIndices(glTFAccessor accessor, out int count)
         {
-            var accessor = accessors[index];
             count = accessor.count;
             var view = bufferViews[accessor.bufferView];
             switch ((glComponentType)accessor.componentType)
@@ -115,10 +118,33 @@ namespace UniGLTF
             }
             throw new NotImplementedException("GetIndices: unknown componenttype: " + accessor.componentType);
         }
+
+        IEnumerable<int> _GetIndices(glTFBufferView view, int count, int byteOffset, glComponentType componentType)
+        {
+            switch (componentType)
+            {
+                case glComponentType.UNSIGNED_BYTE:
+                    {
+                        return GetAttrib<Byte>(count, byteOffset, view).Select(x => (int)(x));
+                    }
+
+                case glComponentType.UNSIGNED_SHORT:
+                    {
+                        return GetAttrib<UInt16>(count, byteOffset, view).Select(x => (int)(x));
+                    }
+
+                case glComponentType.UNSIGNED_INT:
+                    {
+                        return GetAttrib<UInt32>(count, byteOffset, view).Select(x => (int)(x));
+                    }
+            }
+            throw new NotImplementedException("GetIndices: unknown componenttype: " + componentType);
+        }
+
         public int[] GetIndices(int accessorIndex)
         {
             int count;
-            var result = _GetIndices(accessorIndex, out count);
+            var result = _GetIndices(accessors[accessorIndex], out count);
             var indices = new int[count];
 
             // flip triangles
@@ -137,11 +163,31 @@ namespace UniGLTF
 
         public T[] GetArrayFromAccessor<T>(int accessorIndex) where T : struct
         {
-
             var vertexAccessor = accessors[accessorIndex];
-            var view = bufferViews[vertexAccessor.bufferView];
-            var result = GetAttrib<T>(vertexAccessor, view);
-            return result;
+            if (vertexAccessor.bufferView == -1)
+            {
+                throw new NotImplementedException("no bufferView");
+            }
+            else
+            {
+                var view = bufferViews[vertexAccessor.bufferView];
+                var result = GetAttrib<T>(vertexAccessor, view);
+
+                var sparse = vertexAccessor.sparse;
+                if (sparse !=null && sparse.count > 0)
+                {
+                    // override sparse values
+                    var indices = _GetIndices(bufferViews[sparse.indices.bufferView], sparse.count, sparse.indices.byteOffset, sparse.indices.componentType);
+                    var values = GetAttrib<T>(sparse.count, sparse.values.byteOffset, bufferViews[sparse.values.bufferView]);
+                    var it = indices.GetEnumerator();
+                    for(int i=0; i<sparse.count; ++i)
+                    {
+                        it.MoveNext();
+                        result[it.Current] = values[i];
+                    }
+                }
+                return result;
+            }
         }
         #endregion
 
