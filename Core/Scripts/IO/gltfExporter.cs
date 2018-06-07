@@ -46,6 +46,12 @@ namespace UniGLTF
 
         glTF glTF;
 
+        public bool UseSparseAccessorForBlendShape
+        {
+            get;
+            set;
+        }
+
         public GameObject Copy
         {
             get;
@@ -103,7 +109,7 @@ namespace UniGLTF
 
         public virtual void Export()
         {
-            var exported = FromGameObject(glTF, Copy);
+            var exported = FromGameObject(glTF, Copy, UseSparseAccessorForBlendShape);
             Meshes = exported.Meshes.Select(x => x.Mesh).ToList();
             Nodes = exported.Nodes;
             Materials = exported.Materials;
@@ -532,6 +538,7 @@ namespace UniGLTF
                     })
                     .ToArray()
                     ;
+
                 var sparseIndicesViewIndex = gltf.ExtendBufferAndGetViewIndex(bufferIndex, sparseIndices);
 
                 var blendShapePositionAccessorIndex = gltf.ExtendSparseBufferAndGetAccessorIndex(bufferIndex,

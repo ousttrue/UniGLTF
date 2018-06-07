@@ -153,11 +153,13 @@ namespace UniGLTF
             T[] array, int[] sparseIndices, int sparseViewIndex,
             glBufferTarget target = glBufferTarget.NONE) where T : struct
         {
-            return ExtendSparseBufferAndGetAccessorIndex(gltf, bufferIndex, array, sparseIndices, sparseViewIndex, target);
+            return ExtendSparseBufferAndGetAccessorIndex(gltf, bufferIndex, 
+                new ArraySegment<T>(array), sparseIndices, sparseViewIndex,
+                target);
         }
 
         public static int ExtendSparseBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex,
-            ArraySegment<T> array, int[] sparseIndices, int sparseIndicesViewIndex, glComponentType sparseIndicesComponentType,
+            ArraySegment<T> array, int[] sparseIndices, int sparseIndicesViewIndex,
             glBufferTarget target = glBufferTarget.NONE) where T : struct
         {
             if (array.Count == 0)
@@ -179,7 +181,7 @@ namespace UniGLTF
                     indices = new glTFSparseIndices
                     {
                         bufferView = sparseIndicesViewIndex,
-                        componentType = sparseIndicesComponentType
+                        componentType = glComponentType.UNSIGNED_INT
                     },
                     values = new glTFSparseValues
                     {
