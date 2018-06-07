@@ -164,30 +164,26 @@ namespace UniGLTF
         public T[] GetArrayFromAccessor<T>(int accessorIndex) where T : struct
         {
             var vertexAccessor = accessors[accessorIndex];
-            if (vertexAccessor.bufferView == -1)
-            {
-                throw new NotImplementedException("no bufferView");
-            }
-            else
-            {
-                var view = bufferViews[vertexAccessor.bufferView];
-                var result = GetAttrib<T>(vertexAccessor, view);
 
-                var sparse = vertexAccessor.sparse;
-                if (sparse !=null && sparse.count > 0)
+            var result = (vertexAccessor.bufferView != -1)
+                ? GetAttrib<T>(vertexAccessor, bufferViews[vertexAccessor.bufferView])
+                : new T[vertexAccessor.count]
+                ;
+
+            var sparse = vertexAccessor.sparse;
+            if (sparse !=null && sparse.count > 0)
+            {
+                // override sparse values
+                var indices = _GetIndices(bufferViews[sparse.indices.bufferView], sparse.count, sparse.indices.byteOffset, sparse.indices.componentType);
+                var values = GetAttrib<T>(sparse.count, sparse.values.byteOffset, bufferViews[sparse.values.bufferView]);
+                var it = indices.GetEnumerator();
+                for(int i=0; i<sparse.count; ++i)
                 {
-                    // override sparse values
-                    var indices = _GetIndices(bufferViews[sparse.indices.bufferView], sparse.count, sparse.indices.byteOffset, sparse.indices.componentType);
-                    var values = GetAttrib<T>(sparse.count, sparse.values.byteOffset, bufferViews[sparse.values.bufferView]);
-                    var it = indices.GetEnumerator();
-                    for(int i=0; i<sparse.count; ++i)
-                    {
-                        it.MoveNext();
-                        result[it.Current] = values[i];
-                    }
+                    it.MoveNext();
+                    result[it.Current] = values[i];
                 }
-                return result;
             }
+            return result;
         }
         #endregion
 

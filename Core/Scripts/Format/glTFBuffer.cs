@@ -134,7 +134,7 @@ namespace UniGLTF
     [Serializable]
     public class glTFAccessor : JsonSerializableBase
     {
-        public int bufferView;
+        public int bufferView = -1;
         public int byteOffset;
         public string type;
         public glComponentType componentType;
