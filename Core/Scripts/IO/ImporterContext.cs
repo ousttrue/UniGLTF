@@ -19,6 +19,7 @@ namespace UniGLTF
 
     class ShaderStore : IShaderStore
     {
+        string m_defaultShaderName;
         Shader m_default;
         Shader Default
         {
@@ -26,7 +27,7 @@ namespace UniGLTF
             {
                 if (m_default == null)
                 {
-                    m_default = Shader.Find("Standard");
+                    m_default = Shader.Find(m_defaultShaderName);
                 }
                 return m_default;
             }
@@ -45,9 +46,14 @@ namespace UniGLTF
             }
         }
 
-        public ShaderStore()
+        public ShaderStore() : this("Standard")
         {
 
+        }
+
+        public ShaderStore(string defaultShaderName)
+        {
+            m_defaultShaderName = defaultShaderName;
         }
 
         public Shader GetShader(ImporterContext context, int materialIndex)
@@ -61,7 +67,9 @@ namespace UniGLTF
         }
     }
 
+
     public delegate Material CreateMaterialFunc(ImporterContext ctx, int i);
+
 
     public class ImporterContext
     {
@@ -207,7 +215,7 @@ namespace UniGLTF
 
         public bool HasVertexColor(int materialIndex)
         {
-            if(materialIndex<0 || materialIndex >= GLTF.materials.Count)
+            if (materialIndex < 0 || materialIndex >= GLTF.materials.Count)
             {
                 return false;
             }
