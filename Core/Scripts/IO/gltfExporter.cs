@@ -444,6 +444,129 @@ namespace UniGLTF
             return imageIndex;
         }
 
+        static glTFMesh ExportPrimitives(glTF gltf, int bufferIndex, 
+            Mesh mesh, Material[] materials, 
+            List<Material> unityMaterials)
+        {
+            var positions = mesh.vertices.Select(y => y.ReverseZ()).ToArray();
+            var positionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, positions, glBufferTarget.ARRAY_BUFFER);
+            gltf.accessors[positionAccessorIndex].min = positions.Aggregate(positions[0], (a, b) => new Vector3(Mathf.Min(a.x, b.x), Math.Min(a.y, b.y), Mathf.Min(a.z, b.z))).ToArray();
+            gltf.accessors[positionAccessorIndex].max = positions.Aggregate(positions[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
+
+            var normalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.normals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+            var tangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.tangents.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+            var uvAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.uv.Select(y => y.ReverseY()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+            var colorAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.colors, glBufferTarget.ARRAY_BUFFER);
+
+            var boneweights = mesh.boneWeights;
+            var weightAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new Vector4(y.weight0, y.weight1, y.weight2, y.weight3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
+            var jointsAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new UShort4((ushort)y.boneIndex0, (ushort)y.boneIndex1, (ushort)y.boneIndex2, (ushort)y.boneIndex3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
+
+            var attributes = new glTFAttributes
+            {
+                POSITION = positionAccessorIndex,
+            };
+            if (normalAccessorIndex != -1)
+            {
+                attributes.NORMAL = normalAccessorIndex;
+            }
+            if (tangentAccessorIndex != -1)
+            {
+                attributes.TANGENT = tangentAccessorIndex;
+            }
+            if (uvAccessorIndex != -1)
+            {
+                attributes.TEXCOORD_0 = uvAccessorIndex;
+            }
+            if (colorAccessorIndex != -1)
+            {
+                attributes.COLOR_0 = colorAccessorIndex;
+            }
+            if (weightAccessorIndex != -1)
+            {
+                attributes.WEIGHTS_0 = weightAccessorIndex;
+            }
+            if (jointsAccessorIndex != -1)
+            {
+                attributes.JOINTS_0 = jointsAccessorIndex;
+            }
+
+            var gltfMesh = new glTFMesh(mesh.name);
+            for (int j = 0; j < mesh.subMeshCount; ++j)
+            {
+                var indices = TriangleUtil.FlipTriangle(mesh.GetIndices(j)).Select(y => (uint)y).ToArray();
+                var indicesAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, indices, glBufferTarget.ELEMENT_ARRAY_BUFFER);
+
+                gltfMesh.primitives.Add(new glTFPrimitives
+                {
+                    attributes = attributes,
+                    indices = indicesAccessorIndex,
+                    mode = 4, // triangels ?
+                    material = unityMaterials.IndexOf(materials[j])
+                });
+            }
+            return gltfMesh;
+        }
+
+        static gltfMorphTarget ExportMorphTarget(glTF gltf, int bufferIndex,
+            Mesh mesh, int j)
+        {
+            var blendShapeVertices = mesh.vertices;
+            var blendShpaeNormals = mesh.normals;
+            var blendShapeTangents = mesh.tangents.Select(y => (Vector3)y).ToArray();
+            var frameCount = mesh.GetBlendShapeFrameCount(j);
+            mesh.GetBlendShapeFrameVertices(j, frameCount - 1, blendShapeVertices, blendShpaeNormals, null);
+            blendShapeVertices = blendShapeVertices.Select(y => y.ReverseZ()).ToArray();
+
+            var blendShapePositionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, blendShapeVertices
+                , glBufferTarget.ARRAY_BUFFER);
+            gltf.accessors[blendShapePositionAccessorIndex].min = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Min(a.x, b.x), Math.Min(a.y, b.y), Mathf.Min(a.z, b.z))).ToArray();
+            gltf.accessors[blendShapePositionAccessorIndex].max = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
+
+            var blendShapeNormalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
+                blendShpaeNormals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+            var blendShapeTangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
+                blendShapeTangents.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+
+            return new gltfMorphTarget
+            {
+                POSITION = blendShapePositionAccessorIndex,
+                NORMAL = blendShapeNormalAccessorIndex,
+                TANGENT = blendShapeTangentAccessorIndex,
+            };
+        }
+
+        static void ExportMeshes(glTF gltf, int bufferIndex,
+            List<MeshWithRenderer> unityMeshes, List<Material> unityMaterials)
+        {
+            for (int i = 0; i < unityMeshes.Count; ++i)
+            {
+                var x = unityMeshes[i];
+                var mesh = x.Mesh;
+                var materials = x.Rendererer.sharedMaterials;
+
+                var gltfMesh = ExportPrimitives(gltf, bufferIndex,
+                    mesh, materials, unityMaterials);
+
+                for (int j = 0; j < mesh.blendShapeCount; ++j)
+                {
+                    var morphTarget = ExportMorphTarget(gltf, bufferIndex,
+                        mesh, j);
+
+                    //
+                    // first primitive has whole blendShape
+                    //
+                    var firstPrimitive = gltfMesh.primitives[0];
+                    firstPrimitive.targets.Add(morphTarget);
+
+                    // https://github.com/KhronosGroup/glTF/issues/1036
+                    firstPrimitive.extras.targetNames.Add(mesh.GetBlendShapeName(j));
+                }
+
+                gltf.meshes.Add(gltfMesh);
+            }
+        }
+
         public static Exported FromGameObject(glTF gltf, GameObject go)
         {
             var bytesBuffer = new ArrayByteBuffer(new byte[50 * 1024 * 1024]);
@@ -480,105 +603,7 @@ namespace UniGLTF
                 })
                 .Where(x => x.Mesh != null)
                 .ToList();
-            for (int i = 0; i < unityMeshes.Count; ++i)
-            {
-                var x = unityMeshes[i];
-                var mesh = x.Mesh;
-                var materials = x.Rendererer.sharedMaterials;
-
-                var positions = mesh.vertices.Select(y => y.ReverseZ()).ToArray();
-                var positionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, positions, glBufferTarget.ARRAY_BUFFER);
-                gltf.accessors[positionAccessorIndex].min = positions.Aggregate(positions[0], (a, b) => new Vector3(Mathf.Min(a.x, b.x), Math.Min(a.y, b.y), Mathf.Min(a.z, b.z))).ToArray();
-                gltf.accessors[positionAccessorIndex].max = positions.Aggregate(positions[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
-
-                var normalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.normals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                var tangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.tangents.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                var uvAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.uv.Select(y => y.ReverseY()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                var colorAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.colors, glBufferTarget.ARRAY_BUFFER);
-
-                var boneweights = mesh.boneWeights;
-                var weightAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new Vector4(y.weight0, y.weight1, y.weight2, y.weight3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                var jointsAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, boneweights.Select(y => new UShort4((ushort)y.boneIndex0, (ushort)y.boneIndex1, (ushort)y.boneIndex2, (ushort)y.boneIndex3)).ToArray(), glBufferTarget.ARRAY_BUFFER);
-
-                var attributes = new glTFAttributes
-                {
-                    POSITION = positionAccessorIndex,
-                };
-                if (normalAccessorIndex != -1)
-                {
-                    attributes.NORMAL = normalAccessorIndex;
-                }
-                if (tangentAccessorIndex != -1)
-                {
-                    attributes.TANGENT = tangentAccessorIndex;
-                }
-                if (uvAccessorIndex != -1)
-                {
-                    attributes.TEXCOORD_0 = uvAccessorIndex;
-                }
-                if (colorAccessorIndex != -1)
-                {
-                    attributes.COLOR_0 = colorAccessorIndex;
-                }
-                if (weightAccessorIndex != -1)
-                {
-                    attributes.WEIGHTS_0 = weightAccessorIndex;
-                }
-                if (jointsAccessorIndex != -1)
-                {
-                    attributes.JOINTS_0 = jointsAccessorIndex;
-                }
-
-                gltf.meshes.Add(new glTFMesh(mesh.name));
-
-                for (int j = 0; j < mesh.subMeshCount; ++j)
-                {
-                    var indices = TriangleUtil.FlipTriangle(mesh.GetIndices(j)).Select(y => (uint)y).ToArray();
-                    var indicesAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, indices, glBufferTarget.ELEMENT_ARRAY_BUFFER);
-
-                    gltf.meshes.Last().primitives.Add(new glTFPrimitives
-                    {
-                        attributes = attributes,
-                        indices = indicesAccessorIndex,
-                        mode = 4, // triangels ?
-                        material = unityMaterials.IndexOf(materials[j])
-                    });
-                }
-
-                if (mesh.blendShapeCount > 0)
-                {
-                    for (int j = 0; j < mesh.blendShapeCount; ++j)
-                    {
-                        var blendShapeVertices = mesh.vertices;
-                        var blendShpaeNormals = mesh.normals;
-                        var blendShapeTangents = mesh.tangents.Select(y => (Vector3)y).ToArray();
-                        var k = mesh.GetBlendShapeFrameCount(j);
-                        mesh.GetBlendShapeFrameVertices(j, k - 1, blendShapeVertices, blendShpaeNormals, null);
-                        blendShapeVertices = blendShapeVertices.Select(y => y.ReverseZ()).ToArray();
-
-                        var blendShapePositionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, blendShapeVertices
-                            , glBufferTarget.ARRAY_BUFFER);
-                        gltf.accessors[blendShapePositionAccessorIndex].min = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Min(a.x, b.x), Math.Min(a.y, b.y), Mathf.Min(a.z, b.z))).ToArray();
-                        gltf.accessors[blendShapePositionAccessorIndex].max = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
-
-                        var blendShapeNormalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
-                            blendShpaeNormals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                        var blendShapeTangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
-                            blendShapeTangents.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-                        //
-                        // first primitive has whole blendShape
-                        //
-                        var primitive = gltf.meshes.Last().primitives[0];
-                        primitive.targets.Add(new gltfMorphTarget
-                        {
-                            POSITION = blendShapePositionAccessorIndex,
-                            NORMAL = blendShapeNormalAccessorIndex,
-                            TANGENT = blendShapeTangentAccessorIndex,
-                        });
-                        primitive.extras.targetNames.Add(mesh.GetBlendShapeName(j));
-                    }
-                }
-            }
+            ExportMeshes(gltf, bufferIndex, unityMeshes, unityMaterials);
             #endregion
 
             #region Skins
