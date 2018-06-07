@@ -89,9 +89,52 @@ namespace UniGLTF
     }
 
     [Serializable]
-    public class glTFAccessor : IJsonSerializable
+    public class glTFSparseIndices : JsonSerializableBase
     {
-        public int bufferView;
+        public int bufferView = -1;
+        public int byteOffset;
+        public glComponentType componentType;
+
+        protected override void SerializeMembers(JsonFormatter f)
+        {
+            f.KeyValue(() => bufferView);
+            f.KeyValue(() => byteOffset);
+            f.Key("componentType"); f.Value((int)componentType);
+        }
+    }
+
+    [Serializable]
+    public class glTFSparseValues : JsonSerializableBase
+    {
+        public int bufferView = -1;
+        public int byteOffset;
+
+        protected override void SerializeMembers(JsonFormatter f)
+        {
+            f.KeyValue(() => bufferView);
+            f.KeyValue(() => byteOffset);
+        }
+    }
+
+    [Serializable]
+    public class glTFSparse : JsonSerializableBase
+    {
+        public int count;
+        public glTFSparseIndices indices;
+        public glTFSparseValues values;
+
+        protected override void SerializeMembers(JsonFormatter f)
+        {
+            f.KeyValue(() => count);
+            f.KeyValue(() => indices);
+            f.KeyValue(() => values);
+        }
+    }
+
+    [Serializable]
+    public class glTFAccessor : JsonSerializableBase
+    {
+        public int bufferView = -1;
         public int byteOffset;
         public string type;
         public glComponentType componentType;
@@ -99,10 +142,10 @@ namespace UniGLTF
         public float[] max;
         public float[] min;
 
-        public string ToJson()
+        public glTFSparse sparse;
+
+        protected override void SerializeMembers(JsonFormatter f)
         {
-            var f = new JsonFormatter();
-            f.BeginMap();
             f.KeyValue(() => bufferView);
             f.KeyValue(() => byteOffset);
             f.KeyValue(() => type);
@@ -116,8 +159,11 @@ namespace UniGLTF
             {
                 f.KeyValue(() => min);
             }
-            f.EndMap();
-            return f.ToString();
+
+            if (sparse != null && sparse.count > 0)
+            {
+                f.KeyValue(() => sparse);
+            }
         }
     }
 }

@@ -536,9 +536,14 @@ namespace UniGLTF
 
                 var indices =
                  (indexBuffer >= 0)
-                 ? ctx.GLTF.GetIndices(indexBuffer, x => x + indexOffset)
+                 ? ctx.GLTF.GetIndices(indexBuffer)
                  : TriangleUtil.FlipTriangle(Enumerable.Range(0, meshContext.positions.Length)).ToArray() // without index array
                  ;
+                for(int i=0; i<indices.Length; ++i)
+                {
+                    indices[i] += indexOffset;
+                }
+
                 meshContext.subMeshes.Add(indices);
 
                 // material
@@ -595,7 +600,11 @@ namespace UniGLTF
                 if (prim.attributes.JOINTS_0 != -1 && prim.attributes.WEIGHTS_0 != -1)
                 {
                     var joints0 = ctx.GLTF.GetArrayFromAccessor<UShort4>(prim.attributes.JOINTS_0); // uint4
-                    var weights0 = ctx.GLTF.GetArrayFromAccessor<Float4>(prim.attributes.WEIGHTS_0, x => x.One());
+                    var weights0 = ctx.GLTF.GetArrayFromAccessor<Float4>(prim.attributes.WEIGHTS_0);
+                    for(int i=0; i<weights0.Length; ++i)
+                    {
+                        weights0[i] = weights0[i].One();
+                    }
 
                     for (int j = 0; j < joints0.Length; ++j)
                     {

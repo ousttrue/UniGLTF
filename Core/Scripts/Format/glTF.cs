@@ -76,10 +76,14 @@ namespace UniGLTF
 
         T[] GetAttrib<T>(glTFAccessor accessor, glTFBufferView view) where T : struct
         {
-            var attrib = new T[accessor.count];
+            return GetAttrib<T>(accessor.count, accessor.byteOffset, view);
+        }
+        T[] GetAttrib<T>(int count, int byteOffset, glTFBufferView view) where T : struct
+        { 
+            var attrib = new T[count];
             //
             var segment = buffers[view.buffer].GetBytes();
-            var bytes = new ArraySegment<Byte>(segment.Array, segment.Offset + view.byteOffset + accessor.byteOffset, accessor.count * view.byteStride);
+            var bytes = new ArraySegment<Byte>(segment.Array, segment.Offset + view.byteOffset + byteOffset, count * view.byteStride);
             bytes.MarshalCoyTo(attrib);
             return attrib;
         }
@@ -91,9 +95,8 @@ namespace UniGLTF
             return new ArraySegment<byte>(segment.Array, segment.Offset + view.byteOffset, view.byteLength);
         }
 
-        IEnumerable<int> _GetIndices(int index, out int count)
+        IEnumerable<int> _GetIndices(glTFAccessor accessor, out int count)
         {
-            var accessor = accessors[index];
             count = accessor.count;
             var view = bufferViews[accessor.bufferView];
             switch ((glComponentType)accessor.componentType)
@@ -115,15 +118,37 @@ namespace UniGLTF
             }
             throw new NotImplementedException("GetIndices: unknown componenttype: " + accessor.componentType);
         }
-        public int[] GetIndices(int index, Func<int, int> mod = null)
+
+        IEnumerable<int> _GetIndices(glTFBufferView view, int count, int byteOffset, glComponentType componentType)
+        {
+            switch (componentType)
+            {
+                case glComponentType.UNSIGNED_BYTE:
+                    {
+                        return GetAttrib<Byte>(count, byteOffset, view).Select(x => (int)(x));
+                    }
+
+                case glComponentType.UNSIGNED_SHORT:
+                    {
+                        return GetAttrib<UInt16>(count, byteOffset, view).Select(x => (int)(x));
+                    }
+
+                case glComponentType.UNSIGNED_INT:
+                    {
+                        return GetAttrib<UInt32>(count, byteOffset, view).Select(x => (int)(x));
+                    }
+            }
+            throw new NotImplementedException("GetIndices: unknown componenttype: " + componentType);
+        }
+
+        public int[] GetIndices(int accessorIndex)
         {
             int count;
-            var result = _GetIndices(index, out count);
+            var result = _GetIndices(accessors[accessorIndex], out count);
             var indices = new int[count];
 
             // flip triangles
             var it = result.GetEnumerator();
-            if (mod == null)
             {
                 for (int i = 0; i < count; i += 3)
                 {
@@ -132,29 +157,38 @@ namespace UniGLTF
                     it.MoveNext(); indices[i] = it.Current;
                 }
             }
-            else
-            {
-                for (int i = 0; i < count; i += 3)
-                {
-                    it.MoveNext(); indices[i + 2] = mod(it.Current);
-                    it.MoveNext(); indices[i + 1] = mod(it.Current);
-                    it.MoveNext(); indices[i] = mod(it.Current);
-                }
-            }
 
             return indices;
         }
 
-        public T[] GetArrayFromAccessor<T>(int index, Func<T, T> mod = null) where T : struct
+        public T[] GetArrayFromAccessor<T>(int accessorIndex) where T : struct
         {
-            var vertexAccessor = accessors[index];
-            var view = bufferViews[vertexAccessor.bufferView];
-            var result = GetAttrib<T>(vertexAccessor, view);
-            if (mod != null)
+            var vertexAccessor = accessors[accessorIndex];
+
+            if (vertexAccessor.count <= 0) return new T[] { };
+
+            var result = (vertexAccessor.bufferView != -1)
+                ? GetAttrib<T>(vertexAccessor, bufferViews[vertexAccessor.bufferView])
+                : new T[vertexAccessor.count]
+                ;
+
+            var sparse = vertexAccessor.sparse;
+            if (sparse !=null && sparse.count > 0)
             {
-                for (int i = 0; i < result.Length; ++i)
+                // override sparse values
+                var indices = _GetIndices(bufferViews[sparse.indices.bufferView], sparse.count, sparse.indices.byteOffset, sparse.indices.componentType);
+                var values = GetAttrib<T>(sparse.count, sparse.values.byteOffset, bufferViews[sparse.values.bufferView]);
+
+                if (sparse.count != values.Length)
                 {
-                    result[i] = mod(result[i]);
+                    int a = 0;
+                }
+
+                var it = indices.GetEnumerator();
+                for(int i=0; i<sparse.count; ++i)
+                {
+                    it.MoveNext();
+                    result[it.Current] = values[i];
                 }
             }
             return result;

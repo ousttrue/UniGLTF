@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -101,23 +102,21 @@ namespace UniGLTF
             }
         }
 
-        public static int ExtendBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex, T[] array, 
+        public static int ExtendBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex, T[] array,
             glBufferTarget target = glBufferTarget.NONE) where T : struct
         {
             return gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, new ArraySegment<T>(array), target);
         }
 
-        public static int ExtendBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex, ArraySegment<T> array, 
-            glBufferTarget target=glBufferTarget.NONE) where T : struct
+        public static int ExtendBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex,
+            ArraySegment<T> array,
+            glBufferTarget target = glBufferTarget.NONE) where T : struct
         {
             if (array.Count == 0)
             {
                 return -1;
             }
-
-            var view = gltf.buffers[bufferIndex].Append(array, target);
-            var viewIndex = gltf.bufferViews.Count;
-            gltf.bufferViews.Add(view);
+            var viewIndex = ExtendBufferAndGetViewIndex(gltf, bufferIndex, array, target);
             var accessorIndex = gltf.accessors.Count;
             gltf.accessors.Add(new glTFAccessor
             {
@@ -126,6 +125,73 @@ namespace UniGLTF
                 componentType = GetComponentType<T>(),
                 type = GetAccessorType<T>(),
                 count = array.Count,
+            });
+            return accessorIndex;
+        }
+
+        public static int ExtendBufferAndGetViewIndex<T>(this glTF gltf, int bufferIndex,
+            T[] array,
+            glBufferTarget target = glBufferTarget.NONE) where T : struct
+        {
+            return ExtendBufferAndGetViewIndex(gltf, bufferIndex, new ArraySegment<T>(array), target);
+        }
+
+        public static int ExtendBufferAndGetViewIndex<T>(this glTF gltf, int bufferIndex,
+            ArraySegment<T> array,
+            glBufferTarget target = glBufferTarget.NONE) where T : struct
+        {
+            if (array.Count == 0)
+            {
+                return -1;
+            }
+            var view = gltf.buffers[bufferIndex].Append(array, target);
+            var viewIndex = gltf.bufferViews.Count;
+            gltf.bufferViews.Add(view);
+            return viewIndex;
+        }
+
+        public static int ExtendSparseBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex,
+            int accessorCount,
+            T[] sparseValues, int[] sparseIndices, int sparseViewIndex,
+            glBufferTarget target = glBufferTarget.NONE) where T : struct
+        {
+            return ExtendSparseBufferAndGetAccessorIndex(gltf, bufferIndex, 
+                accessorCount,
+                new ArraySegment<T>(sparseValues), sparseIndices, sparseViewIndex,
+                target);
+        }
+
+        public static int ExtendSparseBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex,
+            int accessorCount,
+            ArraySegment<T> sparseValues, int[] sparseIndices, int sparseIndicesViewIndex,
+            glBufferTarget target = glBufferTarget.NONE) where T : struct
+        {
+            if (sparseValues.Count == 0)
+            {
+                return -1;
+            }
+            var sparseValuesViewIndex = ExtendBufferAndGetViewIndex(gltf, bufferIndex, sparseValues, target);
+            var accessorIndex = gltf.accessors.Count;
+            gltf.accessors.Add(new glTFAccessor
+            {
+                byteOffset = 0,
+                componentType = GetComponentType<T>(),
+                type = GetAccessorType<T>(),
+                count = accessorCount,
+
+                sparse = new glTFSparse
+                {
+                    count=sparseIndices.Length,
+                    indices = new glTFSparseIndices
+                    {
+                        bufferView = sparseIndicesViewIndex,
+                        componentType = glComponentType.UNSIGNED_INT
+                    },
+                    values = new glTFSparseValues
+                    {
+                        bufferView = sparseValuesViewIndex,                       
+                    }
+                }
             });
             return accessorIndex;
         }
