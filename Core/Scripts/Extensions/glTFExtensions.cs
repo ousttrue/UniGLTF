@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -166,7 +167,8 @@ namespace UniGLTF
             {
                 return -1;
             }
-            var sparseValuesViewIndex = ExtendBufferAndGetViewIndex(gltf, bufferIndex, array, target);
+            var sparseValuesViewIndex = ExtendBufferAndGetViewIndex(gltf, bufferIndex, 
+                sparseIndices.Select(x => array.Array[array.Offset+x]).ToArray(), target);
             var accessorIndex = gltf.accessors.Count;
             gltf.accessors.Add(new glTFAccessor
             {

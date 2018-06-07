@@ -520,7 +520,10 @@ namespace UniGLTF
         {
             var blendShapeVertices = mesh.vertices;
             var blendShpaeNormals = mesh.normals;
+            var useNormal = blendShpaeNormals != null && blendShpaeNormals.Length == blendShapeVertices.Length;
             var blendShapeTangents = mesh.tangents.Select(y => (Vector3)y).ToArray();
+            var useTangent = blendShapeTangents != null && blendShapeTangents.Length == blendShapeVertices.Length;
+
             var frameCount = mesh.GetBlendShapeFrameCount(j);
             mesh.GetBlendShapeFrameVertices(j, frameCount - 1, blendShapeVertices, blendShpaeNormals, null);
             blendShapeVertices = blendShapeVertices.Select(y => y.ReverseZ()).ToArray();
@@ -532,12 +535,18 @@ namespace UniGLTF
                     {
                         return
                         blendShapeVertices[x] != Vector3.zero
-                        || blendShpaeNormals[x] != Vector3.zero
-                        || blendShapeTangents[x] != Vector3.zero
+                        || (useNormal && blendShpaeNormals[x] != Vector3.zero)
+                        || (useTangent && blendShapeTangents[x] != Vector3.zero)
                         ;
                     })
                     .ToArray()
                     ;
+
+                var sparseBytes = (4 + 12 + 12 + 12) * sparseIndices.Length;
+                var fullBytes = (12 + 12 + 12) * blendShapeVertices.Length;
+                Debug.LogFormat("Export sparse: {0}/{1}bytes({2}%)",
+                    sparseBytes, fullBytes, (int)((float)sparseBytes/fullBytes)
+                    );
 
                 var sparseIndicesViewIndex = gltf.ExtendBufferAndGetViewIndex(bufferIndex, sparseIndices);
 
