@@ -509,7 +509,8 @@ namespace UniGLTF
         }
 
         static gltfMorphTarget ExportMorphTarget(glTF gltf, int bufferIndex,
-            Mesh mesh, int j)
+            Mesh mesh, int j,
+            bool useSparseAccessorForMorphTarget)
         {
             var blendShapeVertices = mesh.vertices;
             var blendShpaeNormals = mesh.normals;
@@ -518,26 +519,65 @@ namespace UniGLTF
             mesh.GetBlendShapeFrameVertices(j, frameCount - 1, blendShapeVertices, blendShpaeNormals, null);
             blendShapeVertices = blendShapeVertices.Select(y => y.ReverseZ()).ToArray();
 
-            var blendShapePositionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, blendShapeVertices
-                , glBufferTarget.ARRAY_BUFFER);
-            gltf.accessors[blendShapePositionAccessorIndex].min = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Min(a.x, b.x), Math.Min(a.y, b.y), Mathf.Min(a.z, b.z))).ToArray();
-            gltf.accessors[blendShapePositionAccessorIndex].max = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
-
-            var blendShapeNormalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
-                blendShpaeNormals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-            var blendShapeTangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
-                blendShapeTangents.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
-
-            return new gltfMorphTarget
+            if (useSparseAccessorForMorphTarget)
             {
-                POSITION = blendShapePositionAccessorIndex,
-                NORMAL = blendShapeNormalAccessorIndex,
-                TANGENT = blendShapeTangentAccessorIndex,
-            };
+                var sparseIndices = Enumerable.Range(0, blendShapeVertices.Length)
+                    .Where(x =>
+                    {
+                        return
+                        blendShapeVertices[x] != Vector3.zero
+                        || blendShpaeNormals[x] != Vector3.zero
+                        || blendShapeTangents[x] != Vector3.zero
+                        ;
+                    })
+                    .ToArray()
+                    ;
+                var sparseIndicesViewIndex = gltf.ExtendBufferAndGetViewIndex(bufferIndex, sparseIndices);
+
+                var blendShapePositionAccessorIndex = gltf.ExtendSparseBufferAndGetAccessorIndex(bufferIndex,
+                    blendShapeVertices, sparseIndices, sparseIndicesViewIndex,
+                    glBufferTarget.ARRAY_BUFFER);
+                gltf.accessors[blendShapePositionAccessorIndex].min = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Min(a.x, b.x), Math.Min(a.y, b.y), Mathf.Min(a.z, b.z))).ToArray();
+                gltf.accessors[blendShapePositionAccessorIndex].max = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
+
+                var blendShapeNormalAccessorIndex = gltf.ExtendSparseBufferAndGetAccessorIndex(bufferIndex,
+                    blendShpaeNormals.Select(y => y.ReverseZ()).ToArray(), sparseIndices, sparseIndicesViewIndex,
+                    glBufferTarget.ARRAY_BUFFER);
+                var blendShapeTangentAccessorIndex = gltf.ExtendSparseBufferAndGetAccessorIndex(bufferIndex,
+                    blendShapeTangents.Select(y => y.ReverseZ()).ToArray(), sparseIndices, sparseIndicesViewIndex,
+                    glBufferTarget.ARRAY_BUFFER);
+
+                return new gltfMorphTarget
+                {
+                    POSITION = blendShapePositionAccessorIndex,
+                    NORMAL = blendShapeNormalAccessorIndex,
+                    TANGENT = blendShapeTangentAccessorIndex,
+                };
+            }
+            else
+            {
+                var blendShapePositionAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, blendShapeVertices
+                    , glBufferTarget.ARRAY_BUFFER);
+                gltf.accessors[blendShapePositionAccessorIndex].min = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Min(a.x, b.x), Math.Min(a.y, b.y), Mathf.Min(a.z, b.z))).ToArray();
+                gltf.accessors[blendShapePositionAccessorIndex].max = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
+
+                var blendShapeNormalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
+                    blendShpaeNormals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+                var blendShapeTangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
+                    blendShapeTangents.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+
+                return new gltfMorphTarget
+                {
+                    POSITION = blendShapePositionAccessorIndex,
+                    NORMAL = blendShapeNormalAccessorIndex,
+                    TANGENT = blendShapeTangentAccessorIndex,
+                };
+            }
         }
 
         static void ExportMeshes(glTF gltf, int bufferIndex,
-            List<MeshWithRenderer> unityMeshes, List<Material> unityMaterials)
+            List<MeshWithRenderer> unityMeshes, List<Material> unityMaterials,
+            bool useSparseAccessorForMorphTarget)
         {
             for (int i = 0; i < unityMeshes.Count; ++i)
             {
@@ -551,7 +591,8 @@ namespace UniGLTF
                 for (int j = 0; j < mesh.blendShapeCount; ++j)
                 {
                     var morphTarget = ExportMorphTarget(gltf, bufferIndex,
-                        mesh, j);
+                        mesh, j,
+                        useSparseAccessorForMorphTarget);
 
                     //
                     // first primitive has whole blendShape
@@ -567,7 +608,7 @@ namespace UniGLTF
             }
         }
 
-        public static Exported FromGameObject(glTF gltf, GameObject go)
+        public static Exported FromGameObject(glTF gltf, GameObject go, bool useSparseAccessorForMorphTarget=false)
         {
             var bytesBuffer = new ArrayByteBuffer(new byte[50 * 1024 * 1024]);
             var bufferIndex = gltf.AddBuffer(bytesBuffer);
@@ -603,7 +644,7 @@ namespace UniGLTF
                 })
                 .Where(x => x.Mesh != null)
                 .ToList();
-            ExportMeshes(gltf, bufferIndex, unityMeshes, unityMaterials);
+            ExportMeshes(gltf, bufferIndex, unityMeshes, unityMaterials, useSparseAccessorForMorphTarget);
             #endregion
 
             #region Skins
