@@ -165,6 +165,8 @@ namespace UniGLTF
         {
             var vertexAccessor = accessors[accessorIndex];
 
+            if (vertexAccessor.count <= 0) return new T[] { };
+
             var result = (vertexAccessor.bufferView != -1)
                 ? GetAttrib<T>(vertexAccessor, bufferViews[vertexAccessor.bufferView])
                 : new T[vertexAccessor.count]
@@ -176,6 +178,12 @@ namespace UniGLTF
                 // override sparse values
                 var indices = _GetIndices(bufferViews[sparse.indices.bufferView], sparse.count, sparse.indices.byteOffset, sparse.indices.componentType);
                 var values = GetAttrib<T>(sparse.count, sparse.values.byteOffset, bufferViews[sparse.values.bufferView]);
+
+                if (sparse.count != values.Length)
+                {
+                    int a = 0;
+                }
+
                 var it = indices.GetEnumerator();
                 for(int i=0; i<sparse.count; ++i)
                 {

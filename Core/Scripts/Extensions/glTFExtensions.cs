@@ -151,31 +151,33 @@ namespace UniGLTF
         }
 
         public static int ExtendSparseBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex,
-            T[] array, int[] sparseIndices, int sparseViewIndex,
+            int accessorCount,
+            T[] sparseValues, int[] sparseIndices, int sparseViewIndex,
             glBufferTarget target = glBufferTarget.NONE) where T : struct
         {
             return ExtendSparseBufferAndGetAccessorIndex(gltf, bufferIndex, 
-                new ArraySegment<T>(array), sparseIndices, sparseViewIndex,
+                accessorCount,
+                new ArraySegment<T>(sparseValues), sparseIndices, sparseViewIndex,
                 target);
         }
 
         public static int ExtendSparseBufferAndGetAccessorIndex<T>(this glTF gltf, int bufferIndex,
-            ArraySegment<T> array, int[] sparseIndices, int sparseIndicesViewIndex,
+            int accessorCount,
+            ArraySegment<T> sparseValues, int[] sparseIndices, int sparseIndicesViewIndex,
             glBufferTarget target = glBufferTarget.NONE) where T : struct
         {
-            if (array.Count == 0)
+            if (sparseValues.Count == 0)
             {
                 return -1;
             }
-            var sparseValuesViewIndex = ExtendBufferAndGetViewIndex(gltf, bufferIndex, 
-                sparseIndices.Select(x => array.Array[array.Offset+x]).ToArray(), target);
+            var sparseValuesViewIndex = ExtendBufferAndGetViewIndex(gltf, bufferIndex, sparseValues, target);
             var accessorIndex = gltf.accessors.Count;
             gltf.accessors.Add(new glTFAccessor
             {
                 byteOffset = 0,
                 componentType = GetComponentType<T>(),
                 type = GetAccessorType<T>(),
-                count = array.Count,
+                count = accessorCount,
 
                 sparse = new glTFSparse
                 {
