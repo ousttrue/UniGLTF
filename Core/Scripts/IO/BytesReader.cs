@@ -8,11 +8,12 @@ namespace UniGLTF
     public class BytesReader
     {
         Byte[] m_bytes;
-        int m_pos = 0;
+        int m_pos;
 
-        public BytesReader(Byte[] bytes)
+        public BytesReader(Byte[] bytes, int pos=0)
         {
             m_bytes = bytes;
+            m_pos = pos;
         }
 
         public string ReadString(int count, Encoding encoding)

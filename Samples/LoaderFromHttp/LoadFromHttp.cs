@@ -27,7 +27,7 @@ namespace UniGLTF
             }
             Debug.LogFormat("downloaded {0} bytes", bytes.Length);
 
-            var task = CoroutineUtil.Run(() => ZipArchive.Parse(bytes));
+            var task = CoroutineUtil.Run(() => Zip.ZipArchive.Parse(bytes));
             yield return task;
             if (task.Error != null)
             {
