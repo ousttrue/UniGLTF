@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -27,14 +28,25 @@ namespace UniGLTF
             }
             Debug.LogFormat("downloaded {0} bytes", bytes.Length);
 
-            var task = CoroutineUtil.Run(() => Zip.ZipArchive.Parse(bytes));
+            var task = CoroutineUtil.RunOnThread(() => Zip.ZipArchive.Parse(bytes));
             yield return task;
             if (task.Error != null)
             {
                 throw task.Error;
             }
+            var zipArchive = task.Result;
+            Debug.LogFormat("done {0}", zipArchive);
 
-            Debug.LogFormat("done {0}", task.Result);
+            var gltf = zipArchive.Entries.FirstOrDefault(x => x.FileName.ToLower().EndsWith(".gltf"));
+            if (gltf == null)
+            {
+                Debug.LogWarning("no gltf in archive");
+                yield break;
+            }
+
+            var jsonBytes = zipArchive.Extract(gltf);
+            var json = Encoding.UTF8.GetString(jsonBytes);
+            Debug.LogFormat("gltf json: {0}", json);
         }
     }
 }

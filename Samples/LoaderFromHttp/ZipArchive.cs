@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Linq;
-
+using System.IO.Compression;
 
 /// <summary>
 /// https://en.wikipedia.org/wiki/Zip_(file_format)
@@ -93,13 +93,35 @@ namespace UniGLTF.Zip
         }
     }
 
-    class CentralDirectoryFileHeader
+    abstract class CommonHeader
     {
         public Encoding Encoding = Encoding.UTF8;
         public Byte[] Bytes;
         public int Offset;
+        public abstract int Signature
+        {
+            get;
+        }
+        protected CommonHeader(Byte[] bytes, int offset)
+        {
+            var sig = BitConverter.ToInt32(bytes, offset);
+            if (sig != Signature)
+            {
+                throw new ZipParseException("invalid central directory file signature: " + sig);
+            }
+            Bytes = bytes;
+            Offset = offset;
 
-        public UInt16 VersionMadeBy;
+            var start = offset + 4;
+            using (var ms = new MemoryStream(bytes, start, bytes.Length - start, false))
+            using (var r = new BinaryReader(ms))
+            {
+                ReadBefore(r);
+                Read(r);
+                ReadAfter(r);
+            }
+        }
+
         public UInt16 VersionNeededToExtract;
         public UInt16 GeneralPurposeBitFlag;
         public CompressionMethod CompressionMethod;
@@ -110,18 +132,22 @@ namespace UniGLTF.Zip
         public Int32 UncompressedSize;
         public UInt16 FileNameLength;
         public UInt16 ExtraFieldLength;
-        public UInt16 FileCommentLength;
-        public UInt16 DiskNumberWhereFileStarts;
-        public UInt16 InternalFileAttributes;
-        public Int32 ExternalFileAttributes;
-        public Int32 RelativeOffsetOfLocalFileHeader;
+
+        public abstract int FixedFieldLength {
+            get;
+        }
+
+        public abstract int Length
+        {
+            get;
+        }
 
         public string FileName
         {
             get
             {
                 return Encoding.GetString(Bytes,
-                    Offset + 46,
+                    Offset + FixedFieldLength,
                     FileNameLength);
             }
         }
@@ -131,8 +157,64 @@ namespace UniGLTF.Zip
             get
             {
                 return new ArraySegment<byte>(Bytes,
-                    Offset + 46 + FileNameLength,
+                    Offset + FixedFieldLength + FileNameLength,
                     ExtraFieldLength);
+            }
+        }
+
+        public override string ToString()
+        {
+            return string.Format("<file {0}({1}/{2} {3})>",
+                FileName,
+                CompressedSize,
+                UncompressedSize,
+                CompressionMethod
+                );
+        }
+
+        public abstract void ReadBefore(BinaryReader r);
+
+        public void Read(BinaryReader r)
+        {
+            VersionNeededToExtract = r.ReadUInt16();
+            GeneralPurposeBitFlag = r.ReadUInt16();
+            CompressionMethod = (CompressionMethod)r.ReadUInt16();
+            FileLastModificationTime = r.ReadUInt16();
+            FileLastModificationDate = r.ReadUInt16();
+            CRC32 = r.ReadInt32();
+            CompressedSize = r.ReadInt32();
+            UncompressedSize = r.ReadInt32();
+            FileNameLength = r.ReadUInt16();
+            ExtraFieldLength = r.ReadUInt16();
+        }
+
+        public abstract void ReadAfter(BinaryReader r);
+    }
+
+    class CentralDirectoryFileHeader : CommonHeader
+    {
+        public override int Signature
+        {
+            get
+            {
+                return 0x02014b50;
+            }
+        }
+
+        public CentralDirectoryFileHeader(Byte[] bytes, int offset) : base(bytes, offset) { }
+
+        public UInt16 VersionMadeBy;
+        public UInt16 FileCommentLength;
+        public UInt16 DiskNumberWhereFileStarts;
+        public UInt16 InternalFileAttributes;
+        public Int32 ExternalFileAttributes;
+        public Int32 RelativeOffsetOfLocalFileHeader;
+
+        public override int FixedFieldLength
+        {
+            get
+            {
+                return 46;
             }
         }
 
@@ -146,171 +228,77 @@ namespace UniGLTF.Zip
             }
         }
 
-        public int Length
+        public override int Length
         {
             get
             {
-                return 46 + FileNameLength + ExtraFieldLength + FileCommentLength;
+                return FixedFieldLength + FileNameLength + ExtraFieldLength + FileCommentLength;
             }
         }
 
-        public override string ToString()
+        public override void ReadBefore(BinaryReader r)
         {
-            return string.Format("<file [{0}]{1}({2}/{3} {4})>",
-                RelativeOffsetOfLocalFileHeader,
-                FileName,
-                CompressedSize,
-                UncompressedSize,
-                CompressionMethod
-                );
+            VersionMadeBy = r.ReadUInt16();
         }
 
-        public static CentralDirectoryFileHeader Parse(byte[] bytes, ref int pos)
+        public override void ReadAfter(BinaryReader r)
         {
-            using (var ms = new MemoryStream(bytes, pos, bytes.Length - pos, false))
-            using (var r = new BinaryReader(ms))
-            {
-                var sig = r.ReadInt32();
-                if (sig != 0x02014b50) throw new ZipParseException("invalid central directory file signature: " + sig);
-
-                var f = new CentralDirectoryFileHeader
-                {
-                    Bytes = bytes,
-                    Offset = pos,
-
-                    VersionMadeBy = r.ReadUInt16(),
-                    VersionNeededToExtract = r.ReadUInt16(),
-                    GeneralPurposeBitFlag = r.ReadUInt16(),
-                    CompressionMethod = (CompressionMethod)r.ReadUInt16(),
-                    FileLastModificationTime = r.ReadUInt16(),
-                    FileLastModificationDate = r.ReadUInt16(),
-                    CRC32 = r.ReadInt32(),
-                    CompressedSize = r.ReadInt32(),
-                    UncompressedSize = r.ReadInt32(),
-                    FileNameLength = r.ReadUInt16(),
-                    ExtraFieldLength = r.ReadUInt16(),
-                    FileCommentLength = r.ReadUInt16(),
-                    DiskNumberWhereFileStarts = r.ReadUInt16(),
-                    InternalFileAttributes = r.ReadUInt16(),
-                    ExternalFileAttributes = r.ReadInt32(),
-                    RelativeOffsetOfLocalFileHeader = r.ReadInt32(),
-                };
-
-                pos += f.Length;
-
-                return f;
-            }
+            FileCommentLength = r.ReadUInt16();
+            DiskNumberWhereFileStarts = r.ReadUInt16();
+            InternalFileAttributes = r.ReadUInt16();
+            ExternalFileAttributes = r.ReadInt32();
+            RelativeOffsetOfLocalFileHeader = r.ReadInt32();
         }
     }
 
-    class LocalFileHeader
+    class LocalFileHeader : CommonHeader
     {
-        public short Version
+        public override int FixedFieldLength
         {
-            get;
-            private set;
-        }
-
-        public ushort Flags
-        {
-            get;
-            private set;
-        }
-
-        public CompressionMethod CompressionMethod
-        {
-            get;
-            private set;
-        }
-
-        public ushort LastModFileTime
-        {
-            get;
-            private set;
-        }
-
-        public ushort LastModFileDate
-        {
-            get;
-            private set;
-        }
-
-        public int CRC32
-        {
-            get;
-            private set;
-        }
-
-        public int CompressedSize
-        {
-            get;
-            private set;
-        }
-
-        public int UncompressedSize
-        {
-            get;
-            private set;
-        }
-
-        public ushort FilenameLength
-        {
-            get;
-            private set;
-        }
-
-        public ushort ExtraFieldLength
-        {
-            get;
-            private set;
-        }
-
-        public override string ToString()
-        {
-            return string.Format("<ZIP:{0}:{1} {2}/{3}bytes>", Version, CompressionMethod, CompressedSize, UncompressedSize);
-        }
-
-        public static LocalFileHeader Parse(Byte[] bytes, int offset)
-        {
-            var r = new BytesReader(bytes, offset);
-            var sig = r.ReadInt32();
-            if (sig != 0x04034b50)
+            get
             {
-                throw new ZipParseException("is not zip archive");
+                return 30;
             }
+        }
 
-            var version = r.ReadInt16();
-            var flags = r.ReadUInt16();
-            var method = r.ReadUInt16();
-            r.ReadUInt16();
-            r.ReadUInt16();
-            var crc = r.ReadInt32();
-            var compressedSize = r.ReadInt32();
-            var uncompressedSize = r.ReadInt32();
-            r.ReadUInt16();
-            r.ReadUInt16();
-
-            var localFileHeader=new LocalFileHeader
+        public override int Signature
+        {
+            get
             {
-                Version = version,
-                Flags = flags,
-                CompressionMethod = (CompressionMethod)method,
-                CompressedSize = compressedSize,
-                UncompressedSize = uncompressedSize,
-            };
+                return 0x04034b50;
+            }
+        }
 
-            return localFileHeader;
+        public override int Length
+        {
+            get
+            {
+                return FixedFieldLength + FixedFieldLength + ExtraFieldLength;
+            }
+        }
+
+        public LocalFileHeader(Byte[] bytes, int offset) : base(bytes, offset)
+        {
+        }
+
+        public override void ReadBefore(BinaryReader r)
+        {
+        }
+
+        public override void ReadAfter(BinaryReader r)
+        {
         }
     }
+
 
     class ZipArchive
     {
         public override string ToString()
         {
-            return string.Format("<ZIPArchive\n{0}>", String.Join("", Entries.Select(x => x.ToString()+"\n").ToArray()));
+            return string.Format("<ZIPArchive\n{0}>", String.Join("", Entries.Select(x => x.ToString() + "\n").ToArray()));
         }
 
-        List<CentralDirectoryFileHeader> Entries = new List<CentralDirectoryFileHeader>();
+        public List<CentralDirectoryFileHeader> Entries = new List<CentralDirectoryFileHeader>();
 
         public static ZipArchive Parse(byte[] bytes)
         {
@@ -320,11 +308,31 @@ namespace UniGLTF.Zip
             var pos = eocd.OffsetOfStartOfCentralDirectory;
             for (int i = 0; i < eocd.NumberOfCentralDirectoryRecordsOnThisDisk; ++i)
             {
-                var file = CentralDirectoryFileHeader.Parse(bytes, ref pos);
+                var file = new CentralDirectoryFileHeader(bytes, pos);
                 archive.Entries.Add(file);
+                pos += file.Length;
             }
 
             return archive;
+        }
+
+        public Byte[] Extract(CentralDirectoryFileHeader header)
+        {
+            var local = new LocalFileHeader(header.Bytes, header.RelativeOffsetOfLocalFileHeader);
+            var pos = local.Offset + local.Length;
+
+            var tmp = new Byte[local.CompressedSize];
+            Array.Copy(header.Bytes, pos, tmp, 0, local.CompressedSize);
+
+            //if (header.Bytes[pos] == 0xDA && header.Bytes[pos + 1] == 0x78)
+
+            using (var s = new MemoryStream(header.Bytes, 0, local.CompressedSize, false))
+            using (var deflateStream = new DeflateStream(s, CompressionMode.Decompress))
+            {
+                var dst = new byte[local.UncompressedSize];
+                var readSize = deflateStream.Read(dst, 0, local.CompressedSize); // incompatible
+                return dst;
+            }
         }
     }
 }

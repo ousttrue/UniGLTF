@@ -46,7 +46,7 @@ namespace UniGLTF
 
     static class CoroutineUtil
     {
-        public static ThraedExecutor<T> Run<T>(Func<T> task)
+        public static ThraedExecutor<T> RunOnThread<T>(Func<T> task)
         {
             return new ThraedExecutor<T>(task);
         }
