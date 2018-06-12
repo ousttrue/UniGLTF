@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Collections;
-using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -44,9 +42,17 @@ namespace UniGLTF
                 yield break;
             }
 
+#if false
+            var json = zipArchive.ExtractToString(gltf, Encoding.UTF8);
+#else
             var jsonBytes = zipArchive.Extract(gltf);
             var json = Encoding.UTF8.GetString(jsonBytes);
+#endif
             Debug.LogFormat("gltf json: {0}", json);
+
+            var context = new UniGLTF.ImporterContext();
+            context.ParseJson<glTF>(json, default(ArraySegment<byte>));
+            gltfImporter.Import<glTF>(context);
         }
     }
 }

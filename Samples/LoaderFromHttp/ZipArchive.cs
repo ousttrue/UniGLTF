@@ -328,7 +328,13 @@ namespace UniGLTF.Zip
             using (var s = new MemoryStream(header.Bytes, pos, local.CompressedSize, false))
             using (var deflateStream = new DeflateStream(s, CompressionMode.Decompress))
             {
-                var readSize = deflateStream.Read(dst, 0, local.CompressedSize);
+                int dst_pos = 0;
+                for(int remain=dst.Length; remain>0;)
+                {
+                    var readSize = deflateStream.Read(dst, dst_pos, remain);
+                    dst_pos += readSize;
+                    remain -= readSize;
+                }
             }
 #else
             var size=RawInflate.RawInflateImport.RawInflate(dst, 0, dst.Length,
@@ -336,6 +342,21 @@ namespace UniGLTF.Zip
 #endif
 
             return dst;
+        }
+
+        public string ExtractToString(CentralDirectoryFileHeader header, Encoding encoding)
+        {
+            var local = new LocalFileHeader(header.Bytes, header.RelativeOffsetOfLocalFileHeader);
+            var pos = local.Offset + local.Length;
+
+            var dst = new Byte[local.UncompressedSize];
+
+            using (var s = new MemoryStream(header.Bytes, pos, local.CompressedSize, false))
+            using (var deflateStream = new DeflateStream(s, CompressionMode.Decompress))
+            using(var r = new StreamReader(deflateStream, encoding))
+            {
+                return r.ReadToEnd();
+            }
         }
     }
 }
