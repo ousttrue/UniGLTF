@@ -176,6 +176,11 @@ namespace UniGLTF
                 new SimpleStorage(chunks[1].Bytes));
         }
 
+        public void ParseJson(string json, IStorage storage)
+        {
+            ParseJson<glTF>(json, storage);
+        }
+
         public void ParseJson<T>(string json, IStorage storage) where T : glTF
         {
             Json = json;
