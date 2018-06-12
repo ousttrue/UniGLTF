@@ -76,21 +76,16 @@ namespace UniGLTF
                 m_imageBytes = byteSegment;
                 m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", m_textureIndex);
             }
-            else if (image.uri.StartsWith("data:"))
+            else 
             {
-                //
-                // embeded Base64Encoded
-                //
-                m_imageBytes = new ArraySegment<byte>(UriByteBuffer.ReadEmbeded(image.uri));
-                m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#Base64Embeded", m_textureIndex);
-            }
-            else
-            {
-                //
-                // file from external folder
-                //
                 m_imageBytes = storage.Get(image.uri);
-                m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
+                if (image.uri.StartsWith("data:")) {
+                    m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#Base64Embeded", m_textureIndex);
+                }
+                else
+                {
+                    m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
+                }
             }
         }
 

@@ -51,21 +51,14 @@ namespace UniGLTF
 
         public static Byte[] ReadEmbeded(string uri)
         {
-            if (uri.StartsWith(DataPrefix))
+            var pos = uri.IndexOf(";base64,");
+            if (pos < 0)
             {
-                return Convert.FromBase64String(uri.Substring(DataPrefix.Length));
-            }
-            else if (uri.StartsWith(DataPrefix2))
-            {
-                return Convert.FromBase64String(uri.Substring(DataPrefix2.Length));
-            }
-            else if (uri.StartsWith(DataPrefix3))
-            {
-                return Convert.FromBase64String(uri.Substring(DataPrefix3.Length));
+                throw new NotImplementedException();
             }
             else
             {
-                return null;
+                return Convert.FromBase64String(uri.Substring(pos + 8));
             }
         }
 

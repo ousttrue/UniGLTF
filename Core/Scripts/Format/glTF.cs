@@ -181,7 +181,7 @@ namespace UniGLTF
 
                 if (sparse.count != values.Length)
                 {
-                    int a = 0;
+                    //int a = 0;
                 }
 
                 var it = indices.GetEnumerator();

@@ -100,7 +100,12 @@ namespace UniGLTF
 
         public ArraySegment<byte> Get(string url)
         {
-            throw new NotImplementedException();
+            var bytes =
+                (url.StartsWith("data:"))
+                ? UriByteBuffer.ReadEmbeded(url)
+                : File.ReadAllBytes(Path.Combine(m_root, url))
+                ;
+            return new ArraySegment<byte>(bytes);
         }
     }
 
