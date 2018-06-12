@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Linq;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// https://en.wikipedia.org/wiki/Zip_(file_format)
@@ -133,7 +134,8 @@ namespace UniGLTF.Zip
         public UInt16 FileNameLength;
         public UInt16 ExtraFieldLength;
 
-        public abstract int FixedFieldLength {
+        public abstract int FixedFieldLength
+        {
             get;
         }
 
@@ -273,7 +275,7 @@ namespace UniGLTF.Zip
         {
             get
             {
-                return FixedFieldLength + FixedFieldLength + ExtraFieldLength;
+                return FixedFieldLength + FileNameLength + ExtraFieldLength;
             }
         }
 
@@ -289,7 +291,6 @@ namespace UniGLTF.Zip
         {
         }
     }
-
 
     class ZipArchive
     {
@@ -321,18 +322,20 @@ namespace UniGLTF.Zip
             var local = new LocalFileHeader(header.Bytes, header.RelativeOffsetOfLocalFileHeader);
             var pos = local.Offset + local.Length;
 
-            var tmp = new Byte[local.CompressedSize];
-            Array.Copy(header.Bytes, pos, tmp, 0, local.CompressedSize);
+            var dst = new Byte[local.UncompressedSize];
 
-            //if (header.Bytes[pos] == 0xDA && header.Bytes[pos + 1] == 0x78)
-
-            using (var s = new MemoryStream(header.Bytes, 0, local.CompressedSize, false))
+#if true
+            using (var s = new MemoryStream(header.Bytes, pos, local.CompressedSize, false))
             using (var deflateStream = new DeflateStream(s, CompressionMode.Decompress))
             {
-                var dst = new byte[local.UncompressedSize];
-                var readSize = deflateStream.Read(dst, 0, local.CompressedSize); // incompatible
-                return dst;
+                var readSize = deflateStream.Read(dst, 0, local.CompressedSize);
             }
+#else
+            var size=RawInflate.RawInflateImport.RawInflate(dst, 0, dst.Length,
+                header.Bytes, pos, header.CompressedSize);
+#endif
+
+            return dst;
         }
     }
 }
