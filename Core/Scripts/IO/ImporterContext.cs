@@ -67,9 +67,42 @@ namespace UniGLTF
         }
     }
 
-
     public delegate Material CreateMaterialFunc(ImporterContext ctx, int i);
 
+    public interface IStorage
+    {
+        ArraySegment<Byte> Get(string url);
+    }
+
+    public class SimpleStorage : IStorage
+    {
+        ArraySegment<Byte> m_bytes;
+
+        public SimpleStorage(ArraySegment<Byte> bytes)
+        {
+            m_bytes = bytes;
+        }
+
+        public ArraySegment<byte> Get(string url)
+        {
+            return m_bytes;
+        }
+    }
+
+    public class FileSystemStorage : IStorage
+    {
+        string m_root;
+
+        public FileSystemStorage(string root)
+        {
+            m_root = Path.GetFullPath(root);
+        }
+
+        public ArraySegment<byte> Get(string url)
+        {
+            throw new NotImplementedException();
+        }
+    }
 
     public class ImporterContext
     {
@@ -93,10 +126,16 @@ namespace UniGLTF
         /// JSON source
         /// </summary>
         public String Json;
+
         /// <summary>
         /// GLTF parsed from JSON
         /// </summary>
         public glTF GLTF; // parsed
+
+        /// <summary>
+        /// URI access
+        /// </summary>
+        public IStorage Storage;
         #endregion
 
         public void ParseGlb(Byte[] bytes)
@@ -128,12 +167,14 @@ namespace UniGLTF
             }
 
             var jsonBytes = chunks[0].Bytes;
-            ParseJson<T>(Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count), chunks[1].Bytes);
+            ParseJson<T>(Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count), 
+                new SimpleStorage(chunks[1].Bytes));
         }
 
-        public void ParseJson<T>(string json, ArraySegment<byte> glbBinChunk) where T : glTF
+        public void ParseJson<T>(string json, IStorage storage) where T : glTF
         {
             Json = json;
+            Storage = storage;
 
             GLTF = JsonUtility.FromJson<T>(Json);
             if (GLTF.asset.version != "2.0")
@@ -148,7 +189,7 @@ namespace UniGLTF
             GLTF.baseDir = System.IO.Path.GetDirectoryName(Path);
             foreach (var buffer in GLTF.buffers)
             {
-                buffer.OpenStorage(GLTF.baseDir, glbBinChunk);
+                buffer.OpenStorage(GLTF.baseDir, storage);
             }
         }
 

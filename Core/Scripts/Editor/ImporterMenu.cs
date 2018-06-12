@@ -25,7 +25,7 @@ namespace UniGLTF
                 {
                     case ".gltf":
                         {
-                            context.ParseJson<glTF>(Encoding.UTF8.GetString(bytes), new ArraySegment<byte>());
+                            context.ParseJson<glTF>(Encoding.UTF8.GetString(bytes), new FileSystemStorage(Path.GetDirectoryName(path)));
                             gltfImporter.Import<glTF>(context);
                             context.Root.name = Path.GetFileNameWithoutExtension(path);
                             context.ShowMeshes();

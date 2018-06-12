@@ -292,7 +292,7 @@ namespace UniGLTF.Zip
         }
     }
 
-    class ZipArchive
+    class ZipArchive : IStorage
     {
         public override string ToString()
         {
@@ -329,7 +329,7 @@ namespace UniGLTF.Zip
             using (var deflateStream = new DeflateStream(s, CompressionMode.Decompress))
             {
                 int dst_pos = 0;
-                for(int remain=dst.Length; remain>0;)
+                for (int remain = dst.Length; remain > 0;)
                 {
                     var readSize = deflateStream.Read(dst, dst_pos, remain);
                     dst_pos += readSize;
@@ -353,10 +353,30 @@ namespace UniGLTF.Zip
 
             using (var s = new MemoryStream(header.Bytes, pos, local.CompressedSize, false))
             using (var deflateStream = new DeflateStream(s, CompressionMode.Decompress))
-            using(var r = new StreamReader(deflateStream, encoding))
+            using (var r = new StreamReader(deflateStream, encoding))
             {
                 return r.ReadToEnd();
             }
+        }
+
+        public ArraySegment<byte> Get(string url)
+        {
+            var found = Entries.FirstOrDefault(x => x.FileName == url);
+            if (found == null)
+            {
+                throw new FileNotFoundException("[ZipArchive]" + url);
+            }
+
+            switch (found.CompressionMethod)
+            {
+                case CompressionMethod.Deflated:
+                    return new ArraySegment<byte>(Extract(found));
+
+                case CompressionMethod.Stored:
+                    return new ArraySegment<byte>(found.Bytes, found.RelativeOffsetOfLocalFileHeader, found.CompressedSize);
+            }
+
+            throw new NotImplementedException(found.CompressionMethod.ToString());
         }
     }
 }

@@ -50,19 +50,19 @@ namespace UniGLTF
 #endif
         }
 
-        public void Process()
+        public void Process(IStorage storage)
         {
             if (!IsAsset)
             {
-                GetImageBytes();
+                GetImageBytes(storage);
             }
             GetOrCreateTexture();
             SetSampler();
         }
 
-        Byte[] m_imageBytes;
+        ArraySegment<Byte> m_imageBytes;
         string m_textureName;
-        public void GetImageBytes()
+        public void GetImageBytes(IStorage storage)
         {
             if (IsAsset) return;
 
@@ -73,7 +73,7 @@ namespace UniGLTF
                 // use buffer view (GLB)
                 //
                 var byteSegment = m_gltf.GetViewBytes(image.bufferView);
-                m_imageBytes = byteSegment.ToArray();
+                m_imageBytes = byteSegment;
                 m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", m_textureIndex);
             }
             else if (image.uri.StartsWith("data:"))
@@ -81,7 +81,7 @@ namespace UniGLTF
                 //
                 // embeded Base64Encoded
                 //
-                m_imageBytes = UriByteBuffer.ReadEmbeded(image.uri);
+                m_imageBytes = new ArraySegment<byte>(UriByteBuffer.ReadEmbeded(image.uri));
                 m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#Base64Embeded", m_textureIndex);
             }
             else
@@ -89,9 +89,8 @@ namespace UniGLTF
                 //
                 // file from external folder
                 //
-                var path = Path.Combine(m_gltf.baseDir, image.uri);
-                m_imageBytes = File.ReadAllBytes(path);
-                m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(path);
+                m_imageBytes = storage.Get(image.uri);
+                m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
             }
         }
 
@@ -115,7 +114,14 @@ namespace UniGLTF
                 // texture from image(png etc) bytes
                 //
                 Texture = new Texture2D(2, 2);
-                Texture.LoadImage(m_imageBytes);
+                if (m_imageBytes.Offset == 0 && m_imageBytes.Count == m_imageBytes.Array.Length)
+                {
+                    Texture.LoadImage(m_imageBytes.Array);
+                }
+                else
+                {
+                    Texture.LoadImage(m_imageBytes.ToArray());
+                }
             }
             Texture.name = m_textureName;
         }

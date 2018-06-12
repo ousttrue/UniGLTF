@@ -56,7 +56,7 @@ public class UniGLTFTest
                 exporter.Export();
 
                 // import
-                context.ParseJson<glTF>(gltf.ToJson(), new ArraySegment<byte>());
+                context.ParseJson<glTF>(gltf.ToJson(), new SimpleStorage(new ArraySegment<byte>()));
                 Debug.LogFormat("{0}", context.Json);
                 gltfImporter.Import<glTF>(context);
 
