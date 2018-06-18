@@ -4,27 +4,25 @@ using System.Collections.Generic;
 using System;
 using System.IO;
 
+
 namespace UniGLTF
 {
     public class TextureItem
     {
-        glTF m_gltf;
         int m_textureIndex;
-        glTFImage Image
-        {
-            get { return m_gltf.images[m_gltf.textures[m_textureIndex].source]; }
-        }
 
-        glTFTextureSampler Sampler
+        public Texture2D Texture;
+        string m_assetPath;
+        public bool IsAsset
         {
-            get {
-                var samplerIndex=m_gltf.textures[m_textureIndex].sampler;
-                return m_gltf.GetSampler(samplerIndex);
+            get
+            {
+                return !string.IsNullOrEmpty(m_assetPath);
             }
         }
 
-        public Texture2D Texture;
-        public bool IsAsset { get; private set; }
+        ArraySegment<Byte> m_imageBytes;
+        string m_textureName;
 
         public IEnumerable<Texture2D> GetTexturesForSaveAssets()
         {
@@ -34,45 +32,52 @@ namespace UniGLTF
 
         public TextureItem(glTF gltf, int index)
         {
-            m_gltf = gltf;
             m_textureIndex = index;
 
-            var image = Image;
+            var image = gltf.GetImageFromTextureIndex(m_textureIndex);
 #if UNITY_EDITOR
             if (!string.IsNullOrEmpty(image.uri)
                 && !image.uri.StartsWith("data:")
-                && !string.IsNullOrEmpty(m_gltf.baseDir) 
-                && m_gltf.baseDir.StartsWith("Assets/"))
+                && !string.IsNullOrEmpty(gltf.baseDir) 
+                && gltf.baseDir.StartsWith("Assets/"))
             {
-                IsAsset = true;
+                m_assetPath= Path.Combine(gltf.baseDir, image.uri);
                 m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
             }
 #endif
         }
 
-        public void Process(IStorage storage)
+        public void Process(glTF gltf, IStorage storage)
+        {
+            ProcessOnAnyThread(gltf, storage);
+            ProcessOnMainThread(gltf);
+        }
+
+        public void ProcessOnAnyThread(glTF gltf, IStorage storage)
         {
             if (!IsAsset)
             {
-                GetImageBytes(storage);
+                GetImageBytes(gltf, storage);
             }
-            GetOrCreateTexture();
-            SetSampler();
         }
 
-        ArraySegment<Byte> m_imageBytes;
-        string m_textureName;
-        public void GetImageBytes(IStorage storage)
+        public void ProcessOnMainThread(glTF gltf)
+        {
+            GetOrCreateTexture();
+            SetSampler(gltf);
+        }
+
+        public void GetImageBytes(glTF gltf, IStorage storage)
         {
             if (IsAsset) return;
 
-            var image = Image;
+            var image = gltf.GetImageFromTextureIndex(m_textureIndex);
             if (string.IsNullOrEmpty(image.uri))
             {
                 //
                 // use buffer view (GLB)
                 //
-                var byteSegment = m_gltf.GetViewBytes(image.bufferView);
+                var byteSegment = gltf.GetViewBytes(image.bufferView);
                 m_imageBytes = byteSegment;
                 m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", m_textureIndex);
             }
@@ -91,15 +96,14 @@ namespace UniGLTF
 
         public void GetOrCreateTexture()
         {
-            var image = Image;
 #if UNITY_EDITOR
             if (IsAsset)
             {
                 //
                 // texture from assets
                 //
-                var path = Path.Combine(m_gltf.baseDir, image.uri);
-                UnityEditor.AssetDatabase.ImportAsset(path.ToUnityRelativePath());
+                var path = m_assetPath.ToUnityRelativePath();
+                UnityEditor.AssetDatabase.ImportAsset(path);
                 Texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
             }
             else
@@ -121,9 +125,9 @@ namespace UniGLTF
             Texture.name = m_textureName;
         }
 
-        public void SetSampler()
+        public void SetSampler(glTF gltf)
         {
-            SetSampler(Texture, Sampler);
+            SetSampler(Texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
         }
 
         static void SetSampler(Texture2D texture, glTFTextureSampler sampler)

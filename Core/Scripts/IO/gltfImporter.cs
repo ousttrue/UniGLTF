@@ -156,7 +156,7 @@ namespace UniGLTF
             }
             foreach(var x in ctx.Textures)
             {
-                x.Process(ctx.Storage);
+                x.Process(ctx.GLTF, ctx.Storage);
             }
 
             // materials

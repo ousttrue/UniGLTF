@@ -210,6 +210,17 @@ namespace UniGLTF
 
         public List<glTFImage> images = new List<glTFImage>();
 
+        public glTFImage GetImageFromTextureIndex(int textureIndex)
+        {
+            return images[textures[textureIndex].source];
+        }
+
+        public glTFTextureSampler GetSamplerFromTextureIndex(int textureIndex)
+        {
+            var samplerIndex = textures[textureIndex].sampler;
+            return GetSampler(samplerIndex);
+        }
+
         public List<glTFMaterial> materials = new List<glTFMaterial>();
         public string GetUniqueMaterialName(int index)
         {
