@@ -13,6 +13,10 @@ namespace UniGLTF
     {
         ArraySegment<Byte> m_bytes;
 
+        public SimpleStorage():this(new ArraySegment<byte>())
+        {
+        }
+
         public SimpleStorage(ArraySegment<Byte> bytes)
         {
             m_bytes = bytes;
