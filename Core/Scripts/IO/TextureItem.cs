@@ -21,7 +21,23 @@ namespace UniGLTF
             }
         }
 
-        ArraySegment<Byte> m_imageBytes;
+        Byte[] m_imageBytes;
+        static Byte[] ToArray(ArraySegment<byte> bytes)
+        {
+            if (bytes.Array == null)
+            {
+                return new byte[] { };
+            }
+            else if(bytes.Offset==0 && bytes.Count == bytes.Array.Length)
+            {
+                return bytes.Array;
+            }
+            else
+            {
+                return bytes.Array.Skip(bytes.Offset).Take(bytes.Count).ToArray();
+            }
+        }
+
         string m_textureName;
 
         public IEnumerable<Texture2D> GetTexturesForSaveAssets()
@@ -78,12 +94,12 @@ namespace UniGLTF
                 // use buffer view (GLB)
                 //
                 var byteSegment = gltf.GetViewBytes(image.bufferView);
-                m_imageBytes = byteSegment;
+                m_imageBytes = ToArray(byteSegment);
                 m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", m_textureIndex);
             }
             else 
             {
-                m_imageBytes = storage.Get(image.uri);
+                m_imageBytes = ToArray(storage.Get(image.uri));
                 if (image.uri.StartsWith("data:")) {
                     m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#Base64Embeded", m_textureIndex);
                 }
@@ -113,13 +129,9 @@ namespace UniGLTF
                 // texture from image(png etc) bytes
                 //
                 Texture = new Texture2D(2, 2);
-                if (m_imageBytes.Offset == 0 && m_imageBytes.Count == m_imageBytes.Array.Length)
+                if (m_imageBytes != null)
                 {
-                    Texture.LoadImage(m_imageBytes.Array);
-                }
-                else
-                {
-                    Texture.LoadImage(m_imageBytes.ToArray());
+                    Texture.LoadImage(m_imageBytes);
                 }
             }
             Texture.name = m_textureName;
