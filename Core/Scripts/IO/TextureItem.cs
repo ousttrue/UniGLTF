@@ -276,7 +276,7 @@ namespace UniGLTF
         }
 
 
-        public static Texture2D CopyTexture(Texture2D src)
+        public static Texture2D CopyTexture(Texture src)
         {
             Texture2D dst = null;
             var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);

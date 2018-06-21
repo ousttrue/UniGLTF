@@ -82,7 +82,7 @@ namespace UniGLTF
             private set;
         }
 
-        public List<Texture2D> Textures
+        public List<Texture> Textures
         {
             get;
             private set;
@@ -167,44 +167,15 @@ namespace UniGLTF
             public string Path;
             public string Mime;
 
-            public BytesWithPath(Texture2D texture)
+            public BytesWithPath(Texture texture)
             {
-                //var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
-                /*
-                if (!String.IsNullOrEmpty(path))
-                {
-                    Bytes = File.ReadAllBytes(path);
-                    Path = path;
-                    var ext = System.IO.Path.GetExtension(Path).ToLower();
-                    switch (ext)
-                    {
-                        case ".png":
-                            Mime = "image/png";
-                            break;
-
-                        case ".jpg":
-                            Mime = "image/jpeg";
-                            break;
-
-                        case ".tga":
-                            Mime = "image/tga";
-                            break;
-
-                        default:
-                            throw new NotImplementedException();
-                    }
-                }
-                else
-                */
-                {
-                    Path = "";
-                    Bytes = TextureItem.CopyTexture(texture).EncodeToPNG();
-                    Mime = "image/png";
-                }
+                Path = "";
+                Bytes = TextureItem.CopyTexture(texture).EncodeToPNG();
+                Mime = "image/png";
             }
         }
 
-        public static glTFMaterial ExportMaterial(Material m, List<Texture2D> textures)
+        public static glTFMaterial ExportMaterial(Material m, List<Texture> textures)
         {
             var material = new glTFMaterial
             {
@@ -221,7 +192,7 @@ namespace UniGLTF
             {
                 material.pbrMetallicRoughness.baseColorTexture = new GltfTextureRef
                 {
-                    index = textures.IndexOf((Texture2D)m.mainTexture),
+                    index = textures.IndexOf(m.mainTexture),
                 };
             }
 
@@ -376,10 +347,10 @@ namespace UniGLTF
             public List<MeshWithRenderer> Meshes;
             public List<Transform> Nodes;
             public List<Material> Materials;
-            public List<Texture2D> Textures;
+            public List<Texture> Textures;
         }
 
-        public static int ExportTexture(glTF gltf, int bufferIndex, Texture2D texture)
+        public static int ExportTexture(glTF gltf, int bufferIndex, Texture texture)
         {
             var bytesWithPath = new BytesWithPath(texture); ;
 
