@@ -206,7 +206,7 @@ namespace UniGLTF
                     mesh.name = string.Format("UniGLTF import#{0}", i);
                 }
                 var originalName = mesh.name;
-                for (int j = 1; ctx.Materials.Any(x => x.name == mesh.name); ++j)
+                for (int j = 1; ctx.Meshes.Any(x => x.Mesh.name == mesh.name); ++j)
                 {
                     mesh.name = string.Format("{0}({1})", originalName, j);
                 }
