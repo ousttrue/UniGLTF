@@ -55,7 +55,7 @@ namespace UniGLTF
             if (!string.IsNullOrEmpty(image.uri)
                 && !image.uri.StartsWith("data:")
                 && !string.IsNullOrEmpty(gltf.baseDir) 
-                && gltf.baseDir.StartsWith("Assets/"))
+                && gltf.baseDir.StartsWith("Assets"))
             {
                 m_assetPath= Path.Combine(gltf.baseDir, image.uri);
                 m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
