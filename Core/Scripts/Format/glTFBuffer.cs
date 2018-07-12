@@ -144,8 +144,13 @@ namespace UniGLTF
         public int count;
         public float[] max;
         public float[] min;
-
+        public bool normalized;
         public glTFSparse sparse;
+
+        // empty schemas
+        public object name;
+        public object extensions;
+        public object extras;
 
         protected override void SerializeMembers(JsonFormatter f)
         {
