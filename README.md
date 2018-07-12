@@ -9,6 +9,8 @@
 ![duck_prefab](doc/duck_prefab.png)
 ![animation](doc/animation.gif)
 
+* [Samples](https://github.com/ousttrue/UniGLTF_Test)
+
 ## License
 
 * [MIT license](LICENSE)
@@ -122,6 +124,10 @@ Exclude SciFiHelmet(70074vertices), all model can import.
 [Mesh.IndexFormat(from 2017.3)](https://docs.unity3d.com/ScriptReference/Mesh-indexFormat.html) allows a huge mesh, Otherwise mesh division required.
 
 ![SciFiHelmet](doc/SciFiHelmet.png)
+
+### Can load gltf in zip archive
+
+* https://github.com/ousttrue/UniGLTF_Test/blob/master/Assets/UniGLTF.Samples/LoaderFromHttp/LoadFromHttp.cs
 
 ## Exporter
 
