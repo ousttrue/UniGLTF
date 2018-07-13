@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 
 namespace UniGLTF
@@ -10,7 +9,11 @@ namespace UniGLTF
         public int index = -1;
         public int texCoord;
         public float scale;
-        public float strength;
+        //public float strength;
+
+        // empty schemas
+        public object extensions;
+        public object extras;
 
         public string ToJson()
         {
@@ -25,14 +28,29 @@ namespace UniGLTF
         }
     }
 
+
     [Serializable]
-    public class GltfPbrMetallicRoughness: IJsonSerializable
+    public class glTFMaterialNormalTextureInfo: GltfTextureRef
+    {
+    }
+
+    [Serializable]
+    public class glTFMaterialOcclusionTextureInfo : GltfTextureRef
+    {
+    }
+
+    [Serializable]
+    public class glTFPbrMetallicRoughness: IJsonSerializable
     {
         public GltfTextureRef baseColorTexture = null;
         public float[] baseColorFactor;
         public GltfTextureRef metallicRoughnessTexture = null;
         public float metallicFactor;
         public float roughnessFactor;
+
+        // empty schemas
+        public object extensions;
+        public object extras;
 
         public string ToJson()
         {
@@ -57,13 +75,14 @@ namespace UniGLTF
         }
     }
 
+
     [Serializable]
     public class glTFMaterial: IJsonSerializable
     {
         public string name;
-        public GltfPbrMetallicRoughness pbrMetallicRoughness;
-        public GltfTextureRef normalTexture = null;
-        public GltfTextureRef occlusionTexture = null;
+        public glTFPbrMetallicRoughness pbrMetallicRoughness;
+        public glTFMaterialNormalTextureInfo normalTexture = null;
+        public glTFMaterialOcclusionTextureInfo occlusionTexture = null;
         public GltfTextureRef emissiveTexture = null;
         public float[] emissiveFactor;
 

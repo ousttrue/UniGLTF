@@ -11,6 +11,10 @@ namespace UniGLTF
         public int node;
         public string path;
 
+        // empty schemas
+        public object extensions;
+        public object extras;
+
         public string ToJson()
         {
             var f = new JsonFormatter();
@@ -47,6 +51,10 @@ namespace UniGLTF
         public int sampler = -1;
         public glTFAnimationTarget target;
 
+        // empty schemas
+        public object extensions;
+        public object extras;
+
         public string ToJson()
         {
             var f = new JsonFormatter();
@@ -66,6 +74,10 @@ namespace UniGLTF
         public int input = -1;
         public string interpolation;
         public int output = -1;
+
+        // empty schemas
+        public object extensions;
+        public object extras;
 
         public string ToJson()
         {
@@ -87,6 +99,10 @@ namespace UniGLTF
         public string name = "";
         public List<glTFAnimationChannel> channels = new List<glTFAnimationChannel>();
         public List<glTFAnimationSampler> samplers = new List<glTFAnimationSampler>();
+
+        // empty schemas
+        public object extensions;
+        public object extras;
 
         public string ToJson()
         {

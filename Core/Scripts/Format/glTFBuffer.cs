@@ -32,6 +32,11 @@ namespace UniGLTF
         public string uri;
         public int byteLength;
 
+        // empty schemas
+        public object extensions;
+        public object extras;
+        public object name;
+
         public glTFBufferView Append<T>(T[] array, glBufferTarget target) where T : struct
         {
             return Append(new ArraySegment<T>(array), target);
@@ -71,6 +76,11 @@ namespace UniGLTF
         public int byteStride;
         public glBufferTarget target;
 
+        // empty schemas
+        public object extensions;
+        public object extras;
+        public object name;
+
         public string ToJson()
         {
             var f = new JsonFormatter();
@@ -98,6 +108,10 @@ namespace UniGLTF
         public int byteOffset;
         public glComponentType componentType;
 
+        // empty schemas
+        public object extensions;
+        public object extras;
+
         protected override void SerializeMembers(JsonFormatter f)
         {
             f.KeyValue(() => bufferView);
@@ -112,6 +126,10 @@ namespace UniGLTF
         public int bufferView = -1;
         public int byteOffset;
 
+        // empty schemas
+        public object extensions;
+        public object extras;
+
         protected override void SerializeMembers(JsonFormatter f)
         {
             f.KeyValue(() => bufferView);
@@ -125,6 +143,10 @@ namespace UniGLTF
         public int count;
         public glTFSparseIndices indices;
         public glTFSparseValues values;
+
+        // empty schemas
+        public object extensions;
+        public object extras;
 
         protected override void SerializeMembers(JsonFormatter f)
         {

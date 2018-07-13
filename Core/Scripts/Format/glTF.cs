@@ -244,6 +244,12 @@ namespace UniGLTF
         }
         public List<glTFAnimation> animations = new List<glTFAnimation>();
 
+        public object cameras;
+        public object extensionsUsed;
+        public object extensionsRequired;
+        public object extensions;
+        public object extras;
+
         public override string ToString()
         {
             return string.Format("{0}", asset);

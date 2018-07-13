@@ -180,7 +180,7 @@ namespace UniGLTF
             var material = new glTFMaterial
             {
                 name = m.name,
-                pbrMetallicRoughness = new GltfPbrMetallicRoughness(),
+                pbrMetallicRoughness = new glTFPbrMetallicRoughness(),
             };
 
             if (m.HasProperty("_Color"))

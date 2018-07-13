@@ -29,6 +29,10 @@ namespace UniGLTF
         public int bufferView;
         public string mimeType;
 
+        // empty schemas
+        public object extensions;
+        public object extras;
+
         protected override void SerializeMembers(JsonFormatter f)
         {
             f.KeyValue(() => name);

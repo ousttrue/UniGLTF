@@ -4,10 +4,16 @@
 namespace UniGLTF
 {
     [Serializable]
-    public struct glTFAssets : IJsonSerializable
+    public class glTFAssets : IJsonSerializable
     {
         public string generator;
         public string version;
+        public string copyright;
+        public string minVersion;
+
+        // empty schemas
+        public object extensions;
+        public object extras;
 
         public string ToJson()
         {
