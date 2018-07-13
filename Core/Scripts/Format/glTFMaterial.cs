@@ -4,11 +4,10 @@
 namespace UniGLTF
 {
     [Serializable]
-    public class GltfTextureRef: IJsonSerializable
+    public class glTFTextureInfo: IJsonSerializable
     {
         public int index = -1;
         public int texCoord;
-        public float scale;
         //public float strength;
 
         // empty schemas
@@ -30,21 +29,23 @@ namespace UniGLTF
 
 
     [Serializable]
-    public class glTFMaterialNormalTextureInfo: GltfTextureRef
+    public class glTFMaterialNormalTextureInfo: glTFTextureInfo
     {
+        public float scale;
     }
 
     [Serializable]
-    public class glTFMaterialOcclusionTextureInfo : GltfTextureRef
+    public class glTFMaterialOcclusionTextureInfo : glTFTextureInfo
     {
+        public float scale;
     }
 
     [Serializable]
     public class glTFPbrMetallicRoughness: IJsonSerializable
     {
-        public GltfTextureRef baseColorTexture = null;
+        public glTFTextureInfo baseColorTexture = null;
         public float[] baseColorFactor;
-        public GltfTextureRef metallicRoughnessTexture = null;
+        public glTFTextureInfo metallicRoughnessTexture = null;
         public float metallicFactor;
         public float roughnessFactor;
 
@@ -83,8 +84,15 @@ namespace UniGLTF
         public glTFPbrMetallicRoughness pbrMetallicRoughness;
         public glTFMaterialNormalTextureInfo normalTexture = null;
         public glTFMaterialOcclusionTextureInfo occlusionTexture = null;
-        public GltfTextureRef emissiveTexture = null;
+        public glTFTextureInfo emissiveTexture = null;
         public float[] emissiveFactor;
+        public string alphaMode;
+        public float alphaCutoff=0.5f;
+        public bool doubleSided;
+
+        // empty schemas
+        public object extensions;
+        public object extras;
 
         public string ToJson()
         {

@@ -10,6 +10,11 @@ namespace UniGLTF
         public int[] joints;
         public int skeleton;
 
+        // empty schemas
+        public object extensions;
+        public object extras;
+        public object name;
+
         public string ToJson()
         {
             var f = new JsonFormatter();

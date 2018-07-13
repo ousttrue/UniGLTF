@@ -37,6 +37,10 @@ namespace UniGLTF
     public class gltfScene : JsonSerializableBase
     {
         public int[] nodes;
+        // empty schemas
+        public object extensions;
+        public object extras;
+        public object name;
 
         protected override void SerializeMembers(JsonFormatter f)
         {

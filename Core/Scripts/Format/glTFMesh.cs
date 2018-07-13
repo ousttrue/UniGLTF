@@ -156,6 +156,10 @@ namespace UniGLTF
         public List<glTFPrimitives> primitives;
         public float[] weights;
 
+        // empty schemas
+        public object extensions;
+        public object extras;
+
         public glTFMesh(string _name)
         {
             name = _name;

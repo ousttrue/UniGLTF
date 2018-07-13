@@ -28,6 +28,10 @@ namespace UniGLTF
         public int skin = -1;
         public int camera = -1;
 
+        public float[] weights;
+
+        // empty schemas
+        public object extensions;
         public glTFNode_extra_rootBone extras = new glTFNode_extra_rootBone();
 
         protected override void SerializeMembers(JsonFormatter f)

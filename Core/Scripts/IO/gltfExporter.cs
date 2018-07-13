@@ -190,7 +190,7 @@ namespace UniGLTF
 
             if (m.mainTexture != null)
             {
-                material.pbrMetallicRoughness.baseColorTexture = new GltfTextureRef
+                material.pbrMetallicRoughness.baseColorTexture = new glTFTextureInfo
                 {
                     index = textures.IndexOf(m.mainTexture),
                 };

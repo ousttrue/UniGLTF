@@ -11,6 +11,11 @@ namespace UniGLTF
         public glWrap wrapS = glWrap.REPEAT;
         public glWrap wrapT = glWrap.REPEAT;
 
+        // empty schemas
+        public object extensions;
+        public object extras;
+        public object name;
+
         protected override void SerializeMembers(JsonFormatter f)
         {
             f.Key("magFilter"); f.Value((int)magFilter);
@@ -53,6 +58,11 @@ namespace UniGLTF
     {
         public int sampler;
         public int source;
+
+        // empty schemas
+        public object extensions;
+        public object extras;
+        public object name;
 
         protected override void SerializeMembers(JsonFormatter f)
         {
