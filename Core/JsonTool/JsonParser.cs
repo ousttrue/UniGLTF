@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using System.Globalization;
 
 /// <summary>
 /// reference: http://www.json.org/index.html
@@ -325,12 +326,12 @@ namespace UniGLTF
         public float GetSingle()
         {
             if (JsonValueType != JsonValueType.Number) throw new JsonValueException("is not number: " + m_segment);
-            return float.Parse(m_segment.ToString());
+            return float.Parse(m_segment.ToString(), CultureInfo.InvariantCulture);
         }
         public double GetDouble()
         {
             if (JsonValueType != JsonValueType.Number) throw new JsonValueException("is not number: " + m_segment);
-            return double.Parse(m_segment.ToString());
+            return double.Parse(m_segment.ToString(), CultureInfo.InvariantCulture);
         }
         public string GetString()
         {

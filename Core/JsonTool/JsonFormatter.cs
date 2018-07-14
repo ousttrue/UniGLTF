@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using System.Linq.Expressions;
+using System.Globalization;
 
 namespace UniGLTF
 {
@@ -239,12 +240,12 @@ namespace UniGLTF
         public void Value(Single x)
         {
             CommaCheck();
-            m_w.Write(x.ToString("R"));
+            m_w.Write(x.ToString("R", CultureInfo.InvariantCulture));
         }
         public void Value(Double x)
         {
             CommaCheck();
-            m_w.Write(x.ToString("R"));
+            m_w.Write(x.ToString("R", CultureInfo.InvariantCulture));
         }
         public void Value(Vector3 v)
         {
