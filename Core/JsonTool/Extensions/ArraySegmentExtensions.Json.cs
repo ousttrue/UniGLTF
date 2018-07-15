@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if false
+using System;
 
 
 namespace UniGLTF
@@ -19,3 +20,4 @@ namespace UniGLTF
         }
     }
 }
+#endif

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿#if false
+using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -22,3 +23,4 @@ namespace UniGLTF
         }
     }
 }
+#endif

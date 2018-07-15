@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿#if false
+using NUnit.Framework;
 using System.Linq;
 
 
@@ -307,3 +308,4 @@ namespace UniGLTF
         }
     }
 }
+#endif
