@@ -46,6 +46,10 @@ Unity Hierarchy <=============> GLTF
             AnimationClip(legacy) animations
 ```
 
+### WIP
+
+Replace json backend to [UniJSON](https://github.com/ousttrue/UniJSON)
+
 ### BlendShapeName
 
 * json.meshes[i].primitives[j].extras.targetNames[k]
