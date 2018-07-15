@@ -113,6 +113,7 @@ namespace UniGLTF
     [Serializable]
     public class glTFPrimitives : IJsonSerializable
     {
+        [JsonSchema(EnumValues = new object[] { 0, 1, 2, 3, 4, 5, 6 })]
         public int mode;
 
         [JsonSchema(Minimum = 0)]
@@ -132,7 +133,8 @@ namespace UniGLTF
         [JsonSchema(Minimum = 0)]
         public int material;
 
-        [JsonSchema(MinItems =1)]
+        [JsonSchema(MinItems = 1)]
+        [ItemJsonSchema(Empty = true)]
         public List<gltfMorphTarget> targets = new List<gltfMorphTarget>();
 
         public extrasTargetNames extras = new extrasTargetNames();

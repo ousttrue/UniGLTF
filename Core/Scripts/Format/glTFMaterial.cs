@@ -50,6 +50,7 @@ namespace UniGLTF
         public glTFTextureInfo baseColorTexture = null;
 
         [JsonSchema(MinItems = 4, MaxItems = 4)]
+        [ItemJsonSchema(Minimum = 0.0, Maximum = 1.0)]
         public float[] baseColorFactor;
 
         public glTFTextureInfo metallicRoughnessTexture = null;
@@ -100,8 +101,10 @@ namespace UniGLTF
         public glTFTextureInfo emissiveTexture = null;
 
         [JsonSchema(MinItems = 3, MaxItems = 3)]
+        [ItemJsonSchema(Minimum = 0.0, Maximum = 1.0)]
         public float[] emissiveFactor;
 
+        [JsonSchema(EnumValues = new object[] { "OPAQUE", "MASK", "BLEND" })]
         public string alphaMode;
 
         [JsonSchema(Minimum = 0.0)]

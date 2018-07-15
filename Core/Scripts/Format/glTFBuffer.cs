@@ -84,7 +84,7 @@ namespace UniGLTF
         [JsonSchema(Minimum = 4, Maximum = 252, MultipleOf = 4)]
         public int byteStride;
 
-        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
+        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt, EnumExcludes = new object[] { glBufferTarget.NONE })]
         public glBufferTarget target;
 
         // empty schemas
@@ -121,7 +121,7 @@ namespace UniGLTF
         [JsonSchema(Minimum = 0)]
         public int byteOffset;
 
-        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
+        [JsonSchema(EnumValues = new object[] { 5121, 5123, 5125 })]
         public glComponentType componentType;
 
         // empty schemas
@@ -186,6 +186,7 @@ namespace UniGLTF
         [JsonSchema(Minimum = 0)]
         public int byteOffset;
 
+        [JsonSchema(EnumValues = new object[] { "SCALAR", "VEC2", "VEC3", "VEC4", "MAT2", "MAT3", "MAT4" })]
         public string type;
 
         [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]

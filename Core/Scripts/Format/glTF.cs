@@ -23,6 +23,19 @@ namespace UniGLTF
     }
 
     [Serializable]
+    public class glTFProperty
+    {
+        public object extensions;
+        public object extras;
+    }
+
+    [Serializable]
+    public class glTFChildOfRootProperty : glTFProperty
+    {
+        public string name;
+    }
+
+    [Serializable]
     public class extraName : JsonSerializableBase
     {
         public string name;
@@ -36,7 +49,8 @@ namespace UniGLTF
     [Serializable]
     public class gltfScene : JsonSerializableBase
     {
-        [JsonSchema(MinItems =1)]
+        [JsonSchema(MinItems = 1)]
+        [ItemJsonSchema(Minimum = 0)]
         public int[] nodes;
 
         // empty schemas
@@ -47,15 +61,6 @@ namespace UniGLTF
         protected override void SerializeMembers(JsonFormatter f)
         {
             f.KeyValue(() => nodes);
-        }
-    }
-
-    [Serializable]
-    public class glTFCamera : JsonSerializableBase
-    {
-        protected override void SerializeMembers(JsonFormatter f)
-        {
-            //throw new NotImplementedException();
         }
     }
 

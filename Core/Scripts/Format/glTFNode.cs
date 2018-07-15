@@ -20,31 +20,33 @@ namespace UniGLTF
     {
         public string name = "";
 
-        [JsonSchema(MinItems =1)]
+        [JsonSchema(MinItems = 1)]
+        [ItemJsonSchema(Minimum = 0)]
         public int[] children;
 
-        [JsonSchema(MinItems =16, MaxItems =16)]
+        [JsonSchema(MinItems = 16, MaxItems = 16)]
         public float[] matrix;
 
         [JsonSchema(MinItems = 3, MaxItems = 3)]
         public float[] translation;
 
         [JsonSchema(MinItems = 4, MaxItems = 4)]
+        [ItemJsonSchema(Minimum = -1.0, Maximum = 1.0)]
         public float[] rotation;
 
         [JsonSchema(MinItems = 3, MaxItems = 3)]
         public float[] scale;
 
-        [JsonSchema(Minimum =0)]
+        [JsonSchema(Minimum = 0)]
         public int mesh = -1;
 
-        [JsonSchema(Minimum =0)]
+        [JsonSchema(Minimum = 0)]
         public int skin = -1;
 
         [JsonSchema(Minimum = 0)]
         public int camera = -1;
 
-        [JsonSchema(MinItems =1)]
+        [JsonSchema(MinItems = 1)]
         public float[] weights;
 
         // empty schemas

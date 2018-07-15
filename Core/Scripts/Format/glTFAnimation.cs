@@ -10,6 +10,8 @@ namespace UniGLTF
     {
         [JsonSchema(Minimum = 0)]
         public int node;
+
+        [JsonSchema(EnumValues = new object[] { "translation", "rotation", "scale", "weights" })]
         public string path;
 
         // empty schemas
@@ -78,6 +80,7 @@ namespace UniGLTF
         [JsonSchema(Minimum = 0)]
         public int input = -1;
 
+        [JsonSchema(EnumValues = new object[] { "LINEAR", "STEP", "CUBICSPLINE" })]
         public string interpolation;
 
         [JsonSchema(Minimum = 0)]

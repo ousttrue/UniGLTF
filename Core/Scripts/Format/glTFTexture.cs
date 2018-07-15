@@ -6,16 +6,26 @@ namespace UniGLTF
     [Serializable]
     public class glTFTextureSampler : JsonSerializableBase
     {
-        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
+        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt,
+            EnumExcludes = new object[] {
+                glFilter.NONE,
+                glFilter.NEAREST_MIPMAP_NEAREST,
+                glFilter.LINEAR_MIPMAP_NEAREST,
+                glFilter.NEAREST_MIPMAP_LINEAR,
+                glFilter.LINEAR_MIPMAP_LINEAR,
+            })]
         public glFilter magFilter = glFilter.NEAREST;
 
-        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
+        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt,
+            EnumExcludes = new object[] { glFilter.NONE })]
         public glFilter minFilter = glFilter.NEAREST;
 
-        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
+        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt,
+            EnumExcludes = new object[] { glWrap.NONE })]
         public glWrap wrapS = glWrap.REPEAT;
 
-        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
+        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt,
+            EnumExcludes = new object[] { glWrap.NONE })]
         public glWrap wrapT = glWrap.REPEAT;
 
         // empty schemas
@@ -41,6 +51,7 @@ namespace UniGLTF
         [JsonSchema(Minimum = 0)]
         public int bufferView;
 
+        [JsonSchema(EnumValues = new object[] { "image/jpeg", "image/png" })]
         public string mimeType;
 
         // empty schemas
