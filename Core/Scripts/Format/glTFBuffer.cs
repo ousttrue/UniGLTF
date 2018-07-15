@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-
+using UniJSON;
 
 namespace UniGLTF
 {
@@ -30,12 +30,14 @@ namespace UniGLTF
         }
 
         public string uri;
+
+        [JsonSchema(Minimum = 1)]
         public int byteLength;
 
         // empty schemas
         public object extensions;
         public object extras;
-        public object name;
+        public string name;
 
         public glTFBufferView Append<T>(T[] array, glBufferTarget target) where T : struct
         {
@@ -70,16 +72,25 @@ namespace UniGLTF
     [Serializable]
     public class glTFBufferView : IJsonSerializable
     {
+        [JsonSchema(Minimum = 0)]
         public int buffer;
+
+        [JsonSchema(Minimum = 0)]
         public int byteOffset;
+
+        [JsonSchema(Minimum = 1)]
         public int byteLength;
+
+        [JsonSchema(Minimum = 4, Maximum = 252, MultipleOf = 4)]
         public int byteStride;
+
+        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
         public glBufferTarget target;
 
         // empty schemas
         public object extensions;
         public object extras;
-        public object name;
+        public string name;
 
         public string ToJson()
         {
@@ -104,8 +115,13 @@ namespace UniGLTF
     [Serializable]
     public class glTFSparseIndices : JsonSerializableBase
     {
+        [JsonSchema(Minimum = 0)]
         public int bufferView = -1;
+
+        [JsonSchema(Minimum = 0)]
         public int byteOffset;
+
+        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
         public glComponentType componentType;
 
         // empty schemas
@@ -123,7 +139,10 @@ namespace UniGLTF
     [Serializable]
     public class glTFSparseValues : JsonSerializableBase
     {
+        [JsonSchema(Minimum = 0)]
         public int bufferView = -1;
+
+        [JsonSchema(Minimum = 0)]
         public int byteOffset;
 
         // empty schemas
@@ -140,7 +159,9 @@ namespace UniGLTF
     [Serializable]
     public class glTFSparse : JsonSerializableBase
     {
+        [JsonSchema(Minimum = 1)]
         public int count;
+
         public glTFSparseIndices indices;
         public glTFSparseValues values;
 
@@ -159,19 +180,34 @@ namespace UniGLTF
     [Serializable]
     public class glTFAccessor : JsonSerializableBase
     {
+        [JsonSchema(Minimum = 0)]
         public int bufferView = -1;
+
+        [JsonSchema(Minimum = 0)]
         public int byteOffset;
+
         public string type;
+
+        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
         public glComponentType componentType;
+
+        [JsonSchema(Minimum = 1)]
         public int count;
+
+        [JsonSchema(MinItems = 1, MaxItems = 16)]
         public float[] max;
+
+        [JsonSchema(MinItems = 1, MaxItems = 16)]
         public float[] min;
+
         public bool normalized;
         public glTFSparse sparse;
 
         // empty schemas
-        public object name;
+        public string name;
+
         public object extensions;
+
         public object extras;
 
         protected override void SerializeMembers(JsonFormatter f)

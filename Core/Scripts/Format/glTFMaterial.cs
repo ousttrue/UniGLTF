@@ -1,12 +1,15 @@
 ﻿using System;
-
+using UniJSON;
 
 namespace UniGLTF
 {
     [Serializable]
-    public class glTFTextureInfo: IJsonSerializable
+    public class glTFTextureInfo : IJsonSerializable
     {
+        [JsonSchema(Minimum = 0)]
         public int index = -1;
+
+        [JsonSchema(Minimum = 0)]
         public int texCoord;
         //public float strength;
 
@@ -29,7 +32,7 @@ namespace UniGLTF
 
 
     [Serializable]
-    public class glTFMaterialNormalTextureInfo: glTFTextureInfo
+    public class glTFMaterialNormalTextureInfo : glTFTextureInfo
     {
         public float scale;
     }
@@ -37,16 +40,24 @@ namespace UniGLTF
     [Serializable]
     public class glTFMaterialOcclusionTextureInfo : glTFTextureInfo
     {
-        public float scale;
+        [JsonSchema(Minimum = 0.0, Maximum = 1.0)]
+        public float strength;
     }
 
     [Serializable]
-    public class glTFPbrMetallicRoughness: IJsonSerializable
+    public class glTFPbrMetallicRoughness : IJsonSerializable
     {
         public glTFTextureInfo baseColorTexture = null;
+
+        [JsonSchema(MinItems = 4, MaxItems = 4)]
         public float[] baseColorFactor;
+
         public glTFTextureInfo metallicRoughnessTexture = null;
+
+        [JsonSchema(Minimum = 0.0, Maximum = 1.0)]
         public float metallicFactor;
+
+        [JsonSchema(Minimum = 0.0, Maximum = 1.0)]
         public float roughnessFactor;
 
         // empty schemas
@@ -78,16 +89,24 @@ namespace UniGLTF
 
 
     [Serializable]
-    public class glTFMaterial: IJsonSerializable
+    public class glTFMaterial : IJsonSerializable
     {
         public string name;
         public glTFPbrMetallicRoughness pbrMetallicRoughness;
         public glTFMaterialNormalTextureInfo normalTexture = null;
+
         public glTFMaterialOcclusionTextureInfo occlusionTexture = null;
+
         public glTFTextureInfo emissiveTexture = null;
+
+        [JsonSchema(MinItems = 3, MaxItems = 3)]
         public float[] emissiveFactor;
+
         public string alphaMode;
-        public float alphaCutoff=0.5f;
+
+        [JsonSchema(Minimum = 0.0)]
+        public float alphaCutoff = 0.5f;
+
         public bool doubleSided;
 
         // empty schemas

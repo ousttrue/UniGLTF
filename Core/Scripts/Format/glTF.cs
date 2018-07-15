@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using UniJSON;
 
 namespace UniGLTF
 {
@@ -36,15 +36,26 @@ namespace UniGLTF
     [Serializable]
     public class gltfScene : JsonSerializableBase
     {
+        [JsonSchema(MinItems =1)]
         public int[] nodes;
+
         // empty schemas
         public object extensions;
         public object extras;
-        public object name;
+        public string name;
 
         protected override void SerializeMembers(JsonFormatter f)
         {
             f.KeyValue(() => nodes);
+        }
+    }
+
+    [Serializable]
+    public class glTFCamera : JsonSerializableBase
+    {
+        protected override void SerializeMembers(JsonFormatter f)
+        {
+            //throw new NotImplementedException();
         }
     }
 
@@ -60,6 +71,7 @@ namespace UniGLTF
         public glTFAssets asset;
 
         #region Buffer      
+        [JsonSchema(MinItems = 1)]
         public List<glTFBuffer> buffers = new List<glTFBuffer>();
         public int AddBuffer(IBytesBuffer bytesBuffer)
         {
@@ -68,6 +80,7 @@ namespace UniGLTF
             return index;
         }
 
+        [JsonSchema(MinItems = 1)]
         public List<glTFBufferView> bufferViews = new List<glTFBufferView>();
         public int AddBufferView(glTFBufferView view)
         {
@@ -76,6 +89,7 @@ namespace UniGLTF
             return index;
         }
 
+        [JsonSchema(MinItems = 1)]
         public List<glTFAccessor> accessors = new List<glTFAccessor>();
 
         T[] GetAttrib<T>(glTFAccessor accessor, glTFBufferView view) where T : struct
@@ -83,7 +97,7 @@ namespace UniGLTF
             return GetAttrib<T>(accessor.count, accessor.byteOffset, view);
         }
         T[] GetAttrib<T>(int count, int byteOffset, glTFBufferView view) where T : struct
-        { 
+        {
             var attrib = new T[count];
             //
             var segment = buffers[view.buffer].GetBytes();
@@ -177,14 +191,14 @@ namespace UniGLTF
                 ;
 
             var sparse = vertexAccessor.sparse;
-            if (sparse !=null && sparse.count > 0)
+            if (sparse != null && sparse.count > 0)
             {
                 // override sparse values
                 var indices = _GetIndices(bufferViews[sparse.indices.bufferView], sparse.count, sparse.indices.byteOffset, sparse.indices.componentType);
                 var values = GetAttrib<T>(sparse.count, sparse.values.byteOffset, bufferViews[sparse.values.bufferView]);
 
                 var it = indices.GetEnumerator();
-                for(int i=0; i<sparse.count; ++i)
+                for (int i = 0; i < sparse.count; ++i)
                 {
                     it.MoveNext();
                     result[it.Current] = values[i];
@@ -194,8 +208,10 @@ namespace UniGLTF
         }
         #endregion
 
+        [JsonSchema(MinItems = 1)]
         public List<glTFTexture> textures = new List<glTFTexture>();
 
+        [JsonSchema(MinItems = 1)]
         public List<glTFTextureSampler> samplers = new List<glTFTextureSampler>();
         public glTFTextureSampler GetSampler(int index)
         {
@@ -207,6 +223,7 @@ namespace UniGLTF
             return samplers[index];
         }
 
+        [JsonSchema(MinItems = 1)]
         public List<glTFImage> images = new List<glTFImage>();
 
         public glTFImage GetImageFromTextureIndex(int textureIndex)
@@ -220,6 +237,7 @@ namespace UniGLTF
             return GetSampler(samplerIndex);
         }
 
+        [JsonSchema(MinItems = 1)]
         public List<glTFMaterial> materials = new List<glTFMaterial>();
         public string GetUniqueMaterialName(int index)
         {
@@ -234,10 +252,19 @@ namespace UniGLTF
             }
         }
 
+        [JsonSchema(MinItems = 1)]
         public List<glTFMesh> meshes = new List<glTFMesh>();
+
+        [JsonSchema(MinItems = 1)]
         public List<glTFNode> nodes = new List<glTFNode>();
+
+        [JsonSchema(MinItems = 1)]
         public List<glTFSkin> skins = new List<glTFSkin>();
+
+        [JsonSchema(Minimum = 0)]
         public int scene;
+
+        [JsonSchema(MinItems = 1)]
         public List<gltfScene> scenes = new List<gltfScene>();
         public int[] rootnodes
         {
@@ -246,11 +273,19 @@ namespace UniGLTF
                 return scenes[scene].nodes;
             }
         }
+
+        [JsonSchema(MinItems = 1)]
         public List<glTFAnimation> animations = new List<glTFAnimation>();
 
-        public object cameras;
-        public object extensionsUsed;
-        public object extensionsRequired;
+        [JsonSchema(MinItems = 1)]
+        public List<glTFCamera> cameras = new List<glTFCamera>();
+
+        [JsonSchema(MinItems = 1)]
+        public List<string> extensionsUsed = new List<string>();
+
+        [JsonSchema(MinItems = 1)]
+        public List<string> extensionsRequired = new List<string>();
+
         public object extensions;
         public object extras;
 
@@ -330,7 +365,7 @@ namespace UniGLTF
 
         public bool Equals(glTF other)
         {
-            return 
+            return
                 textures.SequenceEqual(other.textures)
                 && samplers.SequenceEqual(other.samplers)
                 && images.SequenceEqual(other.images)
@@ -338,7 +373,7 @@ namespace UniGLTF
                 && meshes.SequenceEqual(other.meshes)
                 && nodes.SequenceEqual(other.nodes)
                 && skins.SequenceEqual(other.skins)
-                && scene==other.scene
+                && scene == other.scene
                 && scenes.SequenceEqual(other.scenes)
                 && animations.SequenceEqual(other.animations)
                 ;

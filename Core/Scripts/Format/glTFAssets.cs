@@ -1,5 +1,5 @@
 ﻿using System;
-
+using UniJSON;
 
 namespace UniGLTF
 {
@@ -7,8 +7,13 @@ namespace UniGLTF
     public class glTFAssets : IJsonSerializable
     {
         public string generator;
+
+        [JsonSchema(Pattern = "^[0-9]+\\\\.[0-9]+$")]
         public string version;
+
         public string copyright;
+
+        [JsonSchema(Pattern = "^[0-9]+\\\\.[0-9]+$")]
         public string minVersion;
 
         // empty schemas

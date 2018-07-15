@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using UniJSON;
 
 namespace UniGLTF
 {
@@ -99,7 +99,7 @@ namespace UniGLTF
         {
             f.Key("targetNames");
             f.BeginList();
-            foreach(var x in targetNames)
+            foreach (var x in targetNames)
             {
                 f.Value(x);
             }
@@ -111,11 +111,16 @@ namespace UniGLTF
     /// https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/schema/mesh.primitive.schema.json
     /// </summary>
     [Serializable]
-    public class glTFPrimitives: IJsonSerializable
+    public class glTFPrimitives : IJsonSerializable
     {
         public int mode;
+
+        [JsonSchema(Minimum = 0)]
         public int indices = -1;
+
+        [JsonSchema(Empty = true)]
         public glTFAttributes attributes;
+
         public bool HasVertexColor
         {
             get
@@ -124,11 +129,15 @@ namespace UniGLTF
             }
         }
 
+        [JsonSchema(Minimum = 0)]
         public int material;
 
+        [JsonSchema(MinItems =1)]
         public List<gltfMorphTarget> targets = new List<gltfMorphTarget>();
+
         public extrasTargetNames extras = new extrasTargetNames();
 
+        [JsonSchema(Empty = true)]
         public glTFPrimitivesExtensions extensions;
 
         public string ToJson()
@@ -139,7 +148,7 @@ namespace UniGLTF
             f.KeyValue(() => indices);
             f.Key("attributes"); f.Value(attributes);
             f.KeyValue(() => material);
-            if (targets != null && targets.Count>0)
+            if (targets != null && targets.Count > 0)
             {
                 f.Key("targets"); f.Value(targets);
                 f.KeyValue(() => extras);
@@ -153,7 +162,11 @@ namespace UniGLTF
     public class glTFMesh : IJsonSerializable
     {
         public string name;
+
+        [JsonSchema(MinItems = 1)]
         public List<glTFPrimitives> primitives;
+
+        [JsonSchema(MinItems = 1)]
         public float[] weights;
 
         // empty schemas

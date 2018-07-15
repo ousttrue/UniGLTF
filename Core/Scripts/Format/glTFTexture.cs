@@ -1,20 +1,27 @@
 ﻿using System;
-
+using UniJSON;
 
 namespace UniGLTF
 {
     [Serializable]
     public class glTFTextureSampler : JsonSerializableBase
     {
+        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
         public glFilter magFilter = glFilter.NEAREST;
+
+        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
         public glFilter minFilter = glFilter.NEAREST;
+
+        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
         public glWrap wrapS = glWrap.REPEAT;
+
+        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
         public glWrap wrapT = glWrap.REPEAT;
 
         // empty schemas
         public object extensions;
         public object extras;
-        public object name;
+        public string name;
 
         protected override void SerializeMembers(JsonFormatter f)
         {
@@ -31,7 +38,9 @@ namespace UniGLTF
         public string name;
         public string uri;
 
+        [JsonSchema(Minimum = 0)]
         public int bufferView;
+
         public string mimeType;
 
         // empty schemas
@@ -56,13 +65,16 @@ namespace UniGLTF
     [Serializable]
     public class glTFTexture : JsonSerializableBase
     {
+        [JsonSchema(Minimum = 0)]
         public int sampler;
+
+        [JsonSchema(Minimum = 0)]
         public int source;
 
         // empty schemas
         public object extensions;
         public object extras;
-        public object name;
+        public string name;
 
         protected override void SerializeMembers(JsonFormatter f)
         {

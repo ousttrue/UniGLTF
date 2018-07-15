@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
-
+using UniJSON;
 
 namespace UniGLTF
 {
     [Serializable]
-    public class glTFNode_extra_rootBone: JsonSerializableBase
+    public class glTFNode_extra_rootBone : JsonSerializableBase
     {
         public int skinRootBone = -1; // for Unity's SkinnedMeshRenderer
 
@@ -19,15 +19,32 @@ namespace UniGLTF
     public class glTFNode : JsonSerializableBase
     {
         public string name = "";
+
+        [JsonSchema(MinItems =1)]
         public int[] children;
+
+        [JsonSchema(MinItems =16, MaxItems =16)]
         public float[] matrix;
+
+        [JsonSchema(MinItems = 3, MaxItems = 3)]
         public float[] translation;
+
+        [JsonSchema(MinItems = 4, MaxItems = 4)]
         public float[] rotation;
+
+        [JsonSchema(MinItems = 3, MaxItems = 3)]
         public float[] scale;
+
+        [JsonSchema(Minimum =0)]
         public int mesh = -1;
+
+        [JsonSchema(Minimum =0)]
         public int skin = -1;
+
+        [JsonSchema(Minimum = 0)]
         public int camera = -1;
 
+        [JsonSchema(MinItems =1)]
         public float[] weights;
 
         // empty schemas
