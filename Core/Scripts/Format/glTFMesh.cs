@@ -11,7 +11,7 @@ namespace UniGLTF
         public int bufferView;
         public glTFAttributes attributes;
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             throw new NotImplementedException();
         }
@@ -22,7 +22,7 @@ namespace UniGLTF
     {
         public glTF_KHR_draco_mesh_compression KHR_draco_mesh_compression;
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             throw new NotImplementedException();
         }
@@ -63,7 +63,7 @@ namespace UniGLTF
                 ;
         }
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => POSITION);
             if (NORMAL != -1) f.KeyValue(() => NORMAL);
@@ -82,7 +82,7 @@ namespace UniGLTF
         public int NORMAL = -1;
         public int TANGENT = -1;
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => POSITION);
             f.KeyValue(() => NORMAL);
@@ -95,7 +95,7 @@ namespace UniGLTF
     {
         public List<string> targetNames = new List<string>();
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.Key("targetNames");
             f.BeginList();
@@ -144,15 +144,15 @@ namespace UniGLTF
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
             f.KeyValue(() => mode);
             f.KeyValue(() => indices);
-            f.Key("attributes"); f.Value(attributes);
+            f.Key("attributes"); f.GLTFValue(attributes);
             f.KeyValue(() => material);
             if (targets != null && targets.Count > 0)
             {
-                f.Key("targets"); f.Value(targets);
+                f.Key("targets"); f.GLTFValue(targets);
                 f.KeyValue(() => extras);
             }
             f.EndMap();
@@ -183,10 +183,10 @@ namespace UniGLTF
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
             f.KeyValue(() => name);
-            f.Key("primitives"); f.Value(primitives);
+            f.Key("primitives"); f.GLTFValue(primitives);
             f.EndMap();
             return f.ToString();
         }

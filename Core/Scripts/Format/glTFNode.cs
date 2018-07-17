@@ -9,7 +9,7 @@ namespace UniGLTF
     {
         public int skinRootBone = -1; // for Unity's SkinnedMeshRenderer
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => skinRootBone);
         }
@@ -53,7 +53,7 @@ namespace UniGLTF
         public object extensions;
         public glTFNode_extra_rootBone extras = new glTFNode_extra_rootBone();
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             if (children != null && children.Any())
             {

@@ -33,7 +33,7 @@ namespace UniGLTF
         public object extras;
         public string name;
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.Key("magFilter"); f.Value((int)magFilter);
             f.Key("minFilter"); f.Value((int)minFilter);
@@ -58,7 +58,7 @@ namespace UniGLTF
         public object extensions;
         public object extras;
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => name);
             if (!string.IsNullOrEmpty(uri))
@@ -87,7 +87,7 @@ namespace UniGLTF
         public object extras;
         public string name;
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => sampler);
             f.KeyValue(() => source);

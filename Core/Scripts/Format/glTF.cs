@@ -8,11 +8,11 @@ namespace UniGLTF
     [Serializable]
     public abstract class JsonSerializableBase : IJsonSerializable
     {
-        protected abstract void SerializeMembers(JsonFormatter f);
+        protected abstract void SerializeMembers(GLTFJsonFormatter f);
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
 
             SerializeMembers(f);
@@ -40,7 +40,7 @@ namespace UniGLTF
     {
         public string name;
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => name);
         }
@@ -58,7 +58,7 @@ namespace UniGLTF
         public object extras;
         public string name;
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => nodes);
         }
@@ -299,7 +299,7 @@ namespace UniGLTF
             return string.Format("{0}", asset);
         }
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => asset);
 
@@ -310,17 +310,17 @@ namespace UniGLTF
             }
             if (bufferViews.Any())
             {
-                f.Key("bufferViews"); f.Value(bufferViews);
+                f.Key("bufferViews"); f.GLTFValue(bufferViews);
             }
             if (accessors.Any())
             {
-                f.Key("accessors"); f.Value(accessors);
+                f.Key("accessors"); f.GLTFValue(accessors);
             }
 
             // materials
             if (images.Any())
             {
-                f.Key("images"); f.Value(images);
+                f.Key("images"); f.GLTFValue(images);
                 if (samplers.Count == 0)
                 {
                     samplers.Add(new glTFTextureSampler());
@@ -329,16 +329,16 @@ namespace UniGLTF
 
             if (samplers.Any())
             {
-                f.Key("samplers"); f.Value(samplers);
+                f.Key("samplers"); f.GLTFValue(samplers);
             }
 
             if (textures.Any())
             {
-                f.Key("textures"); f.Value(textures);
+                f.Key("textures"); f.GLTFValue(textures);
             }
             if (materials.Any())
             {
-                f.Key("materials"); f.Value(materials);
+                f.Key("materials"); f.GLTFValue(materials);
             }
 
             // meshes
@@ -364,7 +364,7 @@ namespace UniGLTF
             // animations
             if (animations.Any())
             {
-                f.Key("animations"); f.Value(animations);
+                f.Key("animations"); f.GLTFValue(animations);
             }
         }
 

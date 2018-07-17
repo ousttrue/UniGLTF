@@ -57,7 +57,7 @@ namespace UniGLTF
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
             if (!string.IsNullOrEmpty(uri))
             {
@@ -94,7 +94,7 @@ namespace UniGLTF
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
             f.KeyValue(() => buffer);
             f.KeyValue(() => byteOffset);
@@ -128,7 +128,7 @@ namespace UniGLTF
         public object extensions;
         public object extras;
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => bufferView);
             f.KeyValue(() => byteOffset);
@@ -149,7 +149,7 @@ namespace UniGLTF
         public object extensions;
         public object extras;
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => bufferView);
             f.KeyValue(() => byteOffset);
@@ -169,7 +169,7 @@ namespace UniGLTF
         public object extensions;
         public object extras;
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => count);
             f.KeyValue(() => indices);
@@ -211,7 +211,7 @@ namespace UniGLTF
 
         public object extras;
 
-        protected override void SerializeMembers(JsonFormatter f)
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => bufferView);
             f.KeyValue(() => byteOffset);

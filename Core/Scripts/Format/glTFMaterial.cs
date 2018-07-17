@@ -19,7 +19,7 @@ namespace UniGLTF
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
             f.Key("index"); f.Value(index);
             f.Key("texCoord"); f.Value(texCoord);
@@ -67,7 +67,7 @@ namespace UniGLTF
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
             if (baseColorTexture != null)
             {
@@ -118,7 +118,7 @@ namespace UniGLTF
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
             if (!String.IsNullOrEmpty(name))
             {
@@ -126,19 +126,19 @@ namespace UniGLTF
             }
             if (pbrMetallicRoughness != null)
             {
-                f.Key("pbrMetallicRoughness"); f.Value(pbrMetallicRoughness);
+                f.Key("pbrMetallicRoughness"); f.GLTFValue(pbrMetallicRoughness);
             }
             if (normalTexture != null)
             {
-                f.Key("normalTexture"); f.Value(normalTexture);
+                f.Key("normalTexture"); f.GLTFValue(normalTexture);
             }
             if (occlusionTexture != null)
             {
-                f.Key("occlusionTexture"); f.Value(occlusionTexture);
+                f.Key("occlusionTexture"); f.GLTFValue(occlusionTexture);
             }
             if (emissiveTexture != null)
             {
-                f.Key("emissiveTexture"); f.Value(emissiveTexture);
+                f.Key("emissiveTexture"); f.GLTFValue(emissiveTexture);
             }
             if (emissiveFactor != null)
             {
