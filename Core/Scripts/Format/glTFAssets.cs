@@ -22,7 +22,7 @@ namespace UniGLTF
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
             f.Key("generator"); f.Value(generator);
             f.Key("version"); f.Value(version);

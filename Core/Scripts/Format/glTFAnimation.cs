@@ -21,7 +21,7 @@ namespace UniGLTF
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
 
             f.KeyValue(() => node);
@@ -64,7 +64,7 @@ namespace UniGLTF
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
 
             f.KeyValue(() => sampler);
@@ -93,7 +93,7 @@ namespace UniGLTF
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
 
             f.KeyValue(() => input);
@@ -122,9 +122,10 @@ namespace UniGLTF
 
         public string ToJson()
         {
-            var f = new JsonFormatter();
+            var f = new GLTFJsonFormatter();
             f.BeginMap();
 
+            f.KeyValue(() => name);
             f.KeyValue(() => channels);
             f.KeyValue(() => samplers);
 
