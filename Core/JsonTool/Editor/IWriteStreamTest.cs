@@ -1,10 +1,9 @@
 ﻿using NUnit.Framework;
 using UniGLTF;
-using System;
 using System.Text;
 
 
-namespace UniGLTF
+namespace UniGLTFTest
 {
     public class StoreTests
     {
