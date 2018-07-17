@@ -231,6 +231,9 @@ namespace UniGLTF
             {
                 f.KeyValue(() => sparse);
             }
+
+            f.KeyValue(() => normalized);
+            f.KeyValue(() => name);
         }
     }
 }
