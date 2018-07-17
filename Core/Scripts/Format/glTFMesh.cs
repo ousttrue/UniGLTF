@@ -119,7 +119,7 @@ namespace UniGLTF
         [JsonSchema(Minimum = 0)]
         public int indices = -1;
 
-        [JsonSchema(Empty = true)]
+        [JsonSchema(Required = true, Empty = true)]
         public glTFAttributes attributes;
 
         public bool HasVertexColor
@@ -165,7 +165,7 @@ namespace UniGLTF
     {
         public string name;
 
-        [JsonSchema(MinItems = 1)]
+        [JsonSchema(Required = true, MinItems = 1)]
         public List<glTFPrimitives> primitives;
 
         [JsonSchema(MinItems = 1)]

@@ -48,7 +48,7 @@ namespace UniGLTF
         public string name;
         public string uri;
 
-        [JsonSchema(Minimum = 0)]
+        [JsonSchema(Dependencies = new string[] { "mimeType" }, Minimum = 0)]
         public int bufferView;
 
         [JsonSchema(EnumValues = new object[] { "image/jpeg", "image/png" })]

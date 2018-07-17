@@ -31,7 +31,7 @@ namespace UniGLTF
 
         public string uri;
 
-        [JsonSchema(Minimum = 1)]
+        [JsonSchema(Required = true, Minimum = 1)]
         public int byteLength;
 
         // empty schemas
@@ -72,13 +72,13 @@ namespace UniGLTF
     [Serializable]
     public class glTFBufferView : IJsonSerializable
     {
-        [JsonSchema(Minimum = 0)]
+        [JsonSchema(Required = true, Minimum = 0)]
         public int buffer;
 
         [JsonSchema(Minimum = 0)]
         public int byteOffset;
 
-        [JsonSchema(Minimum = 1)]
+        [JsonSchema(Required = true, Minimum = 1)]
         public int byteLength;
 
         [JsonSchema(Minimum = 4, Maximum = 252, MultipleOf = 4)]
@@ -115,13 +115,13 @@ namespace UniGLTF
     [Serializable]
     public class glTFSparseIndices : JsonSerializableBase
     {
-        [JsonSchema(Minimum = 0)]
+        [JsonSchema(Required = true, Minimum = 0)]
         public int bufferView = -1;
 
         [JsonSchema(Minimum = 0)]
         public int byteOffset;
 
-        [JsonSchema(EnumValues = new object[] { 5121, 5123, 5125 })]
+        [JsonSchema(Required = true, EnumValues = new object[] { 5121, 5123, 5125 })]
         public glComponentType componentType;
 
         // empty schemas
@@ -139,7 +139,7 @@ namespace UniGLTF
     [Serializable]
     public class glTFSparseValues : JsonSerializableBase
     {
-        [JsonSchema(Minimum = 0)]
+        [JsonSchema(Required = true, Minimum = 0)]
         public int bufferView = -1;
 
         [JsonSchema(Minimum = 0)]
@@ -159,10 +159,13 @@ namespace UniGLTF
     [Serializable]
     public class glTFSparse : JsonSerializableBase
     {
-        [JsonSchema(Minimum = 1)]
+        [JsonSchema(Required = true, Minimum = 1)]
         public int count;
 
+        [JsonSchema(Required = true)]
         public glTFSparseIndices indices;
+
+        [JsonSchema(Required = true)]
         public glTFSparseValues values;
 
         // empty schemas
@@ -183,16 +186,16 @@ namespace UniGLTF
         [JsonSchema(Minimum = 0)]
         public int bufferView = -1;
 
-        [JsonSchema(Minimum = 0)]
+        [JsonSchema(Minimum = 0, Dependencies = new string[] { "bufferView" })]
         public int byteOffset;
 
-        [JsonSchema(EnumValues = new object[] { "SCALAR", "VEC2", "VEC3", "VEC4", "MAT2", "MAT3", "MAT4" })]
+        [JsonSchema(Required = true, EnumValues = new object[] { "SCALAR", "VEC2", "VEC3", "VEC4", "MAT2", "MAT3", "MAT4" })]
         public string type;
 
-        [JsonSchema(EnumSerializationType = EnumSerializationType.AsInt)]
+        [JsonSchema(Required = true, EnumSerializationType = EnumSerializationType.AsInt)]
         public glComponentType componentType;
 
-        [JsonSchema(Minimum = 1)]
+        [JsonSchema(Required = true, Minimum = 1)]
         public int count;
 
         [JsonSchema(MinItems = 1, MaxItems = 16)]

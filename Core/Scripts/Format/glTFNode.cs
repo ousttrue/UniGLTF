@@ -40,14 +40,14 @@ namespace UniGLTF
         [JsonSchema(Minimum = 0)]
         public int mesh = -1;
 
-        [JsonSchema(Minimum = 0)]
+        [JsonSchema(Dependencies = new string[] { "mesh" }, Minimum = 0)]
         public int skin = -1;
+
+        [JsonSchema(Dependencies = new string[] { "mesh" }, MinItems = 1)]
+        public float[] weights;
 
         [JsonSchema(Minimum = 0)]
         public int camera = -1;
-
-        [JsonSchema(MinItems = 1)]
-        public float[] weights;
 
         // empty schemas
         public object extensions;

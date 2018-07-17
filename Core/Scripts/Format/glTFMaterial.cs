@@ -6,7 +6,7 @@ namespace UniGLTF
     [Serializable]
     public class glTFTextureInfo : IJsonSerializable
     {
-        [JsonSchema(Minimum = 0)]
+        [JsonSchema(Required = true, Minimum = 0)]
         public int index = -1;
 
         [JsonSchema(Minimum = 0)]
@@ -107,7 +107,7 @@ namespace UniGLTF
         [JsonSchema(EnumValues = new object[] { "OPAQUE", "MASK", "BLEND" })]
         public string alphaMode;
 
-        [JsonSchema(Minimum = 0.0)]
+        [JsonSchema(Dependencies = new string[] { "alphaMode" }, Minimum = 0.0)]
         public float alphaCutoff = 0.5f;
 
         public bool doubleSided;

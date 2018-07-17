@@ -73,6 +73,7 @@ namespace UniGLTF
             set;
         }
 
+        [JsonSchema(Required = true)]
         public glTFAssets asset;
 
         #region Buffer      
@@ -266,7 +267,7 @@ namespace UniGLTF
         [JsonSchema(MinItems = 1)]
         public List<glTFSkin> skins = new List<glTFSkin>();
 
-        [JsonSchema(Minimum = 0)]
+        [JsonSchema(Dependencies = new string[] { "scenes" }, Minimum = 0)]
         public int scene;
 
         [JsonSchema(MinItems = 1)]

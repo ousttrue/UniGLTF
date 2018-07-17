@@ -9,7 +9,7 @@ namespace UniGLTF
         [JsonSchema(Minimum = 0)]
         public int inverseBindMatrices = -1;
 
-        [JsonSchema(MinItems = 1)]
+        [JsonSchema(Required = true, MinItems = 1)]
         [ItemJsonSchema(Minimum = 0)]
         public int[] joints;
 

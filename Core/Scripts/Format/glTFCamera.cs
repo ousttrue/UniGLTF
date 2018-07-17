@@ -12,11 +12,13 @@ namespace UniGLTF
     [Serializable]
     public class glTFOrthographic : glTFProperty
     {
+        [JsonSchema(Required = true)]
         public float xmag;
+        [JsonSchema(Required = true)]
         public float ymag;
-        [JsonSchema(Minimum = 0.0f, ExclusiveMinimum = true)]
+        [JsonSchema(Required = true, Minimum = 0.0f, ExclusiveMinimum = true)]
         public float zfar;
-        [JsonSchema(Minimum = 0.0f)]
+        [JsonSchema(Required = true, Minimum = 0.0f)]
         public float znear;
     }
 
@@ -25,11 +27,11 @@ namespace UniGLTF
     {
         [JsonSchema(Minimum = 0.0f, ExclusiveMinimum = true)]
         public float aspectRatio;
-        [JsonSchema(Minimum = 0.0f, ExclusiveMinimum = true)]
+        [JsonSchema(Required = true, Minimum = 0.0f, ExclusiveMinimum = true)]
         public float yfov;
         [JsonSchema(Minimum = 0.0f, ExclusiveMinimum = true)]
         public float zfar;
-        [JsonSchema(Minimum = 0.0f, ExclusiveMinimum = true)]
+        [JsonSchema(Required = true, Minimum = 0.0f, ExclusiveMinimum = true)]
         public float znear;
     }
 
@@ -39,7 +41,7 @@ namespace UniGLTF
         public glTFOrthographic orthographic;
         public glTFPerspective perspective;
 
-        [JsonSchema(EnumSerializationType = EnumSerializationType.AsLowerString)]
+        [JsonSchema(Required = true, EnumSerializationType = EnumSerializationType.AsLowerString)]
         public ProjectionType type;
     }
 }

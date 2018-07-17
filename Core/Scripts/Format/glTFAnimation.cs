@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UniJSON;
 
+
 namespace UniGLTF
 {
     [Serializable]
@@ -11,7 +12,7 @@ namespace UniGLTF
         [JsonSchema(Minimum = 0)]
         public int node;
 
-        [JsonSchema(EnumValues = new object[] { "translation", "rotation", "scale", "weights" })]
+        [JsonSchema(Required = true, EnumValues = new object[] { "translation", "rotation", "scale", "weights" })]
         public string path;
 
         // empty schemas
@@ -77,13 +78,13 @@ namespace UniGLTF
     [Serializable]
     public class glTFAnimationSampler : IJsonSerializable
     {
-        [JsonSchema(Minimum = 0)]
+        [JsonSchema(Required = true, Minimum = 0)]
         public int input = -1;
 
         [JsonSchema(EnumValues = new object[] { "LINEAR", "STEP", "CUBICSPLINE" })]
         public string interpolation;
 
-        [JsonSchema(Minimum = 0)]
+        [JsonSchema(Required = true, Minimum = 0)]
         public int output = -1;
 
         // empty schemas
@@ -109,10 +110,10 @@ namespace UniGLTF
     {
         public string name = "";
 
-        [JsonSchema(MinItems = 1)]
+        [JsonSchema(Required = true, MinItems = 1)]
         public List<glTFAnimationChannel> channels = new List<glTFAnimationChannel>();
 
-        [JsonSchema(MinItems = 1)]
+        [JsonSchema(Required = true, MinItems = 1)]
         public List<glTFAnimationSampler> samplers = new List<glTFAnimationSampler>();
 
         // empty schemas
