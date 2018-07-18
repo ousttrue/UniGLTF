@@ -25,7 +25,10 @@ namespace UniGLTF
             f.BeginMap();
 
             f.KeyValue(() => node);
-            f.KeyValue(() => path);
+            if (!string.IsNullOrEmpty(path))
+            {
+                f.KeyValue(() => path);
+            }
 
             f.EndMap();
             return f.ToString();
@@ -97,7 +100,10 @@ namespace UniGLTF
             f.BeginMap();
 
             f.KeyValue(() => input);
-            f.KeyValue(() => interpolation);
+            if (!string.IsNullOrEmpty(interpolation))
+            {
+                f.KeyValue(() => interpolation);
+            }
             f.KeyValue(() => output);
 
             f.EndMap();
@@ -125,7 +131,11 @@ namespace UniGLTF
             var f = new GLTFJsonFormatter();
             f.BeginMap();
 
-            f.KeyValue(() => name);
+            if (!string.IsNullOrEmpty(name))
+            {
+                f.KeyValue(() => name);
+            }
+
             f.KeyValue(() => channels);
             f.KeyValue(() => samplers);
 

@@ -99,13 +99,13 @@ namespace UniGLTF
             f.KeyValue(() => buffer);
             f.KeyValue(() => byteOffset);
             f.KeyValue(() => byteLength);
+            if (byteStride>0)
+            {
+                f.KeyValue(() => byteStride);
+            }
             if (target != glBufferTarget.NONE)
             {
                 f.Key("target"); f.Value((int)target);
-            }
-            if (target == glBufferTarget.ARRAY_BUFFER)
-            {
-                f.KeyValue(() => byteStride);
             }
             f.EndMap();
             return f.ToString();
