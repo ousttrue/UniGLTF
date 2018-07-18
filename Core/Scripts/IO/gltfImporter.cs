@@ -89,13 +89,13 @@ namespace UniGLTF
                                  material.color = new Color(color[0], color[1], color[2], color[3]);
                              }
 
-                             if (x.pbrMetallicRoughness.baseColorTexture.index != -1)
+                             if (x.pbrMetallicRoughness.baseColorTexture!=null && x.pbrMetallicRoughness.baseColorTexture.index != -1)
                              {
                                  var texture = ctx.Textures[x.pbrMetallicRoughness.baseColorTexture.index];
                                  material.mainTexture = texture.Texture;
                              }
 
-                             if (x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
+                             if (x.pbrMetallicRoughness.metallicRoughnessTexture!=null && x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
                              {
                                  material.EnableKeyword("_METALLICGLOSSMAP");
                                  var texture = ctx.Textures[x.pbrMetallicRoughness.metallicRoughnessTexture.index];
