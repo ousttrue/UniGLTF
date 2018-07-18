@@ -27,6 +27,7 @@ namespace UniGLTF
             f.BeginMap();
             f.KeyValue(() => inverseBindMatrices);
             f.KeyValue(() => joints);
+            f.KeyValue(() => skeleton);
             f.EndMap();
             return f.ToString();
         }

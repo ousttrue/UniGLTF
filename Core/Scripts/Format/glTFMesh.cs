@@ -93,17 +93,21 @@ namespace UniGLTF
     [Serializable]
     public class extrasTargetNames : JsonSerializableBase
     {
+        [JsonSchema(MinItems = 1)]
         public List<string> targetNames = new List<string>();
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            f.Key("targetNames");
-            f.BeginList();
-            foreach (var x in targetNames)
+            if (targetNames.Count > 0)
             {
-                f.Value(x);
+                f.Key("targetNames");
+                f.BeginList();
+                foreach (var x in targetNames)
+                {
+                    f.Value(x);
+                }
+                f.EndList();
             }
-            f.EndList();
         }
     }
 
@@ -136,7 +140,7 @@ namespace UniGLTF
         [JsonSchema(MinItems = 1)]
         [ItemJsonSchema(Empty = true)]
         public List<gltfMorphTarget> targets = new List<gltfMorphTarget>();
-
+       
         public extrasTargetNames extras = new extrasTargetNames();
 
         [JsonSchema(Empty = true)]
@@ -153,8 +157,8 @@ namespace UniGLTF
             if (targets != null && targets.Count > 0)
             {
                 f.Key("targets"); f.GLTFValue(targets);
-                f.KeyValue(() => extras);
             }
+            f.KeyValue(() => extras);
             f.EndMap();
             return f.ToString();
         }

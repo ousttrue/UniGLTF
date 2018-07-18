@@ -31,8 +31,8 @@ namespace UniGLTF
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            base.SerializeMembers(f);
             f.KeyValue(() => scale);
+            base.SerializeMembers(f);
         }
     }
 
@@ -44,8 +44,8 @@ namespace UniGLTF
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            base.SerializeMembers(f);
             f.KeyValue(() => strength);
+            base.SerializeMembers(f);
         }
     }
 
