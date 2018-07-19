@@ -123,7 +123,7 @@ namespace UniGLTF
         [JsonSchema(Minimum = 0)]
         public int indices = -1;
 
-        [JsonSchema(Required = true, Empty = true)]
+        [JsonSchema(Required = true, SkipSchemaComparison = true)]
         public glTFAttributes attributes;
 
         public bool HasVertexColor
@@ -138,12 +138,12 @@ namespace UniGLTF
         public int material;
 
         [JsonSchema(MinItems = 1)]
-        [ItemJsonSchema(Empty = true)]
+        [ItemJsonSchema(SkipSchemaComparison = true)]
         public List<gltfMorphTarget> targets = new List<gltfMorphTarget>();
        
         public extrasTargetNames extras = new extrasTargetNames();
 
-        [JsonSchema(Empty = true)]
+        [JsonSchema(SkipSchemaComparison = true)]
         public glTFPrimitivesExtensions extensions;
 
         public string ToJson()

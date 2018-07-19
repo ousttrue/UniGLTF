@@ -8,12 +8,12 @@ namespace UniGLTF
     {
         public string generator;
 
-        [JsonSchema(Required = true, Pattern = "^[0-9]+\\\\.[0-9]+$")]
+        [JsonSchema(Required = true, Pattern = "^[0-9]+\\.[0-9]+$")]
         public string version;
 
         public string copyright;
 
-        [JsonSchema(Pattern = "^[0-9]+\\\\.[0-9]+$")]
+        [JsonSchema(Pattern = "^[0-9]+\\.[0-9]+$")]
         public string minVersion;
 
         // empty schemas
