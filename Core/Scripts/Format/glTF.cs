@@ -75,7 +75,7 @@ namespace UniGLTF
         }
 
         [JsonSchema(Required = true)]
-        public glTFAssets asset;
+        public glTFAssets asset = new glTFAssets();
 
         #region Buffer      
         [JsonSchema(MinItems = 1)]
