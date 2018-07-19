@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UniJSON;
 
@@ -383,6 +384,37 @@ namespace UniGLTF
                 && scenes.SequenceEqual(other.scenes)
                 && animations.SequenceEqual(other.animations)
                 ;
+        }
+
+        public byte[] ToGlbBytes()
+        {
+            var json = ToJson();
+
+            var buffer = buffers[0];
+            using (var s = new MemoryStream())
+            {
+                GlbHeader.WriteTo(s);
+
+                var pos = s.Position;
+                s.Position += 4; // skip total size
+
+                int size = 12;
+
+                {
+                    var chunk = new GlbChunk(json);
+                    size += chunk.WriteTo(s);
+                }
+                {
+                    var chunk = new GlbChunk(buffer.GetBytes());
+                    size += chunk.WriteTo(s);
+                }
+
+                s.Position = pos;
+                var bytes = BitConverter.GetBytes(size);
+                s.Write(bytes, 0, bytes.Length);
+
+                return s.ToArray();
+            }
         }
     }
 }
