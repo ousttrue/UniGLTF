@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 
@@ -79,7 +80,7 @@ namespace UniGLTF
             return GetAttrib<T>(accessor.count, accessor.byteOffset, view);
         }
         T[] GetAttrib<T>(int count, int byteOffset, glTFBufferView view) where T : struct
-        { 
+        {
             var attrib = new T[count];
             //
             var segment = buffers[view.buffer].GetBytes();
@@ -173,14 +174,14 @@ namespace UniGLTF
                 ;
 
             var sparse = vertexAccessor.sparse;
-            if (sparse !=null && sparse.count > 0)
+            if (sparse != null && sparse.count > 0)
             {
                 // override sparse values
                 var indices = _GetIndices(bufferViews[sparse.indices.bufferView], sparse.count, sparse.indices.byteOffset, sparse.indices.componentType);
                 var values = GetAttrib<T>(sparse.count, sparse.values.byteOffset, bufferViews[sparse.values.bufferView]);
 
                 var it = indices.GetEnumerator();
-                for(int i=0; i<sparse.count; ++i)
+                for (int i = 0; i < sparse.count; ++i)
                 {
                     it.MoveNext();
                     result[it.Current] = values[i];
@@ -320,7 +321,7 @@ namespace UniGLTF
 
         public bool Equals(glTF other)
         {
-            return 
+            return
                 textures.SequenceEqual(other.textures)
                 && samplers.SequenceEqual(other.samplers)
                 && images.SequenceEqual(other.images)
@@ -328,10 +329,41 @@ namespace UniGLTF
                 && meshes.SequenceEqual(other.meshes)
                 && nodes.SequenceEqual(other.nodes)
                 && skins.SequenceEqual(other.skins)
-                && scene==other.scene
+                && scene == other.scene
                 && scenes.SequenceEqual(other.scenes)
                 && animations.SequenceEqual(other.animations)
                 ;
+        }
+
+        public byte[] ToGlbBytes()
+        {
+            var json = ToJson();
+
+            var buffer = buffers[0];
+            using (var s = new MemoryStream())
+            {
+                GlbHeader.WriteTo(s);
+
+                var pos = s.Position;
+                s.Position += 4; // skip total size
+
+                int size = 12;
+
+                {
+                    var chunk = new GlbChunk(json);
+                    size += chunk.WriteTo(s);
+                }
+                {
+                    var chunk = new GlbChunk(buffer.GetBytes());
+                    size += chunk.WriteTo(s);
+                }
+
+                s.Position = pos;
+                var bytes = BitConverter.GetBytes(size);
+                s.Write(bytes, 0, bytes.Length);
+
+                return s.ToArray();
+            }
         }
     }
 }
