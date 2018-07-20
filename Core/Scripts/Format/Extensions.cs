@@ -11,6 +11,7 @@ namespace UniGLTF
     public class JsonSerializeMembersAttribute : Attribute { }
 
     [Serializable]
+    [ItemJsonSchema(ValueType = JsonValueType.Object)]
     public partial class glTF_extensions : JsonSerializableBase
     {
         protected override void SerializeMembers(GLTFJsonFormatter f)
@@ -50,6 +51,7 @@ namespace UniGLTF
     #endregion
 
     [Serializable]
+    [ItemJsonSchema(ValueType = JsonValueType.Object)]
     public partial class gltfScene_extensions { }
 
     [Serializable]
