@@ -156,7 +156,10 @@ namespace UniGLTF
             {
                 f.Key("targets"); f.GLTFValue(targets);
             }
-            f.KeyValue(() => extras);
+            if (extras.targetNames.Count > 0)
+            {
+                f.KeyValue(() => extras);
+            }
         }
     }
 

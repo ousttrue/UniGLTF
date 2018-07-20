@@ -143,7 +143,7 @@ namespace UniGLTF
                 f.Key("emissiveFactor"); f.Value(emissiveFactor);
             }
 
-            f.KeyValue(() => doubleSided);
+            //f.KeyValue(() => doubleSided);
         }
     }
 }

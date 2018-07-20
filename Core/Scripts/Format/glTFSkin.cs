@@ -25,7 +25,7 @@ namespace UniGLTF
         {
             f.KeyValue(() => inverseBindMatrices);
             f.KeyValue(() => joints);
-            f.KeyValue(() => skeleton);
+            //f.KeyValue(() => skeleton);
         }
     }
 }

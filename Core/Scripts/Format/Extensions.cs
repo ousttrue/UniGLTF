@@ -1,9 +1,31 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
 using UniJSON;
 
 
 namespace UniGLTF
 {
+    public class UsedExtensionAttribute : Attribute { }
+
+    public class JsonSerializeMembersAttribute : Attribute { }
+
+    [Serializable]
+    public partial class glTF_extensions : JsonSerializableBase
+    {
+        protected override void SerializeMembers(GLTFJsonFormatter f)
+        {
+            foreach (var method in typeof(glTF_extensions).GetMethods(BindingFlags.Instance |
+                BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                if (method.GetCustomAttributes(typeof(JsonSerializeMembersAttribute), true).Any())
+                {
+                    method.Invoke(this, new[] { f });
+                }
+            }
+        }
+    }
+
     #region Camera
     [Serializable]
     [ItemJsonSchema(ValueType = JsonValueType.Object)]

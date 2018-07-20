@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UniJSON;
 
 
@@ -24,6 +25,21 @@ namespace UniGLTF
         }
     }
 
+    public partial class glTFUsedExtensions
+    {
+        public static IEnumerable<string> GeetUsedExtensions()
+        {
+            foreach (var prop in typeof(glTFUsedExtensions).GetProperties(BindingFlags.Static |
+                BindingFlags.Public | BindingFlags.NonPublic))
+            {
+                if (prop.GetCustomAttributes(typeof(UsedExtensionAttribute), true).Any())
+                {
+                    var extension = (string)prop.GetValue(null, new object[] { });
+                    yield return extension;
+                }
+            }
+        }
+    }
 
     [Serializable]
     public class glTF : JsonSerializableBase, IEquatable<glTF>
@@ -248,12 +264,12 @@ namespace UniGLTF
         public List<glTFCamera> cameras = new List<glTFCamera>();
 
         [JsonSchema(MinItems = 1)]
-        public List<string> extensionsUsed = new List<string>();
+        public List<string> extensionsUsed = glTFUsedExtensions.GeetUsedExtensions().ToList();
 
         [JsonSchema(MinItems = 1)]
         public List<string> extensionsRequired = new List<string>();
 
-        public object extensions;
+        public glTF_extensions extensions = new glTF_extensions { };
         public object extras;
 
         public override string ToString()
@@ -263,6 +279,10 @@ namespace UniGLTF
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
+            f.KeyValue(() => extensionsUsed);
+            f.KeyValue(() => extensions);
+            f.KeyValue(() => extras);
+
             f.KeyValue(() => asset);
 
             // buffer

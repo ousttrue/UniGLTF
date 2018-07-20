@@ -93,13 +93,16 @@ namespace UniGLTF
             f.KeyValue(() => buffer);
             f.KeyValue(() => byteOffset);
             f.KeyValue(() => byteLength);
-            if (byteStride>0)
-            {
-                f.KeyValue(() => byteStride);
-            }
             if (target != glBufferTarget.NONE)
             {
                 f.Key("target"); f.Value((int)target);
+            }
+            if (
+                byteStride == 8
+                || byteStride == 12
+                || byteStride == 16)
+            {
+                f.KeyValue(() => byteStride);
             }
         }
     }
@@ -227,7 +230,7 @@ namespace UniGLTF
                 f.KeyValue(() => sparse);
             }
 
-            f.KeyValue(() => normalized);
+            //f.KeyValue(() => normalized);
             f.KeyValue(() => name);
         }
     }
