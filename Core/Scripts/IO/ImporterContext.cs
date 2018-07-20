@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Text;
-using UniGLTF.SimpleJSON;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -103,7 +102,7 @@ namespace UniGLTF
 
         void RestoreOlderVersionValues()
         {
-            var parsed = JSON.Parse(Json);
+            var parsed = UniJSON.JSON.Parse(Json);
             for (int i = 0; i < GLTF.images.Count; ++i)
             {
                 if (string.IsNullOrEmpty(GLTF.images[i].name))
