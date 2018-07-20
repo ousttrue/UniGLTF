@@ -4,32 +4,9 @@ using System.IO;
 using System.Linq;
 using UniJSON;
 
+
 namespace UniGLTF
 {
-    [Serializable]
-    public class glTFProperty
-    {
-        public object extensions;
-        public object extras;
-    }
-
-    [Serializable]
-    public class glTFChildOfRootProperty : glTFProperty
-    {
-        public string name;
-    }
-
-    [Serializable]
-    public class extraName : JsonSerializableBase
-    {
-        public string name;
-
-        protected override void SerializeMembers(GLTFJsonFormatter f)
-        {
-            f.KeyValue(() => name);
-        }
-    }
-
     [Serializable]
     public class gltfScene : JsonSerializableBase
     {
@@ -37,9 +14,8 @@ namespace UniGLTF
         [ItemJsonSchema(Minimum = 0)]
         public int[] nodes;
 
-        // empty schemas
-        public object extensions;
-        public object extras;
+        public gltfScene_extensions extensions;
+        public gltfScene_extras extras;
         public string name;
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
@@ -47,6 +23,7 @@ namespace UniGLTF
             f.KeyValue(() => nodes);
         }
     }
+
 
     [Serializable]
     public class glTF : JsonSerializableBase, IEquatable<glTF>
