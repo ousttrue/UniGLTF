@@ -4,7 +4,7 @@ using UniJSON;
 namespace UniGLTF
 {
     [Serializable]
-    public class glTFAssets : IJsonSerializable
+    public class glTFAssets : JsonSerializableBase
     {
         public string generator;
 
@@ -20,14 +20,10 @@ namespace UniGLTF
         public object extensions;
         public object extras;
 
-        public string ToJson()
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            var f = new GLTFJsonFormatter();
-            f.BeginMap();
             f.Key("generator"); f.Value(generator);
             f.Key("version"); f.Value(version);
-            f.EndMap();
-            return f.ToString();
         }
 
         public override string ToString()

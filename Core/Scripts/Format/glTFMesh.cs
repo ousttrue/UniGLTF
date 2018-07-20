@@ -115,7 +115,7 @@ namespace UniGLTF
     /// https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/schema/mesh.primitive.schema.json
     /// </summary>
     [Serializable]
-    public class glTFPrimitives : IJsonSerializable
+    public class glTFPrimitives : JsonSerializableBase
     {
         [JsonSchema(EnumValues = new object[] { 0, 1, 2, 3, 4, 5, 6 })]
         public int mode;
@@ -146,10 +146,8 @@ namespace UniGLTF
         [JsonSchema(SkipSchemaComparison = true)]
         public glTFPrimitivesExtensions extensions;
 
-        public string ToJson()
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            var f = new GLTFJsonFormatter();
-            f.BeginMap();
             f.KeyValue(() => mode);
             f.KeyValue(() => indices);
             f.Key("attributes"); f.GLTFValue(attributes);
@@ -159,13 +157,11 @@ namespace UniGLTF
                 f.Key("targets"); f.GLTFValue(targets);
             }
             f.KeyValue(() => extras);
-            f.EndMap();
-            return f.ToString();
         }
     }
 
     [Serializable]
-    public class glTFMesh : IJsonSerializable
+    public class glTFMesh : JsonSerializableBase
     {
         public string name;
 
@@ -185,14 +181,10 @@ namespace UniGLTF
             primitives = new List<glTFPrimitives>();
         }
 
-        public string ToJson()
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            var f = new GLTFJsonFormatter();
-            f.BeginMap();
             f.KeyValue(() => name);
             f.Key("primitives"); f.GLTFValue(primitives);
-            f.EndMap();
-            return f.ToString();
         }
     }
 }

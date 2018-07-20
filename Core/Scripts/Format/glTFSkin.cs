@@ -4,7 +4,7 @@ using UniJSON;
 namespace UniGLTF
 {
     [Serializable]
-    public class glTFSkin : IJsonSerializable
+    public class glTFSkin : JsonSerializableBase
     {
         [JsonSchema(Minimum = 0)]
         public int inverseBindMatrices = -1;
@@ -21,15 +21,11 @@ namespace UniGLTF
         public object extras;
         public string name;
 
-        public string ToJson()
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            var f = new GLTFJsonFormatter();
-            f.BeginMap();
             f.KeyValue(() => inverseBindMatrices);
             f.KeyValue(() => joints);
             f.KeyValue(() => skeleton);
-            f.EndMap();
-            return f.ToString();
         }
     }
 }

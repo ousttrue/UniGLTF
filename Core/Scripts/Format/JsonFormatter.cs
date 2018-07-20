@@ -7,13 +7,13 @@ namespace UniGLTF
 {
     public class GLTFJsonFormatter: UniJSON.JsonFormatter
     {
-        public void GLTFValue(IJsonSerializable s)
+        public void GLTFValue(JsonSerializableBase s)
         {
             CommaCheck();
             Store.Write(s.ToJson());
         }
 
-        public void GLTFValue<T>(IEnumerable<T> values) where T : IJsonSerializable
+        public void GLTFValue<T>(IEnumerable<T> values) where T : JsonSerializableBase
         {
             BeginList();
             foreach (var value in values)

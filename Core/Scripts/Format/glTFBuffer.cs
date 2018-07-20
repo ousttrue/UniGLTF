@@ -5,7 +5,7 @@ using UniJSON;
 namespace UniGLTF
 {
     [Serializable]
-    public class glTFBuffer : IJsonSerializable
+    public class glTFBuffer : JsonSerializableBase
     {
         IBytesBuffer Storage;
 
@@ -55,22 +55,18 @@ namespace UniGLTF
             return Storage.GetBytes();
         }
 
-        public string ToJson()
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            var f = new GLTFJsonFormatter();
-            f.BeginMap();
             if (!string.IsNullOrEmpty(uri))
             {
                 f.KeyValue(() => uri);
             }
             f.KeyValue(() => byteLength);
-            f.EndMap();
-            return f.ToString();
         }
     }
 
     [Serializable]
-    public class glTFBufferView : IJsonSerializable
+    public class glTFBufferView : JsonSerializableBase
     {
         [JsonSchema(Required = true, Minimum = 0)]
         public int buffer;
@@ -92,10 +88,8 @@ namespace UniGLTF
         public object extras;
         public string name;
 
-        public string ToJson()
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            var f = new GLTFJsonFormatter();
-            f.BeginMap();
             f.KeyValue(() => buffer);
             f.KeyValue(() => byteOffset);
             f.KeyValue(() => byteLength);
@@ -107,8 +101,6 @@ namespace UniGLTF
             {
                 f.Key("target"); f.Value((int)target);
             }
-            f.EndMap();
-            return f.ToString();
         }
     }
 

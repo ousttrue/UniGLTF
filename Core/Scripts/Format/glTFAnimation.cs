@@ -7,7 +7,7 @@ using UniJSON;
 namespace UniGLTF
 {
     [Serializable]
-    public class glTFAnimationTarget : IJsonSerializable
+    public class glTFAnimationTarget : JsonSerializableBase
     {
         [JsonSchema(Minimum = 0)]
         public int node;
@@ -19,19 +19,13 @@ namespace UniGLTF
         public object extensions;
         public object extras;
 
-        public string ToJson()
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            var f = new GLTFJsonFormatter();
-            f.BeginMap();
-
             f.KeyValue(() => node);
             if (!string.IsNullOrEmpty(path))
             {
                 f.KeyValue(() => path);
             }
-
-            f.EndMap();
-            return f.ToString();
         }
 
         public const string PATH_TRANSLATION = "translation";
@@ -53,7 +47,7 @@ namespace UniGLTF
     }
 
     [Serializable]
-    public class glTFAnimationChannel : IJsonSerializable
+    public class glTFAnimationChannel : JsonSerializableBase
     {
         [JsonSchema(Required = true, Minimum = 0)]
         public int sampler = -1;
@@ -65,21 +59,15 @@ namespace UniGLTF
         public object extensions;
         public object extras;
 
-        public string ToJson()
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            var f = new GLTFJsonFormatter();
-            f.BeginMap();
-
             f.KeyValue(() => sampler);
             f.KeyValue(() => target);
-
-            f.EndMap();
-            return f.ToString();
         }
     }
 
     [Serializable]
-    public class glTFAnimationSampler : IJsonSerializable
+    public class glTFAnimationSampler : JsonSerializableBase
     {
         [JsonSchema(Required = true, Minimum = 0)]
         public int input = -1;
@@ -94,25 +82,19 @@ namespace UniGLTF
         public object extensions;
         public object extras;
 
-        public string ToJson()
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            var f = new GLTFJsonFormatter();
-            f.BeginMap();
-
             f.KeyValue(() => input);
             if (!string.IsNullOrEmpty(interpolation))
             {
                 f.KeyValue(() => interpolation);
             }
             f.KeyValue(() => output);
-
-            f.EndMap();
-            return f.ToString();
         }
     }
 
     [Serializable]
-    public class glTFAnimation : IJsonSerializable
+    public class glTFAnimation : JsonSerializableBase
     {
         public string name = "";
 
@@ -126,11 +108,8 @@ namespace UniGLTF
         public object extensions;
         public object extras;
 
-        public string ToJson()
+        protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            var f = new GLTFJsonFormatter();
-            f.BeginMap();
-
             if (!string.IsNullOrEmpty(name))
             {
                 f.KeyValue(() => name);
@@ -138,9 +117,6 @@ namespace UniGLTF
 
             f.KeyValue(() => channels);
             f.KeyValue(() => samplers);
-
-            f.EndMap();
-            return f.ToString();
         }
 
         public int AddChannelAndGetSampler(int nodeIndex, string path)

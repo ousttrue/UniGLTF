@@ -7,23 +7,6 @@ using UniJSON;
 namespace UniGLTF
 {
     [Serializable]
-    public abstract class JsonSerializableBase : IJsonSerializable
-    {
-        protected abstract void SerializeMembers(GLTFJsonFormatter f);
-
-        public string ToJson()
-        {
-            var f = new GLTFJsonFormatter();
-            f.BeginMap();
-
-            SerializeMembers(f);
-
-            f.EndMap();
-            return f.ToString();
-        }
-    }
-
-    [Serializable]
     public class glTFProperty
     {
         public object extensions;
