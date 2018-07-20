@@ -75,21 +75,16 @@ namespace UniGLTF
             }
 
             var jsonBytes = chunks[0].Bytes;
-            ParseJson<T>(Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count), 
+            ParseJson(Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count), 
                 new SimpleStorage(chunks[1].Bytes));
         }
 
         public void ParseJson(string json, IStorage storage)
         {
-            ParseJson<glTF>(json, storage);
-        }
-
-        public void ParseJson<T>(string json, IStorage storage) where T : glTF
-        {
             Json = json;
             Storage = storage;
 
-            GLTF = JsonUtility.FromJson<T>(Json);
+            GLTF = JsonUtility.FromJson<glTF>(Json);
             if (GLTF.asset.version != "2.0")
             {
                 throw new UniGLTFException("unknown gltf version {0}", GLTF.asset.version);

@@ -147,7 +147,7 @@ namespace UniGLTF
             };
         }
 
-        public static void Import<T>(ImporterContext ctx) where T : glTF
+        public static void Import(ImporterContext ctx)
         {
             // textures
             if (ctx.GLTF.textures != null)
