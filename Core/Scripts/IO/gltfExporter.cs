@@ -101,6 +101,17 @@ namespace UniGLTF
             };
         }
 
+        public static glTF Export(GameObject go)
+        {
+            var gltf = new glTF();
+            using (var exporter = new gltfExporter(gltf))
+            {
+                exporter.Prepare(go);
+                exporter.Export();
+            }
+            return gltf;
+        }
+
         public virtual void Prepare(GameObject go)
         {
             Copy = GameObject.Instantiate(go);

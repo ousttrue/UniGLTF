@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using System.IO;
+using System.Text;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -147,7 +149,49 @@ namespace UniGLTF
             };
         }
 
-        public static void Import(ImporterContext ctx)
+        public static GameObject Load(string path)
+        {
+            var bytes = File.ReadAllBytes(path);
+
+            var context = new ImporterContext();
+
+            var ext = Path.GetExtension(path).ToLower();
+            switch (ext)
+            {
+                case ".gltf":
+                    context.ParseJson(Encoding.UTF8.GetString(bytes), new FileSystemStorage(Path.GetDirectoryName(path)));
+                    break;
+
+                case ".zip":
+                    {
+                        var zipArchive = Zip.ZipArchiveStorage.Parse(bytes);
+                        var gltf = zipArchive.Entries.FirstOrDefault(x => x.FileName.ToLower().EndsWith(".gltf"));
+                        if (gltf == null)
+                        {
+                            throw new Exception("no gltf in archive");
+                        }
+                        var jsonBytes = zipArchive.Extract(gltf);
+                        var json = Encoding.UTF8.GetString(jsonBytes);
+                        context.ParseJson(json, zipArchive);
+                    }
+                    break;
+
+                case ".glb":
+                    context.ParseGlb(bytes);
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
+
+            gltfImporter.Load(context);
+            context.Root.name = Path.GetFileNameWithoutExtension(path);
+            context.ShowMeshes();
+
+            return context.Root;
+        }
+
+        public static void Load(ImporterContext ctx)
         {
             // textures
             if (ctx.GLTF.textures != null)

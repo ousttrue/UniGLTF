@@ -25,7 +25,7 @@ namespace UniGLTF
                     {
                         context.ParseJson(File.ReadAllText(context.Path, System.Text.Encoding.UTF8), 
                             new FileSystemStorage(Path.GetDirectoryName(path)));
-                        gltfImporter.Import(context);
+                        gltfImporter.Load(context);
                         context.SaveAsAsset();
                         context.Destroy(false);
                     }
@@ -69,7 +69,7 @@ namespace UniGLTF
                         EditorApplication.delayCall += () =>
                         {
                             // delay and can import png texture
-                            gltfImporter.Import(context);
+                            gltfImporter.Load(context);
                             context.SaveAsAsset();
                             context.Destroy(false);
                         };
