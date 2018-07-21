@@ -10,13 +10,11 @@ namespace UniGLTF
 
     public class JsonSerializeMembersAttribute : Attribute { }
 
-    [Serializable]
-    [ItemJsonSchema(ValueType = JsonValueType.Object)]
-    public partial class glTF_extensions : JsonSerializableBase
+    public class ExtensionBase : JsonSerializableBase
     {
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            foreach (var method in typeof(glTF_extensions).GetMethods(BindingFlags.Instance |
+            foreach (var method in this.GetType().GetMethods(BindingFlags.Instance |
                 BindingFlags.Public | BindingFlags.NonPublic))
             {
                 if (method.GetCustomAttributes(typeof(JsonSerializeMembersAttribute), true).Any())
@@ -25,6 +23,26 @@ namespace UniGLTF
                 }
             }
         }
+
+        public int Count
+        {
+            get
+            {
+                return this.GetType().GetMethods(BindingFlags.Instance |
+                BindingFlags.Public | BindingFlags.NonPublic).Where(x => x.GetCustomAttributes(typeof(JsonSerializeMembersAttribute), true).Any()).Count();
+            }
+        }
+    }
+
+    [Serializable]
+    [ItemJsonSchema(ValueType = JsonValueType.Object)]
+    public partial class glTF_extensions : ExtensionBase
+    {
+    }
+
+    [Serializable]
+    public partial class glTF_extras: ExtensionBase
+    {
     }
 
     #region Camera

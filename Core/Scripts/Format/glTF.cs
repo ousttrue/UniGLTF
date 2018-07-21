@@ -269,8 +269,8 @@ namespace UniGLTF
         [JsonSchema(MinItems = 1)]
         public List<string> extensionsRequired = new List<string>();
 
-        public glTF_extensions extensions = new glTF_extensions { };
-        public object extras;
+        public glTF_extensions extensions = new glTF_extensions();
+        public glTF_extras extras = new glTF_extras();
 
         public override string ToString()
         {
@@ -279,9 +279,18 @@ namespace UniGLTF
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
-            f.KeyValue(() => extensionsUsed);
-            f.KeyValue(() => extensions);
-            f.KeyValue(() => extras);
+            if (extensionsUsed.Count > 0)
+            {
+                f.KeyValue(() => extensionsUsed);
+            }
+            if (extensions.Count > 0)
+            {
+                f.KeyValue(() => extensions);
+            }
+            if (extras.Count > 0)
+            {
+                f.KeyValue(() => extras);
+            }
 
             f.KeyValue(() => asset);
 
@@ -341,6 +350,10 @@ namespace UniGLTF
             if (scenes.Any())
             {
                 f.KeyValue(() => scenes);
+            }
+            if (scene >= 0)
+            {
+                f.KeyValue(() => scene);
             }
 
             // animations
