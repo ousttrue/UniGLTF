@@ -150,7 +150,7 @@ namespace UniGLTF
                 {
                     var extra = parsed["nodes"][i]["extra"]["skinRootBone"].AsInt;
                     //Debug.LogFormat("restore extra: {0}", extra);
-                    node.extras.skinRootBone = extra;
+                    //node.extras.skinRootBone = extra;
                 }
                 catch (Exception)
                 {
