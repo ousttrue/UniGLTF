@@ -9,7 +9,7 @@ namespace UniGLTF
     {
         IBytesBuffer Storage;
 
-        public void OpenStorage(string baseDir, IStorage storage)
+        public void OpenStorage(IStorage storage)
         {
             Storage = new ArraySegmentByteBuffer(storage.Get(uri));
             /*

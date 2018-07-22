@@ -13,7 +13,19 @@ namespace UniGLTF
 {
     public class ImporterContext
     {
+        public string TextureBaseDir
+        {
+            get; private set;
+        }
+        public ImporterContext(string assetPath)
+        {
+            if (!string.IsNullOrEmpty(assetPath))
+            {
+                TextureBaseDir = Path.GetDirectoryName(assetPath).Replace("\\", "/");
+            }
+        }
         #region Source
+        /*
         String m_path;
 
         /// <summary>
@@ -28,6 +40,7 @@ namespace UniGLTF
                 m_path = value;
             }
         }
+        */
 
         /// <summary>
         /// JSON source
@@ -93,10 +106,10 @@ namespace UniGLTF
             RestoreOlderVersionValues();
 
             // parepare byte buffer
-            GLTF.baseDir = System.IO.Path.GetDirectoryName(Path);
+            //GLTF.baseDir = System.IO.Path.GetDirectoryName(Path);
             foreach (var buffer in GLTF.buffers)
             {
-                buffer.OpenStorage(GLTF.baseDir, storage);
+                buffer.OpenStorage(storage);
             }
         }
 
@@ -171,6 +184,7 @@ namespace UniGLTF
             var hasVertexColor = GLTF.meshes.SelectMany(x => x.primitives).Any(x => x.material == materialIndex && x.HasVertexColor);
             return hasVertexColor;
         }
+
         #region Imported
         public GameObject Root;
         public List<Transform> Nodes = new List<Transform>();
@@ -381,6 +395,44 @@ namespace UniGLTF
         }
         #endregion
 #endif
+
+        public void SaveTexturesAsPng(string prefabPath)
+        {
+            var prefabFolder = Path.GetDirectoryName(prefabPath).Replace("\\", "/");
+            AssetDatabase.ImportAsset(prefabFolder);
+            TextureBaseDir = prefabFolder;
+
+            //
+            // https://answers.unity.com/questions/647615/how-to-update-import-settings-for-newly-created-as.html
+            //
+            for (int i = 0; i < GLTF.textures.Count; ++i)
+            {
+                var x = GLTF.textures[i];
+                var image = GLTF.images[x.source];
+                if (string.IsNullOrEmpty(image.uri))
+                {
+                    // glb buffer
+                    var folder = GetAssetFolder(prefabPath, ".Textures");
+                    if (!Directory.Exists(folder.AssetPathToFullPath()))
+                    {
+                        AssetDatabase.CreateFolder(Path.GetDirectoryName(folder), Path.GetFileName(folder));
+                    }
+
+                    // name & bytes
+                    var textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", i);
+                    var byteSegment = GLTF.GetViewBytes(image.bufferView);
+
+                    // path
+                    var png = Path.Combine(folder, textureName + ".png").Replace("\\", "/");
+                    File.WriteAllBytes(png.AssetPathToFullPath(), byteSegment.ToArray());
+
+                    AssetDatabase.ImportAsset(png);
+                    image.uri = png.Substring(prefabFolder.Length + 1);
+                    Debug.LogFormat("image.uri: {0}", image.uri);
+                }
+            }
+            UnityEditor.AssetDatabase.Refresh();
+        }
 
         public void Destroy(bool destroySubAssets)
         {

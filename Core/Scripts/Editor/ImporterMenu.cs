@@ -15,21 +15,22 @@ namespace UniGLTF
             {
                 return;
             }
-            Debug.Log(path);
-
-            var context = gltfImporter.Load(path);
 
             if (Application.isPlaying)
             {
                 // load into scene
+                var context = gltfImporter.Load(path);
                 context.ShowMeshes();
                 Selection.activeGameObject = context.Root;
-                return;
             }
-
-            // import as asset
-            try
+            else
             {
+                if (path.StartsWithUnityAssetPath())
+                {
+                    Debug.LogWarningFormat("disallow import from folder under the Assets");
+                    return;
+                }
+
                 var assetPath = UnityEditor.EditorUtility.SaveFilePanel("save prefab", "Assets", Path.GetFileNameWithoutExtension(path), "prefab");
                 if (string.IsNullOrEmpty(path))
                 {
@@ -42,16 +43,27 @@ namespace UniGLTF
                     return;
                 }
 
-                assetPath = assetPath.ToUnityRelativePath();
-                context.SaveAsAsset(assetPath);
+                // import as asset
+                Import(path, assetPath);
+            }
+        }
 
-                Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
-            }
-            finally
+        static void Import(string readPath, string writePath)
+        {
+            var bytes = File.ReadAllBytes(readPath);
+            var context = gltfImporter.Parse(readPath, bytes);
+            var prefabPath = writePath.ToUnityRelativePath().Replace("\\", "/");
+
+            context.SaveTexturesAsPng(prefabPath);
+
+            EditorApplication.delayCall += () =>
             {
-                // clear scene
-                GameObject.DestroyImmediate(context.Root);
-            }
+                // delay and can import png texture
+                gltfImporter.Load(context);
+                context.SaveAsAsset(prefabPath);
+                context.Destroy(false);
+            };
+
         }
     }
 }

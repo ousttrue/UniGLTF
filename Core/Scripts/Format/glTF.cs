@@ -44,11 +44,13 @@ namespace UniGLTF
     [Serializable]
     public class glTF : JsonSerializableBase, IEquatable<glTF>
     {
+        /*
         public string baseDir
         {
             get;
             set;
         }
+        */
 
         [JsonSchema(Required = true)]
         public glTFAssets asset = new glTFAssets();

@@ -152,10 +152,17 @@ namespace UniGLTF
         public static ImporterContext Load(string path)
         {
             var bytes = File.ReadAllBytes(path);
+            var context = Parse(path, bytes);
+            gltfImporter.Load(context);
+            context.Root.name = Path.GetFileNameWithoutExtension(path);
+            return context;
+        }
 
-            var context = new ImporterContext();
-
+        public static ImporterContext Parse(string path, Byte[] bytes)
+        {
             var ext = Path.GetExtension(path).ToLower();
+            var context = new ImporterContext(path.StartsWithUnityAssetPath() ? path.ToUnityRelativePath() : null);
+
             switch (ext)
             {
                 case ".gltf":
@@ -183,10 +190,6 @@ namespace UniGLTF
                 default:
                     throw new NotImplementedException();
             }
-
-            gltfImporter.Load(context);
-            context.Root.name = Path.GetFileNameWithoutExtension(path);
-
             return context;
         }
 
@@ -195,7 +198,7 @@ namespace UniGLTF
             // textures
             if (ctx.GLTF.textures != null)
             {
-                ctx.Textures.AddRange(ctx.GLTF.textures.Select((x, i) => new TextureItem(ctx.GLTF, i)));
+                ctx.Textures.AddRange(ctx.GLTF.textures.Select((x, i) => new TextureItem(ctx.GLTF, i, ctx.TextureBaseDir)));
             }
             foreach(var x in ctx.Textures)
             {

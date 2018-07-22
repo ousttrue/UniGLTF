@@ -45,7 +45,7 @@ namespace UniGLTF
         public void UniGLTFSimpleSceneTest()
         {
             var go = CreateSimpelScene();
-            var context = new ImporterContext();
+            var context = new ImporterContext(null);
 
             try
             {

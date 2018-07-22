@@ -46,7 +46,7 @@ namespace UniGLTF
             if (m_metallicRoughnessOcclusion != null) yield return m_metallicRoughnessOcclusion;
         }
 
-        public TextureItem(glTF gltf, int index)
+        public TextureItem(glTF gltf, int index, string textureBase)
         {
             m_textureIndex = index;
 
@@ -54,10 +54,10 @@ namespace UniGLTF
 #if UNITY_EDITOR
             if (!string.IsNullOrEmpty(image.uri)
                 && !image.uri.StartsWith("data:")
-                && !string.IsNullOrEmpty(gltf.baseDir) 
-                && gltf.baseDir.StartsWith("Assets"))
+                && !string.IsNullOrEmpty(textureBase) 
+                && textureBase.StartsWith("Assets"))
             {
-                m_assetPath= Path.Combine(gltf.baseDir, image.uri);
+                m_assetPath= Path.Combine(textureBase, image.uri);
                 m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
             }
 #endif

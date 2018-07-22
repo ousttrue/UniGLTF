@@ -15,88 +15,57 @@ namespace UniGLTF
         {
             foreach (string path in importedAssets)
             {
-                ImporterContext context = new ImporterContext
+                Import(path);
+            }
+        }
+
+        public static void Import(string path)
+        {
+            ImporterContext context = new ImporterContext(path);
+            var ext = Path.GetExtension(path).ToLower();
+            try
+            {
+                var prefabPath = Path.GetDirectoryName(path) + "/" + Path.GetFileNameWithoutExtension(path) + ".prefab";
+                prefabPath = prefabPath.Replace("\\", "/");
+                if (ext == ".gltf")
                 {
-                    Path = path,
-                };
-                var ext = Path.GetExtension(path).ToLower();
-                try
+                    context.ParseJson(File.ReadAllText(path, System.Text.Encoding.UTF8),
+                        new FileSystemStorage(Path.GetDirectoryName(path)));
+                    gltfImporter.Load(context);
+                    context.SaveAsAsset(prefabPath);
+                    context.Destroy(false);
+                }
+                else if (ext == ".glb")
                 {
-                    var prefabPath = Path.GetDirectoryName(path) + "/" + Path.GetFileNameWithoutExtension(path) + ".prefab";
-                    prefabPath = prefabPath.Replace("\\", "/");
-                    if (ext == ".gltf")
+                    context.ParseGlb<glTF>(File.ReadAllBytes(path));
+                    context.SaveTexturesAsPng(prefabPath);
+                    EditorApplication.delayCall += () =>
                     {
-                        context.ParseJson(File.ReadAllText(context.Path, System.Text.Encoding.UTF8),
-                            new FileSystemStorage(Path.GetDirectoryName(path)));
-                        gltfImporter.Load(context);
-                        context.SaveAsAsset(prefabPath);
-                        context.Destroy(false);
-                    }
-                    else if (ext == ".glb")
-                    {
-                        context.ParseGlb<glTF>(File.ReadAllBytes(context.Path));
-
-                        //
-                        // https://answers.unity.com/questions/647615/how-to-update-import-settings-for-newly-created-as.html
-                        //
-                        for (int i = 0; i < context.GLTF.textures.Count; ++i)
-                        {
-                            var x = context.GLTF.textures[i];
-                            var image = context.GLTF.images[x.source];
-                            if (string.IsNullOrEmpty(image.uri))
-                            {
-                                // glb buffer
-                                var folder = context.GetAssetFolder(prefabPath, ".Textures").AssetPathToFullPath();
-                                if (!Directory.Exists(folder))
-                                {
-                                    UnityEditor.AssetDatabase.CreateFolder(context.GLTF.baseDir, Path.GetFileNameWithoutExtension(context.Path) + ".Textures");
-                                    //Directory.CreateDirectory(folder);
-                                }
-
-                                // name & bytes
-                                var textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", i);
-                                var byteSegment = context.GLTF.GetViewBytes(image.bufferView);
-
-                                // path
-                                var png = Path.Combine(folder, textureName + ".png");
-                                File.WriteAllBytes(png, byteSegment.ToArray());
-
-                                var assetPath = png.ToUnityRelativePath();
-                                //Debug.LogFormat("import asset {0}", assetPath);
-                                UnityEditor.AssetDatabase.ImportAsset(assetPath);
-                                image.uri = assetPath.Substring(context.GLTF.baseDir.Length + 1);
-                            }
-                        }
-                        UnityEditor.AssetDatabase.Refresh();
-
-                        EditorApplication.delayCall += () =>
-                        {
                             // delay and can import png texture
                             gltfImporter.Load(context);
-                            context.SaveAsAsset(prefabPath);
-                            context.Destroy(false);
-                        };
-                    }
-                    else
-                    {
-                        continue;
-                    }
+                        context.SaveAsAsset(prefabPath);
+                        context.Destroy(false);
+                    };
                 }
-                catch (UniGLTFNotSupportedException ex)
+                else
                 {
-                    Debug.LogWarningFormat("{0}: {1}",
-                        path,
-                        ex.Message
-                        );
+                    return;
                 }
-                catch (Exception ex)
+            }
+            catch (UniGLTFNotSupportedException ex)
+            {
+                Debug.LogWarningFormat("{0}: {1}",
+                    path,
+                    ex.Message
+                    );
+            }
+            catch (Exception ex)
+            {
+                Debug.LogErrorFormat("import error: {0}", path);
+                Debug.LogErrorFormat("{0}", ex);
+                if (context != null)
                 {
-                    Debug.LogErrorFormat("import error: {0}", path);
-                    Debug.LogErrorFormat("{0}", ex);
-                    if (context != null)
-                    {
-                        context.Destroy(true);
-                    }
+                    context.Destroy(true);
                 }
             }
         }
