@@ -149,7 +149,7 @@ namespace UniGLTF
             };
         }
 
-        public static GameObject Load(string path)
+        public static ImporterContext Load(string path)
         {
             var bytes = File.ReadAllBytes(path);
 
@@ -186,9 +186,8 @@ namespace UniGLTF
 
             gltfImporter.Load(context);
             context.Root.name = Path.GetFileNameWithoutExtension(path);
-            context.ShowMeshes();
 
-            return context.Root;
+            return context;
         }
 
         public static void Load(ImporterContext ctx)
