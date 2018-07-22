@@ -612,7 +612,6 @@ namespace UniGLTF
                     var firstPrimitive = gltfMesh.primitives[0];
                     firstPrimitive.targets.Add(morphTarget);
 
-                    // https://github.com/KhronosGroup/glTF/issues/1036
                     firstPrimitive.extras.targetNames.Add(mesh.GetBlendShapeName(j));
                 }
 

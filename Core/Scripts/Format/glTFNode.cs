@@ -5,17 +5,6 @@ using UniJSON;
 namespace UniGLTF
 {
     [Serializable]
-    public class glTFNode_extra_rootBone : JsonSerializableBase
-    {
-        public int skinRootBone = -1; // for Unity's SkinnedMeshRenderer
-
-        protected override void SerializeMembers(GLTFJsonFormatter f)
-        {
-            f.KeyValue(() => skinRootBone);
-        }
-    }
-
-    [Serializable]
     public class glTFNode : JsonSerializableBase
     {
         public string name = "";
@@ -51,7 +40,7 @@ namespace UniGLTF
 
         // empty schemas
         public object extensions;
-        public glTFNode_extra_rootBone extras = new glTFNode_extra_rootBone();
+        public glTFNode_extra extras = new glTFNode_extra();
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {

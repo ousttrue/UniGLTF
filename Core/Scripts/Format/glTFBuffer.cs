@@ -97,10 +97,7 @@ namespace UniGLTF
             {
                 f.Key("target"); f.Value((int)target);
             }
-            if (
-                byteStride == 8
-                || byteStride == 12
-                || byteStride == 16)
+            if (byteStride >= 4)
             {
                 f.KeyValue(() => byteStride);
             }
@@ -230,7 +227,7 @@ namespace UniGLTF
                 f.KeyValue(() => sparse);
             }
 
-            //f.KeyValue(() => normalized);
+            f.KeyValue(() => normalized);
             f.KeyValue(() => name);
         }
     }

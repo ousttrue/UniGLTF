@@ -14,7 +14,7 @@ namespace UniGLTF
         public int[] joints;
 
         [JsonSchema(Minimum = 0)]
-        public int skeleton;
+        public int skeleton = -1;
 
         // empty schemas
         public object extensions;
@@ -25,7 +25,10 @@ namespace UniGLTF
         {
             f.KeyValue(() => inverseBindMatrices);
             f.KeyValue(() => joints);
-            //f.KeyValue(() => skeleton);
+            if (skeleton >= 0)
+            {
+                f.KeyValue(() => skeleton);
+            }
         }
     }
 }

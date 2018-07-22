@@ -4,31 +4,6 @@ using UniJSON;
 
 namespace UniGLTF
 {
-    #region Draco
-    [Serializable]
-    public class glTF_KHR_draco_mesh_compression : JsonSerializableBase
-    {
-        public int bufferView;
-        public glTFAttributes attributes;
-
-        protected override void SerializeMembers(GLTFJsonFormatter f)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    [Serializable]
-    public class glTFPrimitivesExtensions : JsonSerializableBase
-    {
-        public glTF_KHR_draco_mesh_compression KHR_draco_mesh_compression;
-
-        protected override void SerializeMembers(GLTFJsonFormatter f)
-        {
-            throw new NotImplementedException();
-        }
-    }
-    #endregion
-
     [Serializable]
     public class glTFAttributes : JsonSerializableBase
     {
@@ -90,27 +65,6 @@ namespace UniGLTF
         }
     }
 
-    [Serializable]
-    public class extrasTargetNames : JsonSerializableBase
-    {
-        [JsonSchema(MinItems = 1)]
-        public List<string> targetNames = new List<string>();
-
-        protected override void SerializeMembers(GLTFJsonFormatter f)
-        {
-            if (targetNames.Count > 0)
-            {
-                f.Key("targetNames");
-                f.BeginList();
-                foreach (var x in targetNames)
-                {
-                    f.Value(x);
-                }
-                f.EndList();
-            }
-        }
-    }
-
     /// <summary>
     /// https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/schema/mesh.primitive.schema.json
     /// </summary>
@@ -141,10 +95,10 @@ namespace UniGLTF
         [ItemJsonSchema(SkipSchemaComparison = true)]
         public List<gltfMorphTarget> targets = new List<gltfMorphTarget>();
        
-        public extrasTargetNames extras = new extrasTargetNames();
+        public glTFPrimitives_extras extras = new glTFPrimitives_extras();
 
         [JsonSchema(SkipSchemaComparison = true)]
-        public glTFPrimitivesExtensions extensions;
+        public glTFPrimitives_extensions extensions = new glTFPrimitives_extensions();
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
@@ -155,6 +109,10 @@ namespace UniGLTF
             if (targets != null && targets.Count > 0)
             {
                 f.Key("targets"); f.GLTFValue(targets);
+            }
+            if (extensions.KHR_draco_mesh_compression!=null)
+            {
+                f.KeyValue(() => extensions);
             }
             if (extras.targetNames.Count > 0)
             {

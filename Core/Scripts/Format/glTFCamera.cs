@@ -40,7 +40,7 @@ namespace UniGLTF
         public float znear;
 
         public glTFPerspective_extensions extensions;
-        public glTFPerspective_extrans extras;
+        public glTFPerspective_extras extras;
     }
 
     [Serializable]
