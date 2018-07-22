@@ -17,7 +17,7 @@ namespace UniGLTF
         {
             get; private set;
         }
-        public ImporterContext(string assetPath)
+        public ImporterContext(string assetPath = null)
         {
             if (!string.IsNullOrEmpty(assetPath))
             {
@@ -25,22 +25,6 @@ namespace UniGLTF
             }
         }
         #region Source
-        /*
-        String m_path;
-
-        /// <summary>
-        /// GLTF or GLB path
-        /// </summary>
-        public String Path
-        {
-            get { return m_path; }
-            set
-            {
-                if (m_path == value) return;
-                m_path = value;
-            }
-        }
-        */
 
         /// <summary>
         /// JSON source
@@ -87,7 +71,7 @@ namespace UniGLTF
             }
 
             var jsonBytes = chunks[0].Bytes;
-            ParseJson(Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count), 
+            ParseJson(Encoding.UTF8.GetString(jsonBytes.Array, jsonBytes.Offset, jsonBytes.Count),
                 new SimpleStorage(chunks[1].Bytes));
         }
 
@@ -156,6 +140,7 @@ namespace UniGLTF
                     // do nothing
                 }
             }
+#if false
             for (int i = 0; i < GLTF.nodes.Count; ++i)
             {
                 var node = GLTF.nodes[i];
@@ -170,6 +155,7 @@ namespace UniGLTF
                     // do nothing
                 }
             }
+#endif
         }
 
         public CreateMaterialFunc CreateMaterial;
@@ -205,45 +191,7 @@ namespace UniGLTF
         #endregion
 
 #if UNITY_EDITOR
-        #region PrefabPath
-        /*
-        string m_prefabPath;
-        string PrefabPath
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(m_prefabPath))
-                {
-                    m_prefabPath = GetPrefabPath();
-                }
-                return m_prefabPath;
-            }
-        }
-        protected virtual string GetPrefabPath()
-        {
-            var dir = System.IO.Path.GetDirectoryName(Path);
-            var name = System.IO.Path.GetFileNameWithoutExtension(Path);
-            var prefabPath = string.Format("{0}/{1}.prefab", dir, name);
-#if false
-            if (!Application.isPlaying && File.Exists(prefabPath))
-            {
-                // already exists
-                if (IsOwn(prefabPath))
-                {
-                    //Debug.LogFormat("already exist. own: {0}", prefabPath);
-                }
-                else
-                {
-                    // but unknown prefab
-                    var unique = AssetDatabase.GenerateUniqueAssetPath(prefabPath);
-                    //Debug.LogFormat("already exist: {0} => {1}", prefabPath, unique);
-                    prefabPath = unique;
-                }
-            }
-#endif
-            return prefabPath.Replace("\\", "/");
-        }
-        */
+        #region Assets
         public string GetAssetFolder(string prefabPath, string suffix)
         {
             var path = String.Format("{0}/{1}{2}",
@@ -254,9 +202,7 @@ namespace UniGLTF
                 ;
             return path;
         }
-        #endregion
 
-        #region Assets
         IEnumerable<UnityEngine.Object> GetSubAssets(string path)
         {
             return AssetDatabase.LoadAllAssetsAtPath(path);
@@ -393,8 +339,6 @@ namespace UniGLTF
                 AssetDatabase.ImportAsset(x);
             }
         }
-        #endregion
-#endif
 
         public void SaveTexturesAsPng(string prefabPath)
         {
@@ -433,6 +377,8 @@ namespace UniGLTF
             }
             UnityEditor.AssetDatabase.Refresh();
         }
+        #endregion
+#endif
 
         public void Destroy(bool destroySubAssets)
         {
