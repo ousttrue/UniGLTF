@@ -284,10 +284,13 @@ namespace UniGLTF
             var fullPath = assetPath.AssetPathToFullPath();
             if (!Directory.Exists(fullPath))
             {
+                var assetDir = System.IO.Path.GetDirectoryName(assetPath).Replace("\\", "/");
+                AssetDatabase.ImportAsset(assetDir);
                 AssetDatabase.CreateFolder(
                     System.IO.Path.GetDirectoryName(assetPath),
                     System.IO.Path.GetFileName(assetPath)
                     );
+                AssetDatabase.ImportAsset(assetPath);
             }
         }
 
@@ -312,6 +315,7 @@ namespace UniGLTF
             EnsureFolder(materialDir);
             var textureDir = GetAssetFolder(prefabPath, ".Textures");
             EnsureFolder(textureDir);
+
 
             var meshDir = GetAssetFolder(prefabPath, ".Meshes");
             if (!MeshAsSubAsset)
