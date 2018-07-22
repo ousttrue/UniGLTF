@@ -192,6 +192,7 @@ namespace UniGLTF
 
 #if UNITY_EDITOR
         #region PrefabPath
+        /*
         string m_prefabPath;
         string PrefabPath
         {
@@ -228,11 +229,12 @@ namespace UniGLTF
 #endif
             return prefabPath.Replace("\\", "/");
         }
-        public string GetAssetFolder(string suffix)
+        */
+        public string GetAssetFolder(string prefabPath, string suffix)
         {
             var path = String.Format("{0}/{1}{2}",
-                System.IO.Path.GetDirectoryName(PrefabPath),
-                System.IO.Path.GetFileNameWithoutExtension(PrefabPath),
+                System.IO.Path.GetDirectoryName(prefabPath),
+                System.IO.Path.GetFileNameWithoutExtension(prefabPath),
                 suffix
                 )
                 ;
@@ -291,11 +293,11 @@ namespace UniGLTF
 
         public bool MeshAsSubAsset = false;
 
-        public void SaveAsAsset()
+        public void SaveAsAsset(string prefabPath)
         {
             ShowMeshes();
 
-            var prefabPath = PrefabPath;
+            //var prefabPath = PrefabPath;
             if (File.Exists(prefabPath))
             {
                 // clear SubAssets
@@ -306,12 +308,12 @@ namespace UniGLTF
             }
 
             // Add SubAsset
-            var materialDir = GetAssetFolder(".Materials");
+            var materialDir = GetAssetFolder(prefabPath, ".Materials");
             EnsureFolder(materialDir);
-            var textureDir = GetAssetFolder(".Textures");
+            var textureDir = GetAssetFolder(prefabPath, ".Textures");
             EnsureFolder(textureDir);
 
-            var meshDir = GetAssetFolder(".Meshes");
+            var meshDir = GetAssetFolder(prefabPath, ".Meshes");
             if (!MeshAsSubAsset)
             {
                 EnsureFolder(meshDir);

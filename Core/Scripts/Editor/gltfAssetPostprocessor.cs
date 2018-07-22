@@ -3,6 +3,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
+
 namespace UniGLTF
 {
     public class gltfAssetPostprocessor : AssetPostprocessor
@@ -21,12 +22,14 @@ namespace UniGLTF
                 var ext = Path.GetExtension(path).ToLower();
                 try
                 {
+                    var prefabPath = Path.GetDirectoryName(path) + "/" + Path.GetFileNameWithoutExtension(path) + ".prefab";
+                    prefabPath = prefabPath.Replace("\\", "/");
                     if (ext == ".gltf")
                     {
-                        context.ParseJson(File.ReadAllText(context.Path, System.Text.Encoding.UTF8), 
+                        context.ParseJson(File.ReadAllText(context.Path, System.Text.Encoding.UTF8),
                             new FileSystemStorage(Path.GetDirectoryName(path)));
                         gltfImporter.Load(context);
-                        context.SaveAsAsset();
+                        context.SaveAsAsset(prefabPath);
                         context.Destroy(false);
                     }
                     else if (ext == ".glb")
@@ -43,7 +46,7 @@ namespace UniGLTF
                             if (string.IsNullOrEmpty(image.uri))
                             {
                                 // glb buffer
-                                var folder = context.GetAssetFolder(".Textures").AssetPathToFullPath();
+                                var folder = context.GetAssetFolder(prefabPath, ".Textures").AssetPathToFullPath();
                                 if (!Directory.Exists(folder))
                                 {
                                     UnityEditor.AssetDatabase.CreateFolder(context.GLTF.baseDir, Path.GetFileNameWithoutExtension(context.Path) + ".Textures");
@@ -70,7 +73,7 @@ namespace UniGLTF
                         {
                             // delay and can import png texture
                             gltfImporter.Load(context);
-                            context.SaveAsAsset();
+                            context.SaveAsAsset(prefabPath);
                             context.Destroy(false);
                         };
                     }

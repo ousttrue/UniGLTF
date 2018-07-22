@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿using System.IO;
+using UnityEditor;
 using UnityEngine;
 
 
@@ -18,8 +19,39 @@ namespace UniGLTF
 
             var context = gltfImporter.Load(path);
 
-            context.ShowMeshes();
-            Selection.activeGameObject = context.Root;
+            if (Application.isPlaying)
+            {
+                // load into scene
+                context.ShowMeshes();
+                Selection.activeGameObject = context.Root;
+                return;
+            }
+
+            // import as asset
+            try
+            {
+                var assetPath = UnityEditor.EditorUtility.SaveFilePanel("open gltf", "Assets", Path.GetFileNameWithoutExtension(path), "prefab");
+                if (string.IsNullOrEmpty(path))
+                {
+                    return;
+                }
+
+                if (!assetPath.StartsWithUnityAssetPath())
+                {
+                    Debug.LogWarningFormat("out of asset path: {0}", assetPath);
+                    return;
+                }
+
+                assetPath = assetPath.ToUnityRelativePath();
+                context.SaveAsAsset(assetPath);
+
+                Selection.activeObject = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            }
+            finally
+            {
+                // clear scene
+                GameObject.DestroyImmediate(context.Root);
+            }
         }
     }
 }
