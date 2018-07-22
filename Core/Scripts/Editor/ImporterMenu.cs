@@ -8,7 +8,7 @@ namespace UniGLTF
 {
     public static class ImporterMenu
     {
-        [MenuItem("Assets/gltf/import")]
+        [MenuItem(UniGLTFVersion.UNIGLTF_VERSION + "/Import", priority = 1)]
         public static void ImportMenu()
         {
             var path = UnityEditor.EditorUtility.OpenFilePanel("open gltf", "", "gltf,glb");
