@@ -65,7 +65,11 @@ namespace UniGLTF
             if (skin >= 0)
             {
                 f.KeyValue(() => skin);
-                f.KeyValue(() => extras);
+
+                if (extras.__count > 0)
+                {
+                    f.KeyValue(() => extras);
+                }
             }
         }
     }

@@ -814,10 +814,6 @@ namespace UniGLTF
                     if (node.skin != -1)
                     {
                         nodeWithSkin.SkinIndex = node.skin;
-                        if (node.extras.skinRootBone != -1)
-                        {
-                            renderer.rootBone = context.Nodes[node.extras.skinRootBone];
-                        }
                     }
 
                     renderer.sharedMesh = mesh.Mesh;
@@ -884,7 +880,8 @@ namespace UniGLTF
 
                         var joints = skin.joints.Select(y => nodes[y].Transform).ToArray();
                         skinnedMeshRenderer.bones = joints;
-                        //skinnedMeshRenderer.rootBone = nodes[skin.skeleton].Transform;
+
+                        skinnedMeshRenderer.rootBone = nodes[skin.skeleton].Transform;
 
                         if (skin.inverseBindMatrices != -1)
                         {

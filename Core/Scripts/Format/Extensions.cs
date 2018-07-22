@@ -56,24 +56,24 @@ namespace UniGLTF
     #region Camera
     [Serializable]
     [ItemJsonSchema(ValueType = JsonValueType.Object)]
-    public partial class glTFOrthographic_extensions: ExtensionsBase<glTFOrthographic_extensions> { }
+    public partial class glTFOrthographic_extensions : ExtensionsBase<glTFOrthographic_extensions> { }
 
     [Serializable]
-    public partial class glTFOrthographic_extras: ExtraBase<glTFOrthographic_extras> { }
-
-    [Serializable]
-    [ItemJsonSchema(ValueType = JsonValueType.Object)]
-    public partial class glTFPerspective_extensions: ExtensionsBase<glTFPerspective_extensions> { }
-
-    [Serializable]
-    public partial class glTFPerspective_extras: ExtraBase<glTFPerspective_extras> { }
+    public partial class glTFOrthographic_extras : ExtraBase<glTFOrthographic_extras> { }
 
     [Serializable]
     [ItemJsonSchema(ValueType = JsonValueType.Object)]
-    public partial class glTFCamera_extensions: ExtensionsBase<glTFCamera_extensions> { }
+    public partial class glTFPerspective_extensions : ExtensionsBase<glTFPerspective_extensions> { }
 
     [Serializable]
-    public partial class glTFCamera_extras: ExtraBase<glTFCamera_extras> { }
+    public partial class glTFPerspective_extras : ExtraBase<glTFPerspective_extras> { }
+
+    [Serializable]
+    [ItemJsonSchema(ValueType = JsonValueType.Object)]
+    public partial class glTFCamera_extensions : ExtensionsBase<glTFCamera_extensions> { }
+
+    [Serializable]
+    public partial class glTFCamera_extras : ExtraBase<glTFCamera_extras> { }
     #endregion
 
     #region Mesh
@@ -132,6 +132,13 @@ namespace UniGLTF
     #endregion
 
     #region Scene
+    [Serializable]
+    public partial class glTFNode_extra : ExtraBase<glTFNode_extra> { }
+
+#if false
+    //
+    // use /skins/*/skeleton
+    //
     /// <summary>
     /// for Unity's SkinnedMeshRenderer.rootBone
     /// </summary>
@@ -146,5 +153,6 @@ namespace UniGLTF
             f.KeyValue(() => skinRootBone);
         }
     }
+#endif
     #endregion
 }

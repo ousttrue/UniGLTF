@@ -202,10 +202,6 @@ namespace UniGLTF
             {
                 node.mesh = meshes.IndexOf(skinnredMeshRenderer.sharedMesh);
                 node.skin = skins.IndexOf(skinnredMeshRenderer);
-                if (skinnredMeshRenderer.rootBone != null)
-                {
-                    node.extras.skinRootBone = nodes.IndexOf(skinnredMeshRenderer.rootBone);
-                }
             }
 
             return node;
@@ -690,7 +686,6 @@ namespace UniGLTF
                     var nodeIndex = unityNodes.IndexOf(z);
                     var node = gltf.nodes[nodeIndex];
                     node.skin = skinIndex;
-                    node.extras.skinRootBone = unityNodes.IndexOf(x.rootBone);
                 }
             }
             #endregion
