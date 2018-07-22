@@ -30,7 +30,7 @@ namespace UniGLTF
             // import as asset
             try
             {
-                var assetPath = UnityEditor.EditorUtility.SaveFilePanel("open gltf", "Assets", Path.GetFileNameWithoutExtension(path), "prefab");
+                var assetPath = UnityEditor.EditorUtility.SaveFilePanel("save prefab", "Assets", Path.GetFileNameWithoutExtension(path), "prefab");
                 if (string.IsNullOrEmpty(path))
                 {
                     return;
