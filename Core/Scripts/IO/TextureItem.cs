@@ -12,12 +12,12 @@ namespace UniGLTF
         int m_textureIndex;
 
         public Texture2D Texture;
-        string m_assetPath;
+        UnityPath m_assetPath;
         public bool IsAsset
         {
             get
             {
-                return !string.IsNullOrEmpty(m_assetPath);
+                return m_assetPath.IsUnderAssetsFolder;
             }
         }
 
@@ -46,7 +46,7 @@ namespace UniGLTF
             if (m_metallicRoughnessOcclusion != null) yield return m_metallicRoughnessOcclusion;
         }
 
-        public TextureItem(glTF gltf, int index, string textureBase)
+        public TextureItem(glTF gltf, int index, UnityPath textureBase=default(UnityPath))
         {
             m_textureIndex = index;
 
@@ -54,10 +54,9 @@ namespace UniGLTF
 #if UNITY_EDITOR
             if (!string.IsNullOrEmpty(image.uri)
                 && !image.uri.StartsWith("data:")
-                && !string.IsNullOrEmpty(textureBase) 
-                && textureBase.StartsWith("Assets"))
+                && textureBase.IsUnderAssetsFolder)
             {
-                m_assetPath= Path.Combine(textureBase, image.uri);
+                m_assetPath= textureBase.Child(image.uri);
                 m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
             }
 #endif
@@ -118,9 +117,8 @@ namespace UniGLTF
                 //
                 // texture from assets
                 //
-                var path = m_assetPath.ToUnityRelativePath();
-                UnityEditor.AssetDatabase.ImportAsset(path);
-                Texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                m_assetPath.ImportAsset();
+                Texture = m_assetPath.LoadAsset<Texture2D>();
             }
             else
 #endif

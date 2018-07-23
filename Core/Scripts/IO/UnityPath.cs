@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -18,16 +19,16 @@ namespace UniGLTF
             private set;
         }
 
-        public bool IsNullOrEmpty
+        public bool IsNull
         {
-            get { return string.IsNullOrEmpty(Value); }
+            get { return Value == null; }
         }
 
         public bool IsUnderAssetsFolder
         {
             get
             {
-                if (string.IsNullOrEmpty(Value))
+                if (IsNull)
                 {
                     return false;
                 }
@@ -49,7 +50,7 @@ namespace UniGLTF
         {
             get
             {
-                if (IsNullOrEmpty)
+                if (IsNull)
                 {
                     return default(UnityPath);
                 }
@@ -82,13 +83,54 @@ namespace UniGLTF
 
         public UnityPath Child(string name)
         {
-            if (IsNullOrEmpty)
+            if (IsNull)
             {
-                return new UnityPath(EscapeFilePath(name));
+                throw new NotImplementedException();
+            }
+            else if (Value == "")
+            {
+                return new UnityPath(name);
             }
             else
             {
-                return new UnityPath(Value + "/" + EscapeFilePath(name));
+                return new UnityPath(Value + "/" + name);
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            if (IsNull)
+            {
+                return 0;
+            }
+            return Value.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(obj is UnityPath)
+            {
+                var rhs = (UnityPath)obj;
+                if(Value==null && rhs.Value == null)
+                {
+                    return true;
+                }
+                else if (Value == null)
+                {
+                    return false;
+                }
+                else if (rhs.Value == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    return Value == rhs.Value;
+                }
+            }
+            else
+            {
+                return false;
             }
         }
 
@@ -100,6 +142,11 @@ namespace UniGLTF
         /// <returns></returns>
         public UnityPath GetAssetFolder(string suffix)
         {
+            if (!IsUnderAssetsFolder)
+            {
+                throw new NotImplementedException();
+            }
+
             return new UnityPath(
                 string.Format("{0}/{1}{2}",
                 Parent.Value,
@@ -115,7 +162,14 @@ namespace UniGLTF
 
         public static UnityPath FromUnityPath(string unityPath)
         {
-            return new UnityPath(unityPath);
+            if (String.IsNullOrEmpty(unityPath))
+            {
+                return new UnityPath
+                {
+                    Value=""
+                };
+            }
+            return FromFullpath(Path.GetFullPath(unityPath));
         }
         #endregion
 
@@ -133,10 +187,22 @@ namespace UniGLTF
             }
         }
 
+        static string AssetFullPath
+        {
+            get
+            {
+                return BaseFullPath + "/Assets";
+            }
+        }
+
         public string FullPath
         {
             get
             {
+                if (IsNull)
+                {
+                    throw new NotImplementedException();
+                }
                 return Path.Combine(BaseFullPath, Value).Replace("\\", "/");
             }
         }
@@ -151,19 +217,17 @@ namespace UniGLTF
             get { return Directory.Exists(FullPath); }
         }
 
-        static string AssetFullPath
-        {
-            get
-            {
-                return BaseFullPath + "/Assets";
-            }
-        }
-
         public static UnityPath FromFullpath(string fullPath)
         {
-            var fullpath = fullPath.Replace("\\", "/");
+            fullPath = fullPath.Replace("\\", "/");
 
-            if (fullpath == BaseFullPath || fullpath.StartsWith(BaseFullPath + "/"))
+            if (fullPath == BaseFullPath) {
+                return new UnityPath
+                {
+                    Value=""
+                };
+            }
+            else if(fullPath.StartsWith(BaseFullPath + "/"))
             {
                 return new UnityPath(fullPath.Substring(BaseFullPath.Length + 1));
             }
@@ -187,7 +251,7 @@ namespace UniGLTF
 
         public void MarkTextureAssetAsNormalMap()
         {
-            if (IsNullOrEmpty)
+            if (IsNull)
             {
                 return;
             }
@@ -210,11 +274,20 @@ namespace UniGLTF
 
         public void ImportAsset()
         {
+            if (!IsUnderAssetsFolder)
+            {
+                throw new NotImplementedException();
+            }
             AssetDatabase.ImportAsset(Value);
         }
 
         public void EnsureFolder()
         {
+            if (!IsUnderAssetsFolder)
+            {
+                throw new NotImplementedException();
+            }
+
             if (!IsDirectoryExists)
             {
                 var parent = Parent;
@@ -231,26 +304,51 @@ namespace UniGLTF
 
         public UnityEngine.Object[] GetSubAssets()
         {
+            if (!IsUnderAssetsFolder)
+            {
+                throw new NotImplementedException();
+            }
+
             return AssetDatabase.LoadAllAssetsAtPath(Value);
         }
 
         public void CreateAsset(UnityEngine.Object o)
         {
+            if (!IsUnderAssetsFolder)
+            {
+                throw new NotImplementedException();
+            }
+
             AssetDatabase.CreateAsset(o, Value);
         }
 
         public void AddObjectToAsset(UnityEngine.Object o)
         {
+            if (!IsUnderAssetsFolder)
+            {
+                throw new NotImplementedException();
+            }
+
             AssetDatabase.AddObjectToAsset(o, Value);
         }
 
         public T LoadAsset<T>() where T : UnityEngine.Object
         {
+            if (!IsUnderAssetsFolder)
+            {
+                throw new NotImplementedException();
+            }
+
             return AssetDatabase.LoadAssetAtPath<T>(Value);
         }
 
         public UnityPath GenerateUniqueAssetPath()
         {
+            if (!IsUnderAssetsFolder)
+            {
+                throw new NotImplementedException();
+            }
+
             return new UnityPath(AssetDatabase.GenerateUniqueAssetPath(Value));
         }
 #endif

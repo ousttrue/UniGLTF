@@ -109,13 +109,13 @@ namespace UniGLTF
         [Test]
         public void UnityPathTest()
         {
-            var root = default(UnityPath);
-            Assert.IsTrue(root.IsNullOrEmpty);
+            var root = UnityPath.FromUnityPath(".");
+            Assert.IsFalse(root.IsNull);
             Assert.IsFalse(root.IsUnderAssetsFolder);
-            Assert.AreEqual(UnityPath.FromFullpath("."), root);
+            Assert.AreEqual(UnityPath.FromUnityPath("."), root);
 
             var assets = UnityPath.FromUnityPath("Assets");
-            Assert.IsFalse(assets.IsNullOrEmpty);
+            Assert.IsFalse(assets.IsNull);
             Assert.IsTrue(assets.IsUnderAssetsFolder);
 
             var rootChild = root.Child("Assets");

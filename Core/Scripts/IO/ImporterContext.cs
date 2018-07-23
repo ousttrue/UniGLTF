@@ -13,17 +13,16 @@ namespace UniGLTF
 {
     public class ImporterContext
     {
-        public string TextureBaseDir
+        public UnityPath TextureBaseDir
         {
             get; private set;
         }
+
         public ImporterContext(string assetPath = null)
         {
-            if (!string.IsNullOrEmpty(assetPath))
-            {
-                TextureBaseDir = Path.GetDirectoryName(assetPath).Replace("\\", "/");
-            }
+            TextureBaseDir = UnityPath.FromUnityPath(assetPath);
         }
+
         #region Source
 
         /// <summary>
@@ -339,7 +338,7 @@ namespace UniGLTF
         {
             var prefabFolder = Path.GetDirectoryName(prefabPath).Replace("\\", "/");
             AssetDatabase.ImportAsset(prefabFolder);
-            TextureBaseDir = prefabFolder;
+            TextureBaseDir = UnityPath.FromUnityPath(prefabFolder);
 
             //
             // https://answers.unity.com/questions/647615/how-to-update-import-settings-for-newly-created-as.html
