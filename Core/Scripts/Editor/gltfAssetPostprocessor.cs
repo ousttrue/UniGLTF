@@ -15,30 +15,34 @@ namespace UniGLTF
         {
             foreach (string path in importedAssets)
             {
-                Import(path);
+                Import(UnityPath.FromUnityPath(path));
             }
         }
 
-        public static void Import(string path)
+        public static void Import(UnityPath gltfPath)
         {
-            ImporterContext context = new ImporterContext(path);
-            var ext = Path.GetExtension(path).ToLower();
+            if (!gltfPath.IsUnderAssetsFolder)
+            {
+                throw new Exception();
+            }
+
+            ImporterContext context = new ImporterContext(gltfPath);
+            var ext = gltfPath.Extension.ToLower();
             try
             {
-                var prefabPath = Path.GetDirectoryName(path) + "/" + Path.GetFileNameWithoutExtension(path) + ".prefab";
-                prefabPath = prefabPath.Replace("\\", "/");
+                var prefabPath = gltfPath.Parent.Child(gltfPath.FileNameWithoutExtension + ".prefab");
                 if (ext == ".gltf")
                 {
-                    context.ParseJson(File.ReadAllText(path, System.Text.Encoding.UTF8),
-                        new FileSystemStorage(Path.GetDirectoryName(path)));
+                    context.ParseJson(File.ReadAllText(gltfPath.FullPath, System.Text.Encoding.UTF8),
+                        new FileSystemStorage(gltfPath.Parent.FullPath));
                     gltfImporter.Load(context);
                     context.SaveAsAsset(prefabPath);
                     context.Destroy(false);
                 }
                 else if (ext == ".glb")
                 {
-                    context.ParseGlb(File.ReadAllBytes(path));
-                    context.SaveTexturesAsPng(UnityPath.FromUnityPath(prefabPath));
+                    context.ParseGlb(File.ReadAllBytes(gltfPath.FullPath));
+                    context.SaveTexturesAsPng(prefabPath);
                     EditorApplication.delayCall += () =>
                     {
                             // delay and can import png texture
@@ -55,13 +59,13 @@ namespace UniGLTF
             catch (UniGLTFNotSupportedException ex)
             {
                 Debug.LogWarningFormat("{0}: {1}",
-                    path,
+                    gltfPath,
                     ex.Message
                     );
             }
             catch (Exception ex)
             {
-                Debug.LogErrorFormat("import error: {0}", path);
+                Debug.LogErrorFormat("import error: {0}", gltfPath);
                 Debug.LogErrorFormat("{0}", ex);
                 if (context != null)
                 {

@@ -44,17 +44,16 @@ namespace UniGLTF
                 }
 
                 // import as asset
-                Import(path, assetPath);
+                Import(path, UnityPath.FromUnityPath(assetPath));
             }
         }
 
-        static void Import(string readPath, string writePath)
+        static void Import(string readPath, UnityPath prefabPath)
         {
             var bytes = File.ReadAllBytes(readPath);
             var context = gltfImporter.Parse(readPath, bytes);
-            var prefabPath = writePath.ToUnityRelativePath().Replace("\\", "/");
 
-            context.SaveTexturesAsPng(UnityPath.FromUnityPath(prefabPath));
+            context.SaveTexturesAsPng(prefabPath);
 
             EditorApplication.delayCall += () =>
             {

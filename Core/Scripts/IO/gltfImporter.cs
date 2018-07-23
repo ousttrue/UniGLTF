@@ -161,7 +161,7 @@ namespace UniGLTF
         public static ImporterContext Parse(string path, Byte[] bytes)
         {
             var ext = Path.GetExtension(path).ToLower();
-            var context = new ImporterContext(path.StartsWithUnityAssetPath() ? path.ToUnityRelativePath() : null);
+            var context = new ImporterContext(UnityPath.FromFullpath(path));
 
             switch (ext)
             {
