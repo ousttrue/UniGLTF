@@ -884,7 +884,10 @@ namespace UniGLTF
                         var joints = skin.joints.Select(y => nodes[y].Transform).ToArray();
                         skinnedMeshRenderer.bones = joints;
 
-                        skinnedMeshRenderer.rootBone = nodes[skin.skeleton].Transform;
+                        if (skin.skeleton >= 0 && skin.skeleton < nodes.Count)
+                        {
+                            skinnedMeshRenderer.rootBone = nodes[skin.skeleton].Transform;
+                        }
 
                         if (skin.inverseBindMatrices != -1)
                         {
