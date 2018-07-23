@@ -9,10 +9,6 @@
 ![duck_prefab](doc/duck_prefab.png)
 ![animation](doc/animation.gif)
 
-* [Sample and Tests](https://github.com/ousttrue/UniGLTF_Test)
-* [Humanoid Helper](https://github.com/ousttrue/UniHumanoid)
-* [Json backend](https://github.com/ousttrue/UniJson)
-
 * https://github.com/ousttrue/UniGLTF/wiki
 
 # License
