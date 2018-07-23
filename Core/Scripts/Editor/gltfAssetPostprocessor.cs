@@ -38,7 +38,7 @@ namespace UniGLTF
                 else if (ext == ".glb")
                 {
                     context.ParseGlb(File.ReadAllBytes(path));
-                    context.SaveTexturesAsPng(prefabPath);
+                    context.SaveTexturesAsPng(UnityPath.FromUnityPath(prefabPath));
                     EditorApplication.delayCall += () =>
                     {
                             // delay and can import png texture

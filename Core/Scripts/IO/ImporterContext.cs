@@ -334,11 +334,10 @@ namespace UniGLTF
             }
         }
 
-        public void SaveTexturesAsPng(string prefabPath)
+        public void SaveTexturesAsPng(UnityPath prefabPath)
         {
-            var prefabFolder = Path.GetDirectoryName(prefabPath).Replace("\\", "/");
-            AssetDatabase.ImportAsset(prefabFolder);
-            TextureBaseDir = UnityPath.FromUnityPath(prefabFolder);
+            TextureBaseDir = prefabPath.Parent;
+            TextureBaseDir.ImportAsset();
 
             //
             // https://answers.unity.com/questions/647615/how-to-update-import-settings-for-newly-created-as.html
@@ -350,22 +349,19 @@ namespace UniGLTF
                 if (string.IsNullOrEmpty(image.uri))
                 {
                     // glb buffer
-                    var folder = GetAssetFolder(prefabPath, ".Textures");
-                    if (!Directory.Exists(folder.AssetPathToFullPath()))
-                    {
-                        AssetDatabase.CreateFolder(Path.GetDirectoryName(folder), Path.GetFileName(folder));
-                    }
+                    var folder = prefabPath.GetAssetFolder(".Textures");
+                    folder.EnsureFolder();
 
                     // name & bytes
                     var textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", i);
                     var byteSegment = GLTF.GetViewBytes(image.bufferView);
 
                     // path
-                    var png = Path.Combine(folder, textureName + ".png").Replace("\\", "/");
-                    File.WriteAllBytes(png.AssetPathToFullPath(), byteSegment.ToArray());
+                    var png = folder.Child(textureName + ".png");
+                    File.WriteAllBytes(png.FullPath, byteSegment.ToArray());
+                    png.ImportAsset();
 
-                    AssetDatabase.ImportAsset(png);
-                    image.uri = png.Substring(prefabFolder.Length + 1);
+                    image.uri = png.Value.Substring(TextureBaseDir.Value.Length + 1);
                     Debug.LogFormat("image.uri: {0}", image.uri);
                 }
             }

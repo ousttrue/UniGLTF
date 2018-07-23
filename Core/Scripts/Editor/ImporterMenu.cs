@@ -54,7 +54,7 @@ namespace UniGLTF
             var context = gltfImporter.Parse(readPath, bytes);
             var prefabPath = writePath.ToUnityRelativePath().Replace("\\", "/");
 
-            context.SaveTexturesAsPng(prefabPath);
+            context.SaveTexturesAsPng(UnityPath.FromUnityPath(prefabPath));
 
             EditorApplication.delayCall += () =>
             {
