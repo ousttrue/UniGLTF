@@ -9,36 +9,15 @@
 ![duck_prefab](doc/duck_prefab.png)
 ![animation](doc/animation.gif)
 
-* [Samples](https://github.com/ousttrue/UniGLTF_Test)
+* [Sample and Tests](https://github.com/ousttrue/UniGLTF_Test)
+* [Humanoid Helper](https://github.com/ousttrue/UniHumanoid)
+* [Json backend](https://github.com/ousttrue/UniJson)
 
-## License
+# License
 
 * [MIT license](LICENSE)
 
-## Download
-
-* https://github.com/ousttrue/UniGLTF/releases
-
-## Install
-
-* import [unitypackage](https://github.com/ousttrue/UniGLTF/releases)
-
-## Usage
-
-* drop gltf folder or glb file into Assets folder
-
-or
-
-* menu [Assets] - [gltf] - [import]
-
-## Importer
-
-* [x] asset(ScriptedImporter) (Unity-2017 or new)
-* [x] asset(AssetPostprocessor.OnPostprocessAllAssets) (Unity-5.6)
-
-* runtime [Assets] - [gltf] - [import]
-
-### Sample Models
+# Sample Models
 
 * https://github.com/KhronosGroup/glTF-Sample-Models
 
@@ -48,27 +27,49 @@ Exclude SciFiHelmet(70074vertices), all model can import.
 
 ![SciFiHelmet](doc/SciFiHelmet.png)
 
-### Can load gltf in zip archive
+# Download
 
-* https://github.com/ousttrue/UniGLTF_Test/blob/master/Assets/UniGLTF.Samples/LoaderFromHttp/LoadFromHttp.cs
+* https://github.com/ousttrue/UniGLTF/releases
 
-## Exporter
+## Install
 
-* asset([right click] - [gltf] - [export]
-* runtime
-* [validation](http://github.khronos.org/glTF-Validator/)
+* import [unitypackage](https://github.com/ousttrue/UniGLTF/releases)
 
-## Experimental ScriptedImporter for Unity2017
+# Usage
 
-[ScriptedImporter](https://docs.unity3d.com/ScriptReference/Experimental.AssetImporters.ScriptedImporter.html)
+## Import as asset
 
-* Unity2017.3.0f3
+* drop gltf folder or glb file into Assets folder
 
-![duck_assets](doc/duck_assets.png)
+or
 
-ScriptedImporter removed.
+* menu [UniGLTF] - [Import] (select out of Asset folder gltf file(gltf, glb, zip) and (save into Asset folder) 
 
-## Humanoid Helper
+## Import in runTime
 
-* move to [UniHumanoid](https://github.com/ousttrue/UniHumanoid)
+```cs
+var path; // gltf, glb or zip(include gltf)
+
+var context = gltfImporter.Load(path);
+context.ShowMeshes();
+
+GameObject root = context.Root;
+```
+
+## Export from scene
+
+* menu [UniGLTF] - [Export]
+
+## Import in runTime
+
+```cs
+var gltf = new glTF();
+using (var exporter = new gltfExporter(gltf))
+{
+    exporter.Prepare(go);
+    exporter.Export();
+}
+var bytes = gltf.ToGlbBytes();
+File.WriteAllBytes(path, bytes);
+```
 

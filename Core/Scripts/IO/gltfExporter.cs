@@ -12,7 +12,7 @@ namespace UniGLTF
 {
     public class gltfExporter : IDisposable
     {
-        const string CONVERT_HUMANOID_KEY = "GameObject/gltf/export";
+        const string CONVERT_HUMANOID_KEY = UniGLTFVersion.UNIGLTF_VERSION + "/Export";
 
 #if UNITY_EDITOR
         [MenuItem(CONVERT_HUMANOID_KEY, true, 1)]
@@ -43,6 +43,12 @@ namespace UniGLTF
             }
             var bytes = gltf.ToGlbBytes();
             File.WriteAllBytes(path, bytes);
+
+            if (path.StartsWithUnityAssetPath())
+            {
+                AssetDatabase.ImportAsset(path.ToUnityRelativePath());
+                AssetDatabase.Refresh();
+            }
         }
 #endif
 
@@ -622,7 +628,7 @@ namespace UniGLTF
 
             if (go.transform.childCount == 0)
             {
-                throw new UniGLTFException("root node required");
+                throw new UniGLTFException("empty root GameObject required");
             }
 
             var unityNodes = go.transform.Traverse()
