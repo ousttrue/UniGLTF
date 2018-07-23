@@ -59,10 +59,13 @@ GameObject root = context.Root;
 
 ## Export from scene
 
+* support only glb format
 * select target root GameObject in scene(GameObect must be empty root, because target become gltf's ``/scene``. A scene includes nodes.
 * menu [UniGLTF] - [Export]
 
-## Import in runTime
+## Export in runTime
+
+* support only glb format
 
 ```cs
 GameObject go; // export target
