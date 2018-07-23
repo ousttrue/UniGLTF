@@ -49,7 +49,7 @@ or
 ## Import in runTime
 
 ```cs
-var path; // gltf, glb or zip(include gltf)
+string path; // gltf, glb or zip(include gltf)
 
 var context = gltfImporter.Load(path);
 context.ShowMeshes();
@@ -65,12 +65,10 @@ GameObject root = context.Root;
 ## Import in runTime
 
 ```cs
-var gltf = new glTF();
-using (var exporter = new gltfExporter(gltf))
-{
-    exporter.Prepare(go);
-    exporter.Export();
-}
+GameObject go; // export target
+string path; // glb write path
+
+var gltf = gltfExporter.Export(go);
 var bytes = gltf.ToGlbBytes();
 File.WriteAllBytes(path, bytes);
 ```
