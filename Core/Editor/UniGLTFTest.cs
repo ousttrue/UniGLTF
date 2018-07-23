@@ -45,7 +45,7 @@ namespace UniGLTF
         public void UniGLTFSimpleSceneTest()
         {
             var go = CreateSimpelScene();
-            var context = new ImporterContext(null);
+            var context = new ImporterContext();
 
             try
             {
@@ -104,6 +104,26 @@ namespace UniGLTF
             BufferTest(1024, 128);
             BufferTest(1024, 2048);
             BufferTest(1024, 900, 900);
+        }
+
+        [Test]
+        public void UnityPathTest()
+        {
+            var root = default(UnityPath);
+            Assert.IsTrue(root.IsNullOrEmpty);
+            Assert.IsFalse(root.IsUnderAssetsFolder);
+            Assert.AreEqual(UnityPath.FromFullpath("."), root);
+
+            var assets = UnityPath.FromUnityPath("Assets");
+            Assert.IsFalse(assets.IsNullOrEmpty);
+            Assert.IsTrue(assets.IsUnderAssetsFolder);
+
+            var rootChild = root.Child("Assets");
+            Assert.AreEqual(assets, rootChild);
+
+            var assetsChild = assets.Child("Hoge");
+            var hoge = UnityPath.FromUnityPath("Assets/Hoge");
+            Assert.AreEqual(assetsChild, hoge);
         }
     }
 }
