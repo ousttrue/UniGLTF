@@ -37,20 +37,20 @@ namespace UniGLTF
         }
     }
 
-    [Serializable]
     [ItemJsonSchema(ValueType = JsonValueType.Object)]
     public partial class ExtensionsBase<T> : PartialExtensionBase<T>
     {
     }
 
-    [Serializable]
     public partial class ExtraBase<T> : PartialExtensionBase<T>
     {
     }
     #endregion
 
+    [Serializable]
     public partial class glTF_extensions : ExtensionsBase<glTF_extensions> { }
 
+    [Serializable]
     public partial class gltf_extras : ExtraBase<gltf_extras> { }
 
     #region Camera
