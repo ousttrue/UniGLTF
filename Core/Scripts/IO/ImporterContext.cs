@@ -42,16 +42,11 @@ namespace UniGLTF
         public IStorage Storage;
         #endregion
 
-        public void ParseGlb(Byte[] bytes)
-        {
-            ParseGlb<glTF>(bytes);
-        }
-
         /// <summary>
         /// 
         /// </summary>
         /// <param name="bytes"></param>
-        public void ParseGlb<T>(Byte[] bytes) where T : glTF
+        public void ParseGlb(Byte[] bytes)
         {
             var chunks = glbImporter.ParseGlbChanks(bytes);
 

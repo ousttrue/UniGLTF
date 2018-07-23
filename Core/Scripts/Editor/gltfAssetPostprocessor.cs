@@ -37,7 +37,7 @@ namespace UniGLTF
                 }
                 else if (ext == ".glb")
                 {
-                    context.ParseGlb<glTF>(File.ReadAllBytes(path));
+                    context.ParseGlb(File.ReadAllBytes(path));
                     context.SaveTexturesAsPng(prefabPath);
                     EditorApplication.delayCall += () =>
                     {
