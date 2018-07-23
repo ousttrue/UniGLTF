@@ -13,6 +13,8 @@
 * [Humanoid Helper](https://github.com/ousttrue/UniHumanoid)
 * [Json backend](https://github.com/ousttrue/UniJson)
 
+* https://github.com/ousttrue/UniGLTF/wiki
+
 # License
 
 * [MIT license](LICENSE)
