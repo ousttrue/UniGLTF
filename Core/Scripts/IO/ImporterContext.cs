@@ -305,7 +305,7 @@ namespace UniGLTF
                     png.ImportAsset();
 
                     image.uri = png.Value.Substring(TextureBaseDir.Value.Length + 1);
-                    Debug.LogFormat("image.uri: {0}", image.uri);
+                    //Debug.LogFormat("image.uri: {0}", image.uri);
                 }
             }
             UnityEditor.AssetDatabase.Refresh();
