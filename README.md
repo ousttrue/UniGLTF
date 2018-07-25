@@ -17,11 +17,11 @@
 
 * https://github.com/KhronosGroup/glTF-Sample-Models
 
-## huge model is only Unity2017.3 or later
+## Huge model required Unity2017.3 or later
 
-[Mesh.IndexFormat(from 2017.3)](https://docs.unity3d.com/ScriptReference/Mesh-indexFormat.html) allows a huge mesh
+* [Mesh.IndexFormat(from 2017.3)](https://docs.unity3d.com/ScriptReference/Mesh-indexFormat.html) is required
 
-SciFiHelmet(70074vertices)
+example. SciFiHelmet(70074vertices)
 
 ![SciFiHelmet](doc/SciFiHelmet.png)
 
