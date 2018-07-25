@@ -6,7 +6,6 @@
 * glTF-2.0
 
 ![duck](doc/duck.png)
-![duck_prefab](doc/duck_prefab.png)
 ![animation](doc/animation.gif)
 
 * https://github.com/ousttrue/UniGLTF/wiki
@@ -35,16 +34,17 @@ Exclude SciFiHelmet(70074vertices), all model can import.
 
 # Usage
 
-## Import as asset
+## Import as prefab
 
 * drop gltf folder or glb file into Assets folder
+
+![duck_prefab](doc/duck_prefab.png)
 
 or
 
 * editor mode
 * menu [UniGLTF] - [Import] 
 * open gltf file(gltf, glb, zip) from out of Asset Folder
-* save into Asset folder
 
 ## Import in runTime
 
@@ -59,13 +59,11 @@ GameObject root = context.Root;
 
 ## Export from scene
 
-* support only glb format
 * select target root GameObject in scene(GameObect must be empty root, because target become gltf's ``/scene``. A scene includes nodes.
 * menu [UniGLTF] - [Export]
+* support only glb format
 
 ## Export in runTime
-
-* support only glb format
 
 ```cs
 GameObject go; // export target
@@ -75,4 +73,6 @@ var gltf = gltfExporter.Export(go);
 var bytes = gltf.ToGlbBytes();
 File.WriteAllBytes(path, bytes);
 ```
+
+* support only glb format
 
