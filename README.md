@@ -1,36 +1,33 @@
 # UniGLTF
 
-[glTF](https://github.com/KhronosGroup/glTF) importer and exporter
-
-* Unityt5.6.3
-* glTF-2.0
+[glTF](https://github.com/KhronosGroup/glTF) 2.0 importer and exporter for Unity 5.6 or later
 
 ![duck](doc/duck.png)
 ![animation](doc/animation.gif)
-
-* https://github.com/ousttrue/UniGLTF/wiki
 
 # License
 
 * [MIT license](LICENSE)
 
+# See also
+
+* https://github.com/ousttrue/UniGLTF/wiki
+
 # Sample Models
 
 * https://github.com/KhronosGroup/glTF-Sample-Models
 
-Exclude SciFiHelmet(70074vertices), all model can import.
+## huge model is only Unity2017.3 or later
 
-[Mesh.IndexFormat(from 2017.3)](https://docs.unity3d.com/ScriptReference/Mesh-indexFormat.html) allows a huge mesh, Otherwise mesh division required.
+[Mesh.IndexFormat(from 2017.3)](https://docs.unity3d.com/ScriptReference/Mesh-indexFormat.html) allows a huge mesh
+
+SciFiHelmet(70074vertices)
 
 ![SciFiHelmet](doc/SciFiHelmet.png)
 
 # Download
 
 * https://github.com/ousttrue/UniGLTF/releases
-
-## Install
-
-* import [unitypackage](https://github.com/ousttrue/UniGLTF/releases)
 
 # Usage
 
