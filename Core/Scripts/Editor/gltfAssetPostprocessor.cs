@@ -15,7 +15,14 @@ namespace UniGLTF
         {
             foreach (string path in importedAssets)
             {
-                Import(UnityPath.FromUnityPath(path));
+                var ext = Path.GetExtension(path).ToLower();
+                switch (ext)
+                {
+                    case ".gltf":
+                    case ".glb":
+                        Import(UnityPath.FromUnityPath(path));
+                        break;
+                }
             }
         }
 
