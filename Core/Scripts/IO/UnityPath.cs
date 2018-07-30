@@ -61,6 +61,14 @@ namespace UniGLTF
             }
         }
 
+        public bool HasParent
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(Value);
+            }
+        }
+
         static readonly char[] EscapeChars = new char[]
         {
             '\\',
@@ -285,9 +293,14 @@ namespace UniGLTF
 
         public void EnsureFolder()
         {
-            if (!IsUnderAssetsFolder)
+            if (IsNull)
             {
                 throw new NotImplementedException();
+            }
+
+            if (HasParent)
+            {
+                Parent.EnsureFolder();
             }
 
             if (!IsDirectoryExists)
