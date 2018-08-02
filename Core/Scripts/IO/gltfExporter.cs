@@ -405,6 +405,7 @@ namespace UniGLTF
         }
 
         static glTFMesh ExportPrimitives(glTF gltf, int bufferIndex, 
+            string rendererName,
             Mesh mesh, Material[] materials, 
             List<Material> unityMaterials)
         {
@@ -456,6 +457,12 @@ namespace UniGLTF
             {
                 var indices = TriangleUtil.FlipTriangle(mesh.GetIndices(j)).Select(y => (uint)y).ToArray();
                 var indicesAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, indices, glBufferTarget.ELEMENT_ARRAY_BUFFER);
+
+                if (j >= materials.Length)
+                {
+                    Debug.LogWarningFormat("{0}.materials is not enough", rendererName);
+                    break;
+                }
 
                 gltfMesh.primitives.Add(new glTFPrimitives
                 {
@@ -598,8 +605,14 @@ namespace UniGLTF
                 var x = unityMeshes[i];
                 var mesh = x.Mesh;
                 var materials = x.Rendererer.sharedMaterials;
+                if(materials==null || materials.Length == 0)
+                {
+                    Debug.LogWarningFormat("{0} has no materials", x.Rendererer.name);
+                    continue;
+                }
 
                 var gltfMesh = ExportPrimitives(gltf, bufferIndex,
+                    x.Rendererer.name,
                     mesh, materials, unityMaterials);
 
                 for (int j = 0; j < mesh.blendShapeCount; ++j)
