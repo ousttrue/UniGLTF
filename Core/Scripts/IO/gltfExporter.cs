@@ -605,11 +605,6 @@ namespace UniGLTF
                 var x = unityMeshes[i];
                 var mesh = x.Mesh;
                 var materials = x.Rendererer.sharedMaterials;
-                if(materials==null || materials.Length == 0)
-                {
-                    Debug.LogWarningFormat("{0} has no materials", x.Rendererer.name);
-                    continue;
-                }
 
                 var gltfMesh = ExportPrimitives(gltf, bufferIndex,
                     x.Rendererer.name,
@@ -668,7 +663,20 @@ namespace UniGLTF
                     Mesh = x.GetSharedMesh(),
                     Rendererer = x.GetComponent<Renderer>(),
                 })
-                .Where(x => x.Mesh != null)
+                .Where(x =>
+                {
+                    if(x.Mesh == null)
+                    {
+                        return false;
+                    }
+                    if(x.Rendererer.sharedMaterials==null 
+                    || x.Rendererer.sharedMaterials.Length==0)
+                    {
+                        return false;
+                    }
+
+                    return true;
+                })
                 .ToList();
             ExportMeshes(gltf, bufferIndex, unityMeshes, unityMaterials, useSparseAccessorForMorphTarget);
             #endregion
