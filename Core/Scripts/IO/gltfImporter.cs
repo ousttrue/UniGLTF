@@ -458,6 +458,17 @@ namespace UniGLTF
                             Debug.LogWarningFormat("May be partial primitive has blendShape. Rquire separete mesh or extend blend shape, but not implemented: {0}", blendShape.Name);
                         }
                     }
+                    else
+                    {
+                        Debug.LogFormat("empty blendshape: {0}.{1}", mesh.name, blendShape.Name);
+                        // add empty blend shape for keep blend shape index
+                        mesh.AddBlendShapeFrame(blendShape.Name, FRAME_WEIGHT,
+                            //Enumerable.Range(0, mesh.vertexCount).Select(x => Vector3.zero).ToArray(),
+                            null,
+                            null,
+                            null
+                            );
+                    }
                 }
             }
 
