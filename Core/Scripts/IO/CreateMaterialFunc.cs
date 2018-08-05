@@ -8,7 +8,7 @@ namespace UniGLTF
         Shader GetShader(ImporterContext context, int materialIndex);
     }
 
-    class ShaderStore : IShaderStore
+    public class ShaderStore : IShaderStore
     {
         string m_defaultShaderName;
         Shader m_default;
