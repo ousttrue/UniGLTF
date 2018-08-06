@@ -162,30 +162,6 @@ namespace UniGLTF
             }
         }
 
-        public static glTFMaterial ExportMaterial(Material m, List<Texture> textures)
-        {
-            var material = new glTFMaterial
-            {
-                name = m.name,
-                pbrMetallicRoughness = new glTFPbrMetallicRoughness(),
-            };
-
-            if (m.HasProperty("_Color"))
-            {
-                material.pbrMetallicRoughness.baseColorFactor = m.color.ToArray();
-            }
-
-            if (m.mainTexture != null)
-            {
-                material.pbrMetallicRoughness.baseColorTexture = new glTFTextureInfo
-                {
-                    index = textures.IndexOf(m.mainTexture),
-                };
-            }
-
-            return material;
-        }
-
         static glTFNode ExportNode(Transform x, List<Transform> nodes, List<Mesh> meshes, List<SkinnedMeshRenderer> skins)
         {
             var node = new glTFNode
@@ -643,7 +619,7 @@ namespace UniGLTF
                 .Skip(1) // exclude root object for the symmetry with the importer
                 .ToList();
 
-            #region Material
+            #region Materials and Textures
             var unityMaterials = unityNodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
             var unityTextures = unityMaterials.SelectMany(x => x.GetTextures()).Where(x => x != null).Distinct().ToList();
 
@@ -653,7 +629,7 @@ namespace UniGLTF
                 ExportTexture(gltf, bufferIndex, texture);            
             }
            
-            gltf.materials = unityMaterials.Select(x => ExportMaterial(x, unityTextures)).ToList();
+            gltf.materials = unityMaterials.Select(x => MaterialIO.ExportMaterial(x, unityTextures)).ToList();
             #endregion
 
             #region Meshes

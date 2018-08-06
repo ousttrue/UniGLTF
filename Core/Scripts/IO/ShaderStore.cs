@@ -57,6 +57,4 @@ namespace UniGLTF
             return Default;
         }
     }
-
-    public delegate Material CreateMaterialFunc(ImporterContext ctx, int i);
 }
