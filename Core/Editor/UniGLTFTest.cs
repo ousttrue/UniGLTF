@@ -124,6 +124,8 @@ namespace UniGLTF
             var assetsChild = assets.Child("Hoge");
             var hoge = UnityPath.FromUnityPath("Assets/Hoge");
             Assert.AreEqual(assetsChild, hoge);
+
+            var children = root.TravserseDir().ToArray();
         }
     }
 }

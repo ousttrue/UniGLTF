@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using UnityEngine;
+using System.Collections.Generic;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -19,6 +20,11 @@ namespace UniGLTF
         {
             get;
             private set;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("unity://{0}", Value);
         }
 
         public bool IsNull
@@ -253,7 +259,34 @@ namespace UniGLTF
         }
         #endregion
 
-#if UNITY_EDITOR
+        public IEnumerable<UnityPath> TravserseDir()
+        {
+            if (IsDirectoryExists)
+            {
+                yield return this;
+
+                foreach(var child in Children)
+                {
+                    foreach(var x in child.TravserseDir())
+                    {
+                        yield return x;
+                    }
+                }
+            }
+        }
+
+        public IEnumerable<UnityPath> Children
+        {
+            get
+            {
+                foreach(var x in Directory.GetDirectories(FullPath))
+                {
+                    yield return UnityPath.FromFullpath(x);
+                }
+            }
+        }
+
+        #if UNITY_EDITOR
         public T GetImporter<T>() where T : AssetImporter
         {
             return AssetImporter.GetAtPath(Value) as T;
@@ -366,6 +399,6 @@ namespace UniGLTF
 
             return new UnityPath(AssetDatabase.GenerateUniqueAssetPath(Value));
         }
-#endif
+        #endif
     }
 }
