@@ -40,7 +40,7 @@ namespace UniGLTF.ShaderPropExporter
 
 #if UNITY_EDITOR
         [MenuItem(UniGLTFVersion.UNIGLTF_VERSION + "/PreExport ShaderProps")]
-        static void PreExport()
+        public static void PreExport()
         {
             foreach (var fi in typeof(PreShaderPropExporter).GetFields(
                 BindingFlags.Static 
