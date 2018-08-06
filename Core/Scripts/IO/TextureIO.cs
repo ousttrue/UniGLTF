@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -29,6 +30,39 @@ namespace UniGLTF
         }
 #endif
 
+        public struct TextureExportItem
+        {
+            public Texture Texture;
+            public bool IsNormalMap;
+
+            public TextureExportItem(Texture texture, bool isNormalMap)
+            {
+                Texture = texture;
+                IsNormalMap = isNormalMap;
+            }
+
+            public TextureExportItem(Texture texture) : this(texture, false)
+            {
+            }
+        }
+
+        public static IEnumerable<TextureExportItem> GetTextures(Material m)
+        {
+            var props = ShaderPropExporter.PreShaderPropExporter.GetPropsForSupportedShader(m.shader.name);
+            if (props == null)
+            {
+                yield return new TextureExportItem(m.mainTexture);
+            }
+
+            foreach (var prop in props.Properties)
+            {
+                if (prop.ShaderPropertyType == ShaderPropExporter.ShaderPropertyType.TexEnv)
+                {
+                    yield return new TextureExportItem(m.GetTexture(prop.Key), prop.IsNormalMap);
+                }
+            }
+        }
+
         struct BytesWithPath
         {
             public Byte[] Bytes;
@@ -43,7 +77,7 @@ namespace UniGLTF
             }
         }
 
-        public static int ExportTexture(glTF gltf, int bufferIndex, Texture texture)
+        public static int ExportTexture(glTF gltf, int bufferIndex, Texture texture, bool isNormalMap)
         {
             var bytesWithPath = new BytesWithPath(texture); ;
 

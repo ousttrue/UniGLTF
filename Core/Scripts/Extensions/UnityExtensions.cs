@@ -289,30 +289,6 @@ namespace UniGLTF
             return new Material[] { };
         }
 
-        public static IEnumerable<Texture> GetTextures(this Material m)
-        {
-#if UNITY_EDITOR
-            for (int i = 0; i < ShaderUtil.GetPropertyCount(m.shader); ++i)
-            {
-                if(ShaderUtil.GetPropertyType(m.shader, i)==ShaderUtil.ShaderPropertyType.TexEnv)
-                {
-                    var texture = m.GetTexture(ShaderUtil.GetPropertyName(m.shader, i));
-                    if (texture != null)
-                    {
-                        yield return texture;
-                    }
-                }
-            }
-
-#else
-            var texture = m.mainTexture as Texture2D;
-            if (texture != null)
-            {
-                yield return texture;
-            }
-#endif
-        }
-
         public static bool Has<T>(this Transform transform, T t) where T : Component
         {
             return transform.GetComponent<T>() == t;

@@ -43,15 +43,15 @@ namespace UniGLTF.ShaderPropExporter
         static void PreExport()
         {
             foreach (var fi in typeof(PreShaderPropExporter).GetFields(
-                BindingFlags.Static 
-                | BindingFlags.Public 
+                BindingFlags.Static
+                | BindingFlags.Public
                 | BindingFlags.NonPublic))
             {
                 var attr = fi.GetCustomAttributes(true).FirstOrDefault(y => y is PreExportShadersAttribute);
                 if (attr != null)
                 {
                     var supportedShaders = fi.GetValue(null) as SupportedShader[];
-                    foreach(var supported in supportedShaders)
+                    foreach (var supported in supportedShaders)
                     {
                         PreExport(supported);
                     }
@@ -109,12 +109,19 @@ namespace UniGLTF.ShaderPropExporter
             }
 
             ShaderProps props;
-            if (!m_shaderPropMap.TryGetValue(shaderName, out props))
+            if (m_shaderPropMap.TryGetValue(shaderName, out props))
             {
-                return null;
+                return props;
             }
 
-            return props;
+#if UNITY_EDITOR
+            // fallback
+            Debug.LogWarningFormat("Unsupported shader: {0}", shaderName);
+            var shader = Shader.Find(shaderName);
+            return ShaderProps.FromShader(shader);
+#else
+            return null;
+#endif
         }
         #endregion
     }

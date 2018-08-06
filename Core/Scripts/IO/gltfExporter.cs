@@ -100,9 +100,9 @@ namespace UniGLTF
         {
             glTF = gltf;
 
-            glTF.asset=new glTFAssets
+            glTF.asset = new glTFAssets
             {
-                generator = "UniGLTF-"+UniGLTFVersion.VERSION,
+                generator = "UniGLTF-" + UniGLTFVersion.VERSION,
                 version = "2.0",
             };
         }
@@ -251,7 +251,8 @@ namespace UniGLTF
 
                 var nodeIndex = GetNodeIndex(root, nodes, binding.path);
                 var target = PropertyToTarget(binding.propertyName);
-                if (target == glTFAnimationTarget.NOT_IMPLEMENTED) {
+                if (target == glTFAnimationTarget.NOT_IMPLEMENTED)
+                {
                     continue;
                 }
                 var samplerIndex = animation.Animation.AddChannelAndGetSampler(nodeIndex, target);
@@ -277,7 +278,9 @@ namespace UniGLTF
                         binding.propertyName == "m_LocalRotation.w")
                     {
                         values.Output[j] = -keys[i].value;
-                    } else {
+                    }
+                    else
+                    {
                         values.Output[j] = keys[i].value;
                     }
                 }
@@ -295,9 +298,9 @@ namespace UniGLTF
             public List<Texture> Textures;
         }
 
-        static glTFMesh ExportPrimitives(glTF gltf, int bufferIndex, 
+        static glTFMesh ExportPrimitives(glTF gltf, int bufferIndex,
             string rendererName,
-            Mesh mesh, Material[] materials, 
+            Mesh mesh, Material[] materials,
             List<Material> unityMaterials)
         {
             var positions = mesh.vertices.Select(y => y.ReverseZ()).ToArray();
@@ -460,7 +463,7 @@ namespace UniGLTF
                 {
                     for (int i = 0; i < blendShpaeNormals.Length; ++i) blendShpaeNormals[i] = blendShpaeNormals[i].ReverseZ();
                     blendShapeNormalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
-                        blendShpaeNormals, 
+                        blendShpaeNormals,
                         glBufferTarget.ARRAY_BUFFER);
                 }
 
@@ -468,12 +471,12 @@ namespace UniGLTF
                 {
                     for (int i = 0; i < blendShapeTangents.Length; ++i) blendShapeTangents[i] = blendShapeTangents[i].ReverseZ();
                     blendShapeTangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
-                        blendShapeTangents, 
+                        blendShapeTangents,
                         glBufferTarget.ARRAY_BUFFER);
                 }
             }
 
-            if(blendShapePositionAccessorIndex!=-1)
+            if (blendShapePositionAccessorIndex != -1)
             {
                 gltf.accessors[blendShapePositionAccessorIndex].min = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Min(a.x, b.x), Math.Min(a.y, b.y), Mathf.Min(a.z, b.z))).ToArray();
                 gltf.accessors[blendShapePositionAccessorIndex].max = blendShapeVertices.Aggregate(blendShapeVertices[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
@@ -520,7 +523,7 @@ namespace UniGLTF
             }
         }
 
-        public static Exported FromGameObject(glTF gltf, GameObject go, bool useSparseAccessorForMorphTarget=false)
+        public static Exported FromGameObject(glTF gltf, GameObject go, bool useSparseAccessorForMorphTarget = false)
         {
             var bytesBuffer = new ArrayByteBuffer(new byte[50 * 1024 * 1024]);
             var bufferIndex = gltf.AddBuffer(bytesBuffer);
@@ -536,15 +539,16 @@ namespace UniGLTF
 
             #region Materials and Textures
             var unityMaterials = unityNodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
-            var unityTextures = unityMaterials.SelectMany(x => x.GetTextures()).Where(x => x != null).Distinct().ToList();
+            var unityTextures = unityMaterials.SelectMany(x => TextureIO.GetTextures(x)).Where(x => x.Texture != null).Distinct().ToList();
 
             for (int i = 0; i < unityTextures.Count; ++i)
             {
                 var texture = unityTextures[i];
-                TextureIO.ExportTexture(gltf, bufferIndex, texture);
+                TextureIO.ExportTexture(gltf, bufferIndex, texture.Texture, texture.IsNormalMap);
             }
-           
-            gltf.materials = unityMaterials.Select(x => MaterialIO.ExportMaterial(x, unityTextures)).ToList();
+
+            var textures = unityTextures.Select(y => y.Texture).ToList();
+            gltf.materials = unityMaterials.Select(x => MaterialIO.ExportMaterial(x, textures)).ToList();
             #endregion
 
             #region Meshes
@@ -556,12 +560,12 @@ namespace UniGLTF
                 })
                 .Where(x =>
                 {
-                    if(x.Mesh == null)
+                    if (x.Mesh == null)
                     {
                         return false;
                     }
-                    if(x.Rendererer.sharedMaterials==null 
-                    || x.Rendererer.sharedMaterials.Length==0)
+                    if (x.Rendererer.sharedMaterials == null
+                    || x.Rendererer.sharedMaterials.Length == 0)
                     {
                         return false;
                     }
@@ -658,7 +662,7 @@ namespace UniGLTF
                 Meshes = unityMeshes,
                 Nodes = unityNodes.Select(x => x.transform).ToList(),
                 Materials = unityMaterials,
-                Textures = unityTextures,
+                Textures = textures,
             };
         }
         #endregion

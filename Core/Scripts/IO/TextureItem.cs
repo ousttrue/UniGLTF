@@ -260,30 +260,78 @@ namespace UniGLTF
 
         class sRGBScope : IDisposable
         {
-            bool sRGBWrite;
-            public sRGBScope()
+            bool m_sRGBWrite;
+            public sRGBScope(bool sRGBWrite)
             {
-                sRGBWrite = GL.sRGBWrite;
-                GL.sRGBWrite = true;
+                m_sRGBWrite = GL.sRGBWrite;
+                GL.sRGBWrite = sRGBWrite;
             }
 
             public void Dispose()
             {
-                GL.sRGBWrite = sRGBWrite;
+                GL.sRGBWrite = m_sRGBWrite;
             }
         }
 
+        static Texture2D DTXnm2RGBA(Texture2D tex)
+        {
+            Color[] colors = tex.GetPixels();
+            for (int i = 0; i < colors.Length; i++)
+            {
+                Color c = colors[i];
+                c.r = c.a * 2 - 1;  //red<-alpha (x<-w)
+                c.g = c.g * 2 - 1; //green is always the same (y)
+                Vector2 xy = new Vector2(c.r, c.g); //this is the xy vector
+                c.b = Mathf.Sqrt(1 - Mathf.Clamp01(Vector2.Dot(xy, xy))); //recalculate the blue channel (z)
+                colors[i] = new Color(c.r * 0.5f + 0.5f, c.g * 0.5f + 0.5f, c.b * 0.5f + 0.5f); //back to 0-1 range
+            }
+            tex.SetPixels(colors); //apply pixels to the texture
+            tex.Apply();
+            return tex;
+        }
+
+        static bool IsDxt5(Texture src)
+        {
+            var srcAsTexture2D = src as Texture2D;
+            if (srcAsTexture2D != null)
+            {               
+                Debug.LogFormat("{0} format {1}", srcAsTexture2D.name, srcAsTexture2D.format);
+                return srcAsTexture2D.format == TextureFormat.DXT5;
+            }
+            return false;
+        }
+
+        static Material s_dxt5decode;
+        static Material GetDecodeDxt5()
+        {
+            if (s_dxt5decode == null)
+            {
+                s_dxt5decode = new Material(Shader.Find("UniGLTF/Dxt5Decoder"));
+            }
+            return s_dxt5decode;
+        }
 
         public static Texture2D CopyTexture(Texture src)
         {
             Texture2D dst = null;
+
             var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
-            using (var scope = new sRGBScope())
+
+            using (var scope = new sRGBScope(true))
             {
-                Graphics.Blit(src, renderTexture);
-                dst = new Texture2D(src.width, src.height, TextureFormat.ARGB32, false, false);
-                dst.ReadPixels(new Rect(0, 0, src.width, src.height), 0, 0);
+                if (IsDxt5(src))
+                {
+                    var mat = GetDecodeDxt5();
+                    Graphics.Blit(src, renderTexture, mat);
+                }
+                else
+                {
+                    Graphics.Blit(src, renderTexture);
+                }
             }
+            dst = new Texture2D(src.width, src.height, TextureFormat.ARGB32, false, false);
+            dst.ReadPixels(new Rect(0, 0, src.width, src.height), 0, 0);
+
             RenderTexture.active = null;
             if (Application.isEditor)
             {
