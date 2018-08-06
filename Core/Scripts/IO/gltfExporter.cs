@@ -148,20 +148,6 @@ namespace UniGLTF
         }
 
         #region Export
-        struct BytesWithPath
-        {
-            public Byte[] Bytes;
-            public string Path;
-            public string Mime;
-
-            public BytesWithPath(Texture texture)
-            {
-                Path = "";
-                Bytes = TextureItem.CopyTexture(texture).EncodeToPNG();
-                Mime = "image/png";
-            }
-        }
-
         static glTFNode ExportNode(Transform x, List<Transform> nodes, List<Mesh> meshes, List<SkinnedMeshRenderer> skins)
         {
             var node = new glTFNode
@@ -307,77 +293,6 @@ namespace UniGLTF
             public List<Transform> Nodes;
             public List<Material> Materials;
             public List<Texture> Textures;
-        }
-
-        public static int ExportTexture(glTF gltf, int bufferIndex, Texture texture)
-        {
-            var bytesWithPath = new BytesWithPath(texture); ;
-
-            // add view
-            var view = gltf.buffers[bufferIndex].Append(bytesWithPath.Bytes, glBufferTarget.NONE);
-            var viewIndex = gltf.AddBufferView(view);
-
-            // add image
-            var imageIndex = gltf.images.Count;
-            gltf.images.Add(new glTFImage
-            {
-                name = texture.name,
-                bufferView = viewIndex,
-                mimeType = bytesWithPath.Mime,
-            });
-
-            // add sampler
-            var filter = default(glFilter);
-            switch (texture.filterMode)
-            {
-                case FilterMode.Point:
-                    filter = glFilter.NEAREST;
-                    break;
-
-                default:
-                    filter = glFilter.LINEAR;
-                    break;
-            }
-            var wrap = default(glWrap);
-
-            switch (texture.wrapMode)
-            {
-                case TextureWrapMode.Clamp:
-                    wrap = glWrap.CLAMP_TO_EDGE;
-                    break;
-
-                case TextureWrapMode.Repeat:
-                    wrap = glWrap.REPEAT;
-                    break;
-
-#if UNITY_2017_OR_NEWER
-                    case TextureWrapMode.Mirror:
-                        wrap = glWrap.MIRRORED_REPEAT;
-                        break;
-#endif
-
-                default:
-                    throw new NotImplementedException();
-            }
-
-            var samplerIndex = gltf.samplers.Count;
-            gltf.samplers.Add(new glTFTextureSampler
-            {
-                magFilter = filter,
-                minFilter = filter,
-                wrapS = wrap,
-                wrapT = wrap,
-
-            });
-
-            // add texture
-            gltf.textures.Add(new glTFTexture
-            {
-                sampler = samplerIndex,
-                source = imageIndex,
-            });
-
-            return imageIndex;
         }
 
         static glTFMesh ExportPrimitives(glTF gltf, int bufferIndex, 
@@ -626,7 +541,7 @@ namespace UniGLTF
             for (int i = 0; i < unityTextures.Count; ++i)
             {
                 var texture = unityTextures[i];
-                ExportTexture(gltf, bufferIndex, texture);            
+                TextureIO.ExportTexture(gltf, bufferIndex, texture);
             }
            
             gltf.materials = unityMaterials.Select(x => MaterialIO.ExportMaterial(x, unityTextures)).ToList();

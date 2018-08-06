@@ -5,9 +5,6 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using System.IO;
 using System.Text;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 
 namespace UniGLTF

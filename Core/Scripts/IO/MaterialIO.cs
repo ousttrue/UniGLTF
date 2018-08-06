@@ -11,26 +11,6 @@ namespace UniGLTF
     {
         public delegate Material CreateMaterialFunc(ImporterContext ctx, int i);
 
-#if UNITY_EDITOR
-        public static void MarkTextureAssetAsNormalMap(string assetPath)
-        {
-            if (string.IsNullOrEmpty(assetPath))
-            {
-                return;
-            }
-
-            var textureImporter = AssetImporter.GetAtPath(assetPath) as TextureImporter;
-            if (null == textureImporter)
-            {
-                return;
-            }
-
-            //Debug.LogFormat("[MarkTextureAssetAsNormalMap] {0}", assetPath);
-            textureImporter.textureType = TextureImporterType.NormalMap;
-            textureImporter.SaveAndReimport();
-        }
-#endif
-
         /// StandardShader vaiables
         /// 
         /// _Color
@@ -108,7 +88,7 @@ namespace UniGLTF
                             var textureAssetPath = AssetDatabase.GetAssetPath(texture.Texture);
                             if (!string.IsNullOrEmpty(textureAssetPath))
                             {
-                                MarkTextureAssetAsNormalMap(textureAssetPath);
+                                TextureIO.MarkTextureAssetAsNormalMap(textureAssetPath);
                             }
 #endif
                             material.SetTexture("_BumpMap", texture.Texture);
