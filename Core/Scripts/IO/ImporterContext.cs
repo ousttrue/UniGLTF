@@ -154,6 +154,22 @@ namespace UniGLTF
 
         public IMaterialImporter MaterialImporter;
 
+        public bool MaterialHasVertexColor(glTFMaterial material)
+        {
+            if (material == null)
+            {
+                return false;
+            }
+
+            var materialIndex = GLTF.materials.IndexOf(material);
+            if (materialIndex == -1)
+            {
+                return false;
+            }
+
+            return MaterialHasVertexColor(materialIndex);
+        }
+
         public bool MaterialHasVertexColor(int materialIndex)
         {
             if (materialIndex < 0 || materialIndex >= GLTF.materials.Count)

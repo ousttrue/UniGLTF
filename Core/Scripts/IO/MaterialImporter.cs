@@ -49,7 +49,12 @@ namespace UniGLTF
         /// _ZWrite
         public virtual Material CreateMaterial(ImporterContext ctx, int i)
         {
-            var shader = m_shaderStore.GetShader(ctx, i);
+            var y = i >= 0 && i < ctx.GLTF.materials.Count
+                ? ctx.GLTF.materials[i]
+                : null
+                ;
+
+            var shader = m_shaderStore.GetShader(y);
             Debug.LogFormat("[{0}]{1}", i, shader.name);
             var material = new Material(shader);
             material.name = string.Format("material_{0:00}", i);

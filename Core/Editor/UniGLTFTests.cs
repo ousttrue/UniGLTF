@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace UniGLTF
 {
-    public class Tests
+    public class UniGLTFTests
     {
         static GameObject CreateSimpelScene()
         {

@@ -5,7 +5,7 @@ namespace UniGLTF
 {
     public interface IShaderStore
     {
-        Shader GetShader(ImporterContext context, int materialIndex);
+        Shader GetShader(glTFMaterial material);
     }
 
     public class ShaderStore : IShaderStore
@@ -64,25 +64,26 @@ namespace UniGLTF
             }
         }
 
-        public ShaderStore() : this("Standard")
-        {
+        ImporterContext m_context;
 
+        public ShaderStore(ImporterContext context) : this(context, "Standard")
+        {
         }
 
-        public ShaderStore(string defaultShaderName)
+        public ShaderStore(ImporterContext context, string defaultShaderName)
         {
+            m_context = context;
             m_defaultShaderName = defaultShaderName;
         }
 
-        public Shader GetShader(ImporterContext context, int materialIndex)
+        public Shader GetShader(glTFMaterial material)
         {
-            if(materialIndex>=0 && materialIndex < context.GLTF.materials.Count)
+            if (material != null)
             {
-                var material = context.GLTF.materials[materialIndex];
-                if(material.extensions!=null && material.extensions.KHR_materials_unlit != null)
+                if (material.extensions != null && material.extensions.KHR_materials_unlit != null)
                 {
                     // is unlit
-                    switch(material.alphaMode)
+                    switch (material.alphaMode)
                     {
                         case "BLEND": return UnlitTransparent;
                         case "MASK": return UnlitCutout;
@@ -91,7 +92,7 @@ namespace UniGLTF
                 }
             }
 
-            if (context.MaterialHasVertexColor(materialIndex))
+            if (m_context != null && m_context.MaterialHasVertexColor(material))
             {
                 return VColor;
             }

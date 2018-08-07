@@ -72,7 +72,7 @@ namespace UniGLTF
             // materials
             if (ctx.MaterialImporter == null)
             {
-                ctx.MaterialImporter = new MaterialImporter(new ShaderStore());
+                ctx.MaterialImporter = new MaterialImporter(new ShaderStore(ctx));
             }
 
             if (ctx.GLTF.materials == null || !ctx.GLTF.materials.Any())
