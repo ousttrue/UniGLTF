@@ -44,7 +44,9 @@ namespace UniGLTF
 
             return (ctx, i) =>
             {
-                var material = new Material(shaderStore.GetShader(ctx, i));
+                var shader = shaderStore.GetShader(ctx, i);
+                Debug.LogFormat("[{0}]{1}", i, shader.name);
+                var material = new Material(shader);
                 material.name = string.Format("material_{0:00}", i);
 
                 if (i >= 0 && i < ctx.GLTF.materials.Count)

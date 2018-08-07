@@ -113,7 +113,7 @@ namespace UniGLTF
         public bool doubleSided;
 
         // empty schemas
-        public object extensions;
+        public glTFMaterial_extensions extensions;
         public object extras;
 
         protected override void SerializeMembers(GLTFJsonFormatter f)

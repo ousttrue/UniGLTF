@@ -154,7 +154,7 @@ namespace UniGLTF
 
         public MaterialIO.CreateMaterialFunc CreateMaterial;
 
-        public bool HasVertexColor(int materialIndex)
+        public bool MaterialHasVertexColor(int materialIndex)
         {
             if (materialIndex < 0 || materialIndex >= GLTF.materials.Count)
             {
