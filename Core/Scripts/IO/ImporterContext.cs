@@ -152,7 +152,7 @@ namespace UniGLTF
 #endif
         }
 
-        public MaterialIO.CreateMaterialFunc CreateMaterial;
+        public IMaterialImporter MaterialImporter;
 
         public bool MaterialHasVertexColor(int materialIndex)
         {

@@ -70,22 +70,22 @@ namespace UniGLTF
             }
 
             // materials
-            if (ctx.CreateMaterial == null)
+            if (ctx.MaterialImporter == null)
             {
-                ctx.CreateMaterial = MaterialIO.CreateMaterialFuncFromShader(new ShaderStore());
+                ctx.MaterialImporter = new MaterialImporter(new ShaderStore());
             }
 
             if (ctx.GLTF.materials == null || !ctx.GLTF.materials.Any())
             {
                 // no material
-                ctx.Materials.Add(ctx.CreateMaterial(ctx, 0));
+                ctx.Materials.Add(ctx.MaterialImporter.CreateMaterial(ctx, 0));
             }
             else
             {
                 for (int i = 0; i < ctx.GLTF.materials.Count; ++i)
                 {
                     var index = i;
-                    var material = ctx.CreateMaterial(ctx, index);
+                    var material = ctx.MaterialImporter.CreateMaterial(ctx, index);
 
                     var originalName = material.name;
                     for(int j=1;  ctx.Materials.Any(x => x.name == material.name); ++j)
