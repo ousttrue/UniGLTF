@@ -548,7 +548,8 @@ namespace UniGLTF
             }
 
             var textures = unityTextures.Select(y => y.Texture).ToList();
-            gltf.materials = unityMaterials.Select(x => MaterialIO.ExportMaterial(x, textures)).ToList();
+            var materialExporter = new MaterialExporter();
+            gltf.materials = unityMaterials.Select(x => materialExporter.ExportMaterial(x, textures)).ToList();
             #endregion
 
             #region Meshes
