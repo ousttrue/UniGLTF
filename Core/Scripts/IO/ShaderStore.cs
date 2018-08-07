@@ -60,7 +60,7 @@ namespace UniGLTF
             get
             {
                 if (m_unlitCoutout == null) m_unlitCoutout = Shader.Find("Unlit/Transparent Cutout");
-                return m_unlitTransparent;
+                return m_unlitCoutout;
             }
         }
 
