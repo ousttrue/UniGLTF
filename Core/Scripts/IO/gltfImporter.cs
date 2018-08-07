@@ -75,24 +75,27 @@ namespace UniGLTF
                 ctx.MaterialImporter = new MaterialImporter(new ShaderStore(ctx));
             }
 
+            Func<int, TextureItem> getTexture = x =>
+            {
+                if(x<0 || x >= ctx.Textures.Count)
+                {
+                    return null;
+                }
+                return ctx.Textures[x];
+            };
+
             if (ctx.GLTF.materials == null || !ctx.GLTF.materials.Any())
             {
                 // no material
-                ctx.Materials.Add(ctx.MaterialImporter.CreateMaterial(ctx, 0));
+                ctx.AddMaterial(ctx.MaterialImporter.CreateMaterial(0, null, getTexture));
             }
             else
             {
                 for (int i = 0; i < ctx.GLTF.materials.Count; ++i)
                 {
                     var index = i;
-                    var material = ctx.MaterialImporter.CreateMaterial(ctx, index);
-
-                    var originalName = material.name;
-                    for(int j=1;  ctx.Materials.Any(x => x.name == material.name); ++j)
-                    {
-                        material.name = string.Format("{0}({1})", originalName, j);
-                    }
-                    ctx.Materials.Add(material);
+                    var material = ctx.MaterialImporter.CreateMaterial(index, ctx.GLTF.materials[i], getTexture);
+                    ctx.AddMaterial(material);
                 }
             }
 
@@ -300,7 +303,7 @@ namespace UniGLTF
             var result = new MeshWithMaterials
             {
                 Mesh = mesh,
-                Materials = meshContext.materialIndices.Select(x => ctx.Materials[x]).ToArray()
+                Materials = meshContext.materialIndices.Select(x => ctx.GetMaterials()[x]).ToArray()
             };
 
             if (meshContext.blendShapes != null)

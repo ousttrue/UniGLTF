@@ -5,7 +5,6 @@ namespace UniGLTF
 {
     public class MaterialTests
     {
-
         [Test]
         public void ShaderImportTest()
         {
@@ -26,10 +25,10 @@ namespace UniGLTF
             {
                 var shader = shaderStore.GetShader(new glTFMaterial
                 {
-                    alphaMode="BLEND",
+                    alphaMode = "BLEND",
                     extensions = new glTFMaterial_extensions
                     {
-                        KHR_materials_unlit = new glTF_KHR_materials_unlit { }                      
+                        KHR_materials_unlit = new glTF_KHR_materials_unlit { }
                     }
                 });
                 Assert.AreEqual("Unlit/Transparent", shader.name);
@@ -50,12 +49,28 @@ namespace UniGLTF
             {
                 var shader = shaderStore.GetShader(new glTFMaterial
                 {
-                    extensions=new glTFMaterial_extensions
+                    extensions = new glTFMaterial_extensions
                     {
-                        KHR_materials_unlit=new glTF_KHR_materials_unlit { }
+                        KHR_materials_unlit = new glTF_KHR_materials_unlit { }
                     }
                 });
                 Assert.AreEqual("Unlit/Texture", shader.name);
+            }
+        }
+
+        [Test]
+        public void MaterialImportTest()
+        {
+            var shaderStore = new ShaderStore(null);
+            var materialImporter = new MaterialImporter(shaderStore);
+
+            {
+                var material = materialImporter.CreateMaterial(0, new glTFMaterial
+                {
+
+                },
+                x => null);
+                Assert.AreEqual("Standard", material.shader.name);
             }
         }
     }

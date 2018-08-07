@@ -185,7 +185,22 @@ namespace UniGLTF
         public GameObject Root;
         public List<Transform> Nodes = new List<Transform>();
         public List<TextureItem> Textures = new List<TextureItem>();
-        public List<Material> Materials = new List<Material>();
+        List<Material> m_materials = new List<Material>();
+        public void AddMaterial(Material material)
+        {
+            var originalName = material.name;
+            int j = 2;
+            while (m_materials.Any(x => x.name == material.name))
+            {
+                material.name = string.Format("{0}({1})", originalName, j++);
+            }
+            m_materials.Add(material);
+        }
+        public IList<Material> GetMaterials()
+        {
+            return m_materials;
+        }
+
         public List<MeshWithMaterials> Meshes = new List<MeshWithMaterials>();
         public void ShowMeshes()
         {
@@ -213,7 +228,7 @@ namespace UniGLTF
                 }
             }
             foreach (var x in textures) { yield return x; }
-            foreach (var x in Materials) { yield return x; }
+            foreach (var x in m_materials) { yield return x; }
             foreach (var x in Meshes) { yield return x.Mesh; }
             if (Animation != null) yield return Animation;
         }
