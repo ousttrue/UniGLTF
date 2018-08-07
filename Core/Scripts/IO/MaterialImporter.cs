@@ -9,16 +9,23 @@ namespace UniGLTF
 {
     public interface IMaterialImporter
     {
-        Material CreateMaterial(int i, glTFMaterial src, Func<int, TextureItem> getTexture);
+        Material CreateMaterial(int i, glTFMaterial src);
     }
 
     public class MaterialImporter : IMaterialImporter
     {
         IShaderStore m_shaderStore;
 
-        public MaterialImporter(IShaderStore shaderStore)
+        ImporterContext m_context;
+        protected ImporterContext Context
+        {
+            get { return m_context; }
+        }
+
+        public MaterialImporter(IShaderStore shaderStore, ImporterContext context)
         {
             m_shaderStore = shaderStore;
+            m_context = context;
         }
 
         /// StandardShader vaiables
@@ -48,7 +55,7 @@ namespace UniGLTF
         /// _SrcBlend
         /// _DstBlend
         /// _ZWrite
-        public virtual Material CreateMaterial(int i, glTFMaterial x, Func<int, TextureItem> getTexture)
+        public virtual Material CreateMaterial(int i, glTFMaterial x)
         {
             var shader = m_shaderStore.GetShader(x);
             Debug.LogFormat("[{0}]{1}", i, shader.name);
@@ -70,7 +77,7 @@ namespace UniGLTF
 
                     if (x.pbrMetallicRoughness.baseColorTexture != null && x.pbrMetallicRoughness.baseColorTexture.index != -1)
                     {
-                        var texture = getTexture(x.pbrMetallicRoughness.baseColorTexture.index);
+                        var texture = m_context.GetTexture(x.pbrMetallicRoughness.baseColorTexture.index);
                         if (texture != null)
                         {
                             material.mainTexture = texture.Texture;
@@ -80,7 +87,7 @@ namespace UniGLTF
                     if (x.pbrMetallicRoughness.metallicRoughnessTexture != null && x.pbrMetallicRoughness.metallicRoughnessTexture.index != -1)
                     {
                         material.EnableKeyword("_METALLICGLOSSMAP");
-                        var texture = getTexture(x.pbrMetallicRoughness.metallicRoughnessTexture.index);
+                        var texture = Context.GetTexture(x.pbrMetallicRoughness.metallicRoughnessTexture.index);
                         if (texture != null)
                         {
                             material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessOcclusionConverted());
@@ -91,7 +98,7 @@ namespace UniGLTF
                 if (x.normalTexture!=null && x.normalTexture.index != -1)
                 {
                     material.EnableKeyword("_NORMALMAP");
-                    var texture = getTexture(x.normalTexture.index);
+                    var texture = Context.GetTexture(x.normalTexture.index);
                     if (texture != null)
                     {
 #if UNITY_EDITOR
@@ -107,7 +114,7 @@ namespace UniGLTF
 
                 if (x.occlusionTexture!=null && x.occlusionTexture.index != -1)
                 {
-                    var texture = getTexture(x.occlusionTexture.index);
+                    var texture = Context.GetTexture(x.occlusionTexture.index);
                     if (texture != null)
                     {
                         material.SetTexture("_OcclusionMap", texture.GetMetallicRoughnessOcclusionConverted());
@@ -127,7 +134,7 @@ namespace UniGLTF
 
                     if (x.emissiveTexture.index != -1)
                     {
-                        var texture = getTexture(x.emissiveTexture.index);
+                        var texture = Context.GetTexture(x.emissiveTexture.index);
                         if (texture != null)
                         {
                             material.SetTexture("_EmissionMap", texture.Texture);

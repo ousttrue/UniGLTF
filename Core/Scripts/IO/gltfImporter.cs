@@ -62,9 +62,13 @@ namespace UniGLTF
             // textures
             if (ctx.GLTF.textures != null)
             {
-                ctx.Textures.AddRange(ctx.GLTF.textures.Select((x, i) => new TextureItem(ctx.GLTF, i, ctx.TextureBaseDir)));
+                for(int i=0; i<ctx.GLTF.textures.Count; ++i)
+                {
+                    var item = new TextureItem(ctx.GLTF, i, ctx.TextureBaseDir);
+                    ctx.AddTexture(item);
+                }
             }
-            foreach(var x in ctx.Textures)
+            foreach(var x in ctx.GetTextures())
             {
                 x.Process(ctx.GLTF, ctx.Storage);
             }
@@ -72,29 +76,20 @@ namespace UniGLTF
             // materials
             if (ctx.MaterialImporter == null)
             {
-                ctx.MaterialImporter = new MaterialImporter(new ShaderStore(ctx));
+                ctx.MaterialImporter = new MaterialImporter(new ShaderStore(ctx), ctx);
             }
-
-            Func<int, TextureItem> getTexture = x =>
-            {
-                if(x<0 || x >= ctx.Textures.Count)
-                {
-                    return null;
-                }
-                return ctx.Textures[x];
-            };
 
             if (ctx.GLTF.materials == null || !ctx.GLTF.materials.Any())
             {
                 // no material
-                ctx.AddMaterial(ctx.MaterialImporter.CreateMaterial(0, null, getTexture));
+                ctx.AddMaterial(ctx.MaterialImporter.CreateMaterial(0, null));
             }
             else
             {
                 for (int i = 0; i < ctx.GLTF.materials.Count; ++i)
                 {
                     var index = i;
-                    var material = ctx.MaterialImporter.CreateMaterial(index, ctx.GLTF.materials[i], getTexture);
+                    var material = ctx.MaterialImporter.CreateMaterial(index, ctx.GLTF.materials[i]);
                     ctx.AddMaterial(material);
                 }
             }

@@ -184,7 +184,25 @@ namespace UniGLTF
         #region Imported
         public GameObject Root;
         public List<Transform> Nodes = new List<Transform>();
-        public List<TextureItem> Textures = new List<TextureItem>();
+
+        List<TextureItem> m_textures = new List<TextureItem>();
+        public IList<TextureItem> GetTextures()
+        {
+            return m_textures;
+        }
+        public TextureItem GetTexture(int i)
+        {
+            if (i < 0 || i >= m_textures.Count)
+            {
+                return null;
+            }
+            return m_textures[i];
+        }
+        public void AddTexture(TextureItem item)
+        {
+            m_textures.Add(item);
+        }
+
         List<Material> m_materials = new List<Material>();
         public void AddMaterial(Material material)
         {
@@ -220,7 +238,7 @@ namespace UniGLTF
         protected virtual IEnumerable<UnityEngine.Object> ObjectsForSubAsset()
         {
             HashSet<Texture2D> textures = new HashSet<Texture2D>();
-            foreach (var x in Textures.SelectMany(y => y.GetTexturesForSaveAssets()))
+            foreach (var x in m_textures.SelectMany(y => y.GetTexturesForSaveAssets()))
             {
                 if (!textures.Contains(x))
                 {

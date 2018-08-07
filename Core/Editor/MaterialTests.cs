@@ -62,14 +62,13 @@ namespace UniGLTF
         public void MaterialImportTest()
         {
             var shaderStore = new ShaderStore(null);
-            var materialImporter = new MaterialImporter(shaderStore);
+            var materialImporter = new MaterialImporter(shaderStore, null);
 
             {
                 var material = materialImporter.CreateMaterial(0, new glTFMaterial
                 {
 
-                },
-                x => null);
+                });
                 Assert.AreEqual("Standard", material.shader.name);
             }
         }
