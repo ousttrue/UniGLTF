@@ -60,7 +60,7 @@ namespace UniGLTF
             var shader = m_shaderStore.GetShader(x);
             Debug.LogFormat("[{0}]{1}", i, shader.name);
             var material = new Material(shader);
-            material.name = string.IsNullOrEmpty(x.name)
+            material.name = (x==null || string.IsNullOrEmpty(x.name))
                 ? string.Format("material_{0:00}", i)
                 : x.name
                 ;
