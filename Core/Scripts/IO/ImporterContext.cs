@@ -51,7 +51,7 @@ namespace UniGLTF
             var total = TimeSpan.Zero;
 
             var sb = new StringBuilder();
-            sb.Append("【SpeedLog】");
+            sb.AppendLine("【SpeedLog】");
             foreach(var kv in m_speedReports)
             {
                 sb.AppendLine(string.Format("{0}: {1}ms", kv.Key, (int)kv.Elapsed.TotalMilliseconds));
