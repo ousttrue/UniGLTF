@@ -279,6 +279,19 @@ namespace UniGLTF
                 }
             }
         }
+
+        public void EnableUpdateWhenOffscreen()
+        {
+            foreach (var x in Meshes)
+            {
+                var skinnedMeshRenderer = x.Renderer as SkinnedMeshRenderer;
+                if (skinnedMeshRenderer != null)
+                {
+                    skinnedMeshRenderer.updateWhenOffscreen = true;
+                }
+            }
+        }
+
         public AnimationClip Animation;
         #endregion
 
