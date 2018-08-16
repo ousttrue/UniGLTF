@@ -69,17 +69,17 @@ namespace UniGLTF
             //public string Path;
             public string Mime;
 
-            public BytesWithPath(Texture texture)
+            public BytesWithPath(Texture texture, bool isNormalMap)
             {
                 //Path = "";
-                Bytes = TextureItem.CopyTexture(texture).EncodeToPNG();
+                Bytes = TextureItem.CopyTexture(texture, isNormalMap).EncodeToPNG();
                 Mime = "image/png";
             }
         }
 
         public static int ExportTexture(glTF gltf, int bufferIndex, Texture texture, bool isNormalMap)
         {
-            var bytesWithPath = new BytesWithPath(texture); ;
+            var bytesWithPath = new BytesWithPath(texture, isNormalMap); ;
 
             // add view
             var view = gltf.buffers[bufferIndex].Append(bytesWithPath.Bytes, glBufferTarget.NONE);

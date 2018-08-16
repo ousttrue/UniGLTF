@@ -216,7 +216,7 @@ namespace UniGLTF
         {
             if (m_metallicRoughnessOcclusion == null)
             {
-                var texture = CopyTexture(Texture);
+                var texture = CopyTexture(Texture, false);
                 texture.SetPixels32(texture.GetPixels32().Select(ConvertMetallicRoughnessOcclusion).ToArray());
                 texture.name = this.Texture.name + ".metallicRoughnessOcclusion";
                 m_metallicRoughnessOcclusion = texture;
@@ -311,7 +311,7 @@ namespace UniGLTF
             return s_dxt5decode;
         }
 
-        public static Texture2D CopyTexture(Texture src)
+        public static Texture2D CopyTexture(Texture src, bool isNormal)
         {
             Texture2D dst = null;
 
@@ -319,7 +319,7 @@ namespace UniGLTF
 
             using (var scope = new sRGBScope(true))
             {
-                if (IsDxt5(src))
+                if (isNormal && IsDxt5(src))
                 {
                     var mat = GetDecodeDxt5();
                     Graphics.Blit(src, renderTexture, mat);
