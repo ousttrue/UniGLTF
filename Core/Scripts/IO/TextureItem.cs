@@ -7,145 +7,46 @@ using System.IO;
 
 namespace UniGLTF
 {
-    public class TextureItem
+    public static class TextureSamplerUtil
     {
-        int m_textureIndex;
-
-        public Texture2D Texture;
-        UnityPath m_assetPath;
-        public bool IsAsset
+        #region WrapMode
+        enum TextureWrapType
         {
-            get
-            {
-                return m_assetPath.IsUnderAssetsFolder;
-            }
-        }
-
-        Byte[] m_imageBytes;
-        static Byte[] ToArray(ArraySegment<byte> bytes)
-        {
-            if (bytes.Array == null)
-            {
-                return new byte[] { };
-            }
-            else if(bytes.Offset==0 && bytes.Count == bytes.Array.Length)
-            {
-                return bytes.Array;
-            }
-            else
-            {
-                return bytes.Array.Skip(bytes.Offset).Take(bytes.Count).ToArray();
-            }
-        }
-
-        string m_textureName;
-
-        public IEnumerable<Texture2D> GetTexturesForSaveAssets()
-        {
-            if (!IsAsset) yield return Texture;
-            if (m_metallicRoughnessOcclusion != null) yield return m_metallicRoughnessOcclusion;
-        }
-
-        public TextureItem(glTF gltf, int index, UnityPath textureBase=default(UnityPath))
-        {
-            m_textureIndex = index;
-
-            var image = gltf.GetImageFromTextureIndex(m_textureIndex);
-#if UNITY_EDITOR
-            if (!string.IsNullOrEmpty(image.uri)
-                && !image.uri.StartsWith("data:")
-                && textureBase.IsUnderAssetsFolder)
-            {
-                m_assetPath= textureBase.Child(image.uri);
-                m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
-            }
+            All,
+#if UNITY_2017_OR_NEWER
+            U,
+            V,
+            W,
 #endif
         }
 
-        public void Process(glTF gltf, IStorage storage)
+        struct TypeWithMode
         {
-            ProcessOnAnyThread(gltf, storage);
-            ProcessOnMainThread(gltf);
-        }
+            public TextureWrapType WrapType;
+            public TextureWrapMode WrapMode;
 
-        public void ProcessOnAnyThread(glTF gltf, IStorage storage)
-        {
-            if (!IsAsset)
+            public TypeWithMode(TextureWrapType type, TextureWrapMode mode)
             {
-                GetImageBytes(gltf, storage);
+                WrapType = type;
+                WrapMode = mode;
             }
         }
 
-        public void ProcessOnMainThread(glTF gltf)
+        static IEnumerable<TypeWithMode> GetUnityWrapMode(glTFTextureSampler sampler)
         {
-            GetOrCreateTexture();
-            SetSampler(gltf);
-        }
+#if UNITY_2017_OR_NEWER
 
-        public void GetImageBytes(glTF gltf, IStorage storage)
-        {
-            if (IsAsset) return;
+            case glWrap.CLAMP_TO_EDGE:
+                texture.wrapModeU = TextureWrapMode.Clamp;
+                break;
 
-            var image = gltf.GetImageFromTextureIndex(m_textureIndex);
-            if (string.IsNullOrEmpty(image.uri))
-            {
-                //
-                // use buffer view (GLB)
-                //
-                var byteSegment = gltf.GetViewBytes(image.bufferView);
-                m_imageBytes = ToArray(byteSegment);
-                m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", m_textureIndex);
-            }
-            else 
-            {
-                m_imageBytes = ToArray(storage.Get(image.uri));
-                if (image.uri.StartsWith("data:")) {
-                    m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#Base64Embeded", m_textureIndex);
-                }
-                else
-                {
-                    m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
-                }
-            }
-        }
+            case glWrap.REPEAT:
+                texture.wrapModeU = TextureWrapMode.Repeat;
+                break;
 
-        public void GetOrCreateTexture()
-        {
-#if UNITY_EDITOR
-            if (IsAsset)
-            {
-                //
-                // texture from assets
-                //
-                m_assetPath.ImportAsset();
-                Texture = m_assetPath.LoadAsset<Texture2D>();
-            }
-            else
-#endif
-            {
-                //
-                // texture from image(png etc) bytes
-                //
-                Texture = new Texture2D(2, 2);
-                if (m_imageBytes != null)
-                {
-                    Texture.LoadImage(m_imageBytes);
-                }
-            }
-            Texture.name = m_textureName;
-        }
-
-        public void SetSampler(glTF gltf)
-        {
-            SetSampler(Texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
-        }
-
-        static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
-        {
-            if (texture == null)
-            {
-                return;
-            }
+            case glWrap.MIRRORED_REPEAT:
+                texture.wrapModeU = TextureWrapMode.Mirror;
+                break;
 
             switch (sampler.wrapS)
             {
@@ -196,19 +97,216 @@ namespace UniGLTF
             }
 #endif
 
-            switch (sampler.magFilter)
+#else
+            // Unity2017より前は、wrapSとwrapTの区別が無くてwrapしかない
+
+            switch (sampler.wrapS)
             {
-                case glFilter.NEAREST:
-                    texture.filterMode = FilterMode.Point;
+                case glWrap.NONE: // default
+                    yield return new TypeWithMode(TextureWrapType.All, TextureWrapMode.Repeat);
                     break;
 
-                case glFilter.LINEAR:
-                    texture.filterMode = FilterMode.Bilinear;
+                case glWrap.CLAMP_TO_EDGE:
+                case glWrap.MIRRORED_REPEAT:
+                    yield return new TypeWithMode(TextureWrapType.All, TextureWrapMode.Clamp);
+                    break;
+
+                case glWrap.REPEAT:
+                    yield return new TypeWithMode(TextureWrapType.All, TextureWrapMode.Repeat);
                     break;
 
                 default:
                     throw new NotImplementedException();
+#endif
             }
+        }
+        #endregion
+
+        static FilterMode GetFilterMode(glTFTextureSampler sampler)
+        {
+            switch (sampler.magFilter)
+            {
+                case glFilter.NEAREST:
+                    return FilterMode.Point;
+
+                case glFilter.LINEAR:
+                    return FilterMode.Bilinear;
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        public static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
+        {
+            if (texture == null)
+            {
+                return;
+            }
+
+            foreach (var kv in GetUnityWrapMode(sampler))
+            {
+                switch (kv.WrapType)
+                {
+                    case TextureWrapType.All:
+                        texture.wrapMode = kv.WrapMode;
+                        break;
+
+#if UNITY_2017_OR_NEWER
+                    case TextureWrapType.U:
+                        texture.wrapModeU = kv.Value;
+                        break;
+
+                    case TextureWrapType.V:
+                        texture.wrapModeV = kv.Value;
+                        break;
+
+                    case TextureWrapType.W:
+                        texture.wrapModeW = kv.Value;
+                        break;
+#endif
+
+                    default:
+                        throw new NotImplementedException();
+                }
+            }
+
+            texture.filterMode = GetFilterMode(sampler);
+        }
+    }
+
+    public class TextureItem
+    {
+        int m_textureIndex;
+
+        public Texture2D Texture;
+        UnityPath m_assetPath;
+        public bool IsAsset
+        {
+            get
+            {
+                return m_assetPath.IsUnderAssetsFolder;
+            }
+        }
+
+        Byte[] m_imageBytes;
+        static Byte[] ToArray(ArraySegment<byte> bytes)
+        {
+            if (bytes.Array == null)
+            {
+                return new byte[] { };
+            }
+            else if (bytes.Offset == 0 && bytes.Count == bytes.Array.Length)
+            {
+                return bytes.Array;
+            }
+            else
+            {
+                return bytes.Array.Skip(bytes.Offset).Take(bytes.Count).ToArray();
+            }
+        }
+
+        string m_textureName;
+
+        public IEnumerable<Texture2D> GetTexturesForSaveAssets()
+        {
+            if (!IsAsset) yield return Texture;
+            if (m_metallicRoughnessOcclusion != null) yield return m_metallicRoughnessOcclusion;
+        }
+
+        public TextureItem(glTF gltf, int index, UnityPath textureBase = default(UnityPath))
+        {
+            m_textureIndex = index;
+
+            var image = gltf.GetImageFromTextureIndex(m_textureIndex);
+#if UNITY_EDITOR
+            if (!string.IsNullOrEmpty(image.uri)
+                && !image.uri.StartsWith("data:")
+                && textureBase.IsUnderAssetsFolder)
+            {
+                m_assetPath = textureBase.Child(image.uri);
+                m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
+            }
+#endif
+        }
+
+        public void Process(glTF gltf, IStorage storage)
+        {
+            ProcessOnAnyThread(gltf, storage);
+            ProcessOnMainThread(gltf);
+        }
+
+        public void ProcessOnAnyThread(glTF gltf, IStorage storage)
+        {
+            if (!IsAsset)
+            {
+                GetImageBytes(gltf, storage);
+            }
+        }
+
+        public void ProcessOnMainThread(glTF gltf)
+        {
+            GetOrCreateTexture();
+            SetSampler(gltf);
+        }
+
+        public void GetImageBytes(glTF gltf, IStorage storage)
+        {
+            if (IsAsset) return;
+
+            var image = gltf.GetImageFromTextureIndex(m_textureIndex);
+            if (string.IsNullOrEmpty(image.uri))
+            {
+                //
+                // use buffer view (GLB)
+                //
+                var byteSegment = gltf.GetViewBytes(image.bufferView);
+                m_imageBytes = ToArray(byteSegment);
+                m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", m_textureIndex);
+            }
+            else
+            {
+                m_imageBytes = ToArray(storage.Get(image.uri));
+                if (image.uri.StartsWith("data:"))
+                {
+                    m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#Base64Embeded", m_textureIndex);
+                }
+                else
+                {
+                    m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
+                }
+            }
+        }
+
+        public void GetOrCreateTexture()
+        {
+#if UNITY_EDITOR
+            if (IsAsset)
+            {
+                //
+                // texture from assets
+                //
+                m_assetPath.ImportAsset();
+                Texture = m_assetPath.LoadAsset<Texture2D>();
+            }
+            else
+#endif
+            {
+                //
+                // texture from image(png etc) bytes
+                //
+                Texture = new Texture2D(2, 2);
+                if (m_imageBytes != null)
+                {
+                    Texture.LoadImage(m_imageBytes);
+                }
+            }
+            Texture.name = m_textureName;
+        }
+
+        public void SetSampler(glTF gltf)
+        {
+            TextureSamplerUtil.SetSampler(Texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
         }
 
         Texture2D m_metallicRoughnessOcclusion;
@@ -294,7 +392,7 @@ namespace UniGLTF
         {
             var srcAsTexture2D = src as Texture2D;
             if (srcAsTexture2D != null)
-            {               
+            {
                 Debug.LogFormat("{0} format {1}", srcAsTexture2D.name, srcAsTexture2D.format);
                 return srcAsTexture2D.format == TextureFormat.DXT5;
             }
