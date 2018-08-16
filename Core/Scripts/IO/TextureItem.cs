@@ -10,7 +10,7 @@ namespace UniGLTF
     public static class TextureSamplerUtil
     {
         #region WrapMode
-        enum TextureWrapType
+        public enum TextureWrapType
         {
             All,
 #if UNITY_2017_OR_NEWER
@@ -20,19 +20,12 @@ namespace UniGLTF
 #endif
         }
 
-        struct TypeWithMode
+        public static KeyValuePair<TextureWrapType, TextureWrapMode> TypeWithMode(TextureWrapType type, TextureWrapMode mode)
         {
-            public TextureWrapType WrapType;
-            public TextureWrapMode WrapMode;
-
-            public TypeWithMode(TextureWrapType type, TextureWrapMode mode)
-            {
-                WrapType = type;
-                WrapMode = mode;
-            }
+            return new KeyValuePair<TextureWrapType, TextureWrapMode>(type, mode);
         }
 
-        static IEnumerable<TypeWithMode> GetUnityWrapMode(glTFTextureSampler sampler)
+        public static IEnumerable<KeyValuePair<TextureWrapType, TextureWrapMode>> GetUnityWrapMode(glTFTextureSampler sampler)
         {
 #if UNITY_2017_OR_NEWER
 
@@ -103,16 +96,16 @@ namespace UniGLTF
             switch (sampler.wrapS)
             {
                 case glWrap.NONE: // default
-                    yield return new TypeWithMode(TextureWrapType.All, TextureWrapMode.Repeat);
+                    yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Repeat);
                     break;
 
                 case glWrap.CLAMP_TO_EDGE:
                 case glWrap.MIRRORED_REPEAT:
-                    yield return new TypeWithMode(TextureWrapType.All, TextureWrapMode.Clamp);
+                    yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Clamp);
                     break;
 
                 case glWrap.REPEAT:
-                    yield return new TypeWithMode(TextureWrapType.All, TextureWrapMode.Repeat);
+                    yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Repeat);
                     break;
 
                 default:
@@ -146,10 +139,10 @@ namespace UniGLTF
 
             foreach (var kv in GetUnityWrapMode(sampler))
             {
-                switch (kv.WrapType)
+                switch (kv.Key)
                 {
                     case TextureWrapType.All:
-                        texture.wrapMode = kv.WrapMode;
+                        texture.wrapMode = kv.Value;
                         break;
 
 #if UNITY_2017_OR_NEWER
