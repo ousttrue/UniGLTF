@@ -123,18 +123,26 @@ namespace UniGLTF
         }
         #endregion
 
-        static FilterMode GetFilterMode(glTFTextureSampler sampler)
+        public static FilterMode ImportFilterMode(glFilter filterMode)
         {
-            switch (sampler.magFilter)
+            switch (filterMode)
             {
                 case glFilter.NEAREST:
+                case glFilter.NEAREST_MIPMAP_LINEAR:
+                case glFilter.NEAREST_MIPMAP_NEAREST:
                     return FilterMode.Point;
 
+                case glFilter.NONE:
                 case glFilter.LINEAR:
+                case glFilter.LINEAR_MIPMAP_NEAREST:
                     return FilterMode.Bilinear;
+
+                case glFilter.LINEAR_MIPMAP_LINEAR:
+                    return FilterMode.Trilinear;
 
                 default:
                     throw new NotImplementedException();
+
             }
         }
 
@@ -172,8 +180,81 @@ namespace UniGLTF
                 }
             }
 
-            texture.filterMode = GetFilterMode(sampler);
+            texture.filterMode = ImportFilterMode(sampler.minFilter);
         }
+
+        #region Export
+        public static glFilter ExportFilter(Texture texture)
+        {
+            switch (texture.filterMode)
+            {
+                case FilterMode.Point:
+                    return glFilter.NEAREST;
+
+                case FilterMode.Bilinear:
+                    return glFilter.LINEAR;
+
+                case FilterMode.Trilinear:
+                    return glFilter.LINEAR_MIPMAP_LINEAR;
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        public static TextureWrapMode GetWrapS(Texture texture)
+        {
+#if UNITY_2017_1_OR_NEWER
+            return texture.wrapModeU;
+#else
+            return texture.wrapMode;
+#endif
+        }
+
+        public static TextureWrapMode GetWrapT(Texture texture)
+        {
+#if UNITY_2017_1_OR_NEWER
+            return texture.wrapModeV;
+#else
+            return texture.wrapMode;
+#endif
+        }
+
+        public static glWrap ExportWrapMode(TextureWrapMode wrapMode)
+        {
+            switch (wrapMode)
+            {
+                case TextureWrapMode.Clamp:
+                    return glWrap.CLAMP_TO_EDGE;
+
+                case TextureWrapMode.Repeat:
+                    return glWrap.REPEAT;
+
+#if UNITY_2017_1_OR_NEWER
+                case TextureWrapMode.Mirror:
+                case TextureWrapMode.MirrorOnce:
+                    return glWrap.MIRRORED_REPEAT;
+#endif
+
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        public static glTFTextureSampler Export(Texture texture)
+        {
+            var filter = ExportFilter(texture);
+            var wrapS = ExportWrapMode(GetWrapS(texture));
+            var wrapT = ExportWrapMode(GetWrapT(texture));
+            return new glTFTextureSampler
+            {
+                magFilter = filter,
+                minFilter = filter,
+                wrapS = wrapS,
+                wrapT = wrapT,
+            };
+        }
+        #endregion
     }
 
     public class TextureItem

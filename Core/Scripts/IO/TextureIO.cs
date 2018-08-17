@@ -95,48 +95,9 @@ namespace UniGLTF
             });
 
             // add sampler
-            var filter = default(glFilter);
-            switch (texture.filterMode)
-            {
-                case FilterMode.Point:
-                    filter = glFilter.NEAREST;
-                    break;
-
-                default:
-                    filter = glFilter.LINEAR;
-                    break;
-            }
-            var wrap = default(glWrap);
-
-            switch (texture.wrapMode)
-            {
-                case TextureWrapMode.Clamp:
-                    wrap = glWrap.CLAMP_TO_EDGE;
-                    break;
-
-                case TextureWrapMode.Repeat:
-                    wrap = glWrap.REPEAT;
-                    break;
-
-#if UNITY_2017_1_OR_NEWER
-                    case TextureWrapMode.Mirror:
-                        wrap = glWrap.MIRRORED_REPEAT;
-                        break;
-#endif
-
-                default:
-                    throw new NotImplementedException();
-            }
-
             var samplerIndex = gltf.samplers.Count;
-            gltf.samplers.Add(new glTFTextureSampler
-            {
-                magFilter = filter,
-                minFilter = filter,
-                wrapS = wrap,
-                wrapT = wrap,
-
-            });
+            var sampler = TextureSamplerUtil.Export(texture);
+            gltf.samplers.Add(sampler);
 
             // add texture
             gltf.textures.Add(new glTFTexture
