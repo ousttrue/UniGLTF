@@ -96,6 +96,11 @@ namespace UniGLTF
             private set;
         }
 
+        protected virtual IMaterialExporter CreateMaterialExporter()
+        {
+            return new MaterialExporter();
+        }
+
         public gltfExporter(glTF gltf)
         {
             glTF = gltf;
@@ -521,13 +526,13 @@ namespace UniGLTF
                 throw new UniGLTFException("empty root GameObject required");
             }
 
-            var unityNodes = go.transform.Traverse()
+            Nodes = go.transform.Traverse()
                 .Skip(1) // exclude root object for the symmetry with the importer
                 .ToList();
 
             #region Materials and Textures
-            var unityMaterials = unityNodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
-            var unityTextures = unityMaterials.SelectMany(x => TextureIO.GetTextures(x)).Where(x => x.Texture != null).Distinct().ToList();
+            Materials = Nodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
+            var unityTextures = Materials.SelectMany(x => TextureIO.GetTextures(x)).Where(x => x.Texture != null).Distinct().ToList();
 
             for (int i = 0; i < unityTextures.Count; ++i)
             {
@@ -535,13 +540,13 @@ namespace UniGLTF
                 TextureIO.ExportTexture(gltf, bufferIndex, texture.Texture, texture.IsNormalMap);
             }
 
-            var textures = unityTextures.Select(y => y.Texture).ToList();
-            var materialExporter = new MaterialExporter();
-            gltf.materials = unityMaterials.Select(x => materialExporter.ExportMaterial(x, textures)).ToList();
+            Textures = unityTextures.Select(y => y.Texture).ToList();
+            var materialExporter = CreateMaterialExporter();
+            gltf.materials = Materials.Select(x => materialExporter.ExportMaterial(x, Textures)).ToList();
             #endregion
 
             #region Meshes
-            var unityMeshes = unityNodes
+            var unityMeshes = Nodes
                 .Select(x => new MeshWithRenderer
                 {
                     Mesh = x.GetSharedMesh(),
@@ -562,19 +567,20 @@ namespace UniGLTF
                     return true;
                 })
                 .ToList();
-            ExportMeshes(gltf, bufferIndex, unityMeshes, unityMaterials, useSparseAccessorForMorphTarget);
+            ExportMeshes(gltf, bufferIndex, unityMeshes, Materials, useSparseAccessorForMorphTarget);
+            Meshes = unityMeshes.Select(x => x.Mesh).ToList();
             #endregion
 
             #region Skins
-            var unitySkins = unityNodes
+            var unitySkins = Nodes
                 .Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null)
                 .ToList();
-            gltf.nodes = unityNodes.Select(x => ExportNode(x, unityNodes, unityMeshes.Select(y => y.Mesh).ToList(), unitySkins)).ToList();
+            gltf.nodes = Nodes.Select(x => ExportNode(x, Nodes, unityMeshes.Select(y => y.Mesh).ToList(), unitySkins)).ToList();
             gltf.scenes = new List<gltfScene>
             {
                 new gltfScene
                 {
-                    nodes = go.transform.GetChildren().Select(x => unityNodes.IndexOf(x)).ToArray(),
+                    nodes = go.transform.GetChildren().Select(x => Nodes.IndexOf(x)).ToArray(),
                 }
             };
 
@@ -586,15 +592,15 @@ namespace UniGLTF
                 var skin = new glTFSkin
                 {
                     inverseBindMatrices = accessor,
-                    joints = x.bones.Select(y => unityNodes.IndexOf(y)).ToArray(),
-                    skeleton = unityNodes.IndexOf(x.rootBone),
+                    joints = x.bones.Select(y => Nodes.IndexOf(y)).ToArray(),
+                    skeleton = Nodes.IndexOf(x.rootBone),
                 };
                 var skinIndex = gltf.skins.Count;
                 gltf.skins.Add(skin);
 
-                foreach (var z in unityNodes.Where(y => y.Has(x)))
+                foreach (var z in Nodes.Where(y => y.Has(x)))
                 {
-                    var nodeIndex = unityNodes.IndexOf(z);
+                    var nodeIndex = Nodes.IndexOf(z);
                     var node = gltf.nodes[nodeIndex];
                     node.skin = skinIndex;
                 }
@@ -608,7 +614,7 @@ namespace UniGLTF
             {
                 foreach (AnimationState state in animation)
                 {
-                    var animationWithCurve = ExportAnimation(state.clip, go.transform, unityNodes);
+                    var animationWithCurve = ExportAnimation(state.clip, go.transform, Nodes);
 
                     foreach (var kv in animationWithCurve.SamplerMap)
                     {
@@ -645,11 +651,6 @@ namespace UniGLTF
             }
             #endregion
 #endif
-
-            Meshes = unityMeshes.Select(x => x.Mesh).ToList();
-            Nodes = unityNodes.Select(x => x.transform).ToList();
-            Materials = unityMaterials;
-            Textures = textures;
         }
         #endregion
     }

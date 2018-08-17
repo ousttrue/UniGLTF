@@ -15,6 +15,8 @@ namespace UniGLTF
         {
             var material = CreateMaterial(m);
 
+            // common params
+            material.name = m.name;
             Export_Color(m, textures, material);
 
             return material;
@@ -36,7 +38,7 @@ namespace UniGLTF
             }
         }
 
-        glTFMaterial CreateMaterial(Material m)
+        protected virtual glTFMaterial CreateMaterial(Material m)
         {
             switch (m.shader.name)
             {
@@ -57,28 +59,28 @@ namespace UniGLTF
             }
         }
 
-        glTFMaterial Export_UnlitColor(Material m)
+        static glTFMaterial Export_UnlitColor(Material m)
         {
             var material = glTF_KHR_materials_unlit.CreateDefault();
             material.alphaMode = "OPAQUE";
             return material;
         }
 
-        glTFMaterial Export_UnlitTexture(Material m)
+        static glTFMaterial Export_UnlitTexture(Material m)
         {
             var material = glTF_KHR_materials_unlit.CreateDefault();
             material.alphaMode = "OPAQUE";
             return material;
         }
 
-        glTFMaterial Export_UnlitTransparent(Material m)
+        static glTFMaterial Export_UnlitTransparent(Material m)
         {
             var material = glTF_KHR_materials_unlit.CreateDefault();
             material.alphaMode = "BLEND";
             return material;
         }
 
-        glTFMaterial Export_UnlitCutout(Material m)
+        static glTFMaterial Export_UnlitCutout(Material m)
         {
             var material = glTF_KHR_materials_unlit.CreateDefault();
             material.alphaMode = "MASK";
@@ -86,11 +88,10 @@ namespace UniGLTF
             return material;
         }
 
-        glTFMaterial Export_Standard(Material m)
+        static glTFMaterial Export_Standard(Material m)
         {
             var material = new glTFMaterial
             {
-                name = m.name,
                 pbrMetallicRoughness = new glTFPbrMetallicRoughness(),
             };
 
