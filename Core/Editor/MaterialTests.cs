@@ -6,26 +6,88 @@ namespace UniGLTF
     public class MaterialTests
     {
         [Test]
-        public void ShaderImportTest()
+        public void UnlitShaderImportTest()
         {
             var shaderStore = new ShaderStore(null);
 
             {
-                var shader = shaderStore.GetShader(null);
-                Assert.AreEqual("Standard", shader.name);
-            }
-
-            {
+                // OPAQUE/Color
                 var shader = shaderStore.GetShader(new glTFMaterial
                 {
+                    alphaMode = "OPAQUE",
+                    pbrMetallicRoughness = new glTFPbrMetallicRoughness
+                    {
+                        baseColorFactor = new float[] { 1, 0, 0, 1 },
+                    },
+                    extensions = new glTFMaterial_extensions
+                    {
+                        KHR_materials_unlit = new glTF_KHR_materials_unlit { }
+                    }
                 });
-                Assert.AreEqual("Standard", shader.name);
+                Assert.AreEqual("Unlit/Color", shader.name);
             }
 
             {
+                // OPAQUE/Texture
+                var shader = shaderStore.GetShader(new glTFMaterial
+                {
+                    alphaMode = "OPAQUE",
+                    pbrMetallicRoughness = new glTFPbrMetallicRoughness
+                    {
+                        baseColorTexture = new glTFTextureInfo(),
+                    },
+                    extensions = new glTFMaterial_extensions
+                    {
+                        KHR_materials_unlit = new glTF_KHR_materials_unlit { }
+                    }
+                });
+                Assert.AreEqual("Unlit/Texture", shader.name);
+            }
+
+            {
+                // OPAQUE/Color/Texture
+                var shader = shaderStore.GetShader(new glTFMaterial
+                {
+                    alphaMode = "OPAQUE",
+                    pbrMetallicRoughness = new glTFPbrMetallicRoughness
+                    {
+                        baseColorFactor = new float[] { 1, 0, 0, 1 },
+                        baseColorTexture = new glTFTextureInfo(),
+                    },
+                    extensions = new glTFMaterial_extensions
+                    {
+                        KHR_materials_unlit = new glTF_KHR_materials_unlit { }
+                    }
+                });
+                Assert.AreEqual("Unlit/Texture", shader.name);
+            }
+
+            {
+                // BLEND/Color
                 var shader = shaderStore.GetShader(new glTFMaterial
                 {
                     alphaMode = "BLEND",
+                    pbrMetallicRoughness = new glTFPbrMetallicRoughness
+                    {
+                        baseColorFactor = new float[] { 1, 0, 0, 1 },
+                    },
+                    extensions = new glTFMaterial_extensions
+                    {
+                        KHR_materials_unlit = new glTF_KHR_materials_unlit { }
+                    }
+                });
+                Assert.AreEqual("Unlit/Color", shader.name);
+            }
+
+            {
+                // BLEND/Texture
+                var shader = shaderStore.GetShader(new glTFMaterial
+                {
+                    alphaMode = "BLEND",
+                    pbrMetallicRoughness = new glTFPbrMetallicRoughness
+                    {
+                        baseColorTexture = new glTFTextureInfo(),
+                    },
                     extensions = new glTFMaterial_extensions
                     {
                         KHR_materials_unlit = new glTF_KHR_materials_unlit { }
@@ -35,9 +97,32 @@ namespace UniGLTF
             }
 
             {
+                // BLEND/Color/Texture
+                var shader = shaderStore.GetShader(new glTFMaterial
+                {
+                    alphaMode = "BLEND",
+                    pbrMetallicRoughness = new glTFPbrMetallicRoughness
+                    {
+                        baseColorFactor = new float[] { 1, 0, 0, 1 },
+                        baseColorTexture = new glTFTextureInfo(),
+                    },
+                    extensions = new glTFMaterial_extensions
+                    {
+                        KHR_materials_unlit = new glTF_KHR_materials_unlit { }
+                    }
+                });
+                Assert.AreEqual("Unlit/Transparent", shader.name);
+            }
+
+            {
+                // MASK/Texture
                 var shader = shaderStore.GetShader(new glTFMaterial
                 {
                     alphaMode = "MASK",
+                    pbrMetallicRoughness = new glTFPbrMetallicRoughness
+                    {
+                        baseColorTexture = new glTFTextureInfo(),
+                    },
                     extensions = new glTFMaterial_extensions
                     {
                         KHR_materials_unlit = new glTF_KHR_materials_unlit { }
@@ -47,6 +132,25 @@ namespace UniGLTF
             }
 
             {
+                // MASK/Color/Texture
+                var shader = shaderStore.GetShader(new glTFMaterial
+                {
+                    alphaMode = "MASK",
+                    pbrMetallicRoughness = new glTFPbrMetallicRoughness
+                    {
+                        baseColorFactor = new float[] { 1, 0, 0, 1 },
+                        baseColorTexture = new glTFTextureInfo(),
+                    },
+                    extensions = new glTFMaterial_extensions
+                    {
+                        KHR_materials_unlit = new glTF_KHR_materials_unlit { }
+                    }
+                });
+                Assert.AreEqual("Unlit/Transparent Cutout", shader.name);
+            }
+
+            {
+                // default
                 var shader = shaderStore.GetShader(new glTFMaterial
                 {
                     extensions = new glTFMaterial_extensions
@@ -54,7 +158,7 @@ namespace UniGLTF
                         KHR_materials_unlit = new glTF_KHR_materials_unlit { }
                     }
                 });
-                Assert.AreEqual("Unlit/Texture", shader.name);
+                Assert.AreEqual("Unlit/Color", shader.name);
             }
         }
 

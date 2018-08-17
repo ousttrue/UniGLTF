@@ -34,13 +34,23 @@ namespace UniGLTF
             }
         }
 
-        Shader m_unlit;
-        Shader Unlit
+        Shader m_unlitTexture;
+        Shader UnlitTexture
         {
             get
             {
-                if (m_unlit == null) m_unlit = Shader.Find("Unlit/Texture");
-                return m_unlit;
+                if (m_unlitTexture == null) m_unlitTexture = Shader.Find("Unlit/Texture");
+                return m_unlitTexture;
+            }
+        }
+
+        Shader m_unlitColor;
+        Shader UnlitColor
+        {
+            get
+            {
+                if (m_unlitColor == null) m_unlitColor = Shader.Find("Unlit/Color");
+                return m_unlitColor;
             }
         }
 
@@ -76,27 +86,107 @@ namespace UniGLTF
             m_defaultShaderName = defaultShaderName;
         }
 
+        static bool IsWhite(float[] color)
+        {
+            if (color == null) return false;
+            if(color.Length!=4)return false;
+            if(color[0]!=1
+                || color[1]!=1
+                || color[2]!=1
+                || color[3] != 1)
+            {
+                return false;
+            }
+            return true;
+        }
+
         public Shader GetShader(glTFMaterial material)
         {
-            if (material != null)
+            if (material == null)
             {
-                if (material.extensions != null && material.extensions.KHR_materials_unlit != null)
+                return Default;
+            }
+
+            if (material.extensions != null && material.extensions.KHR_materials_unlit != null)
+            {
+                var isWhite = material.pbrMetallicRoughness != null && IsWhite(material.pbrMetallicRoughness.baseColorFactor);
+                var hasTexture = material.pbrMetallicRoughness != null && material.pbrMetallicRoughness.baseColorTexture != null;
+
+                // is unlit
+                switch (material.alphaMode)
                 {
-                    // is unlit
-                    switch (material.alphaMode)
-                    {
-                        case "BLEND": return UnlitTransparent;
-                        case "MASK": return UnlitCutout;
-                        default: return Unlit; // OPAQUE
-                    }
+                    case "BLEND":
+                        {
+                            if (hasTexture)
+                            {
+                                if (isWhite)
+                                {
+                                    return UnlitTransparent;
+                                }
+                                else
+                                {
+                                    Debug.LogWarningFormat("{0}: shader has no color property", UnlitTexture.name);
+                                    return UnlitTransparent;
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogWarningFormat("{0}: shader is opaque", UnlitColor.name);
+                                return UnlitColor;
+                            }
+                        }
+
+                    case "MASK":
+                        {
+                            if (hasTexture)
+                            {
+                                if (isWhite)
+                                {
+                                    return UnlitCutout;
+                                }
+                                else
+                                {
+                                    Debug.LogWarningFormat("{0}: shader has no color property", UnlitCutout.name);
+                                    return UnlitCutout;
+                                }
+                            }
+                            else
+                            {
+                                Debug.LogErrorFormat("{0}: alphaMode='MASK' but no texture", UnlitTexture.name);
+                                return UnlitCutout;
+                            }
+                        }
+
+                    default:
+                        {
+
+                            if (hasTexture)
+                            {
+                                if (isWhite)
+                                {
+                                    return UnlitTexture;
+                                }
+                                else
+                                {
+                                    Debug.LogWarningFormat("{0}: shader has no color property", UnlitTexture.name);
+                                    return UnlitTexture;
+                                }
+                            }
+                            else
+                            {
+                                return UnlitColor;
+                            }
+                        }
                 }
             }
 
+            // custom shader for vertex color
             if (m_context != null && m_context.MaterialHasVertexColor(material))
             {
                 return VColor;
             }
 
+            // standard
             return Default;
         }
     }
