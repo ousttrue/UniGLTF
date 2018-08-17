@@ -32,11 +32,13 @@ namespace UniGLTF.ShaderPropExporter
     {
         const string TARGET_FOLDER = "UniGLTF/Core/Scripts";
 
+#pragma warning disable 414
         [PreExportShaders]
         static SupportedShader[] SupportedShaders = new SupportedShader[]
         {
             new SupportedShader(TARGET_FOLDER, "Standard","_BumpMap"),
         };
+#pragma warning restore 414
 
 #if UNITY_EDITOR
         [MenuItem(UniGLTFVersion.UNIGLTF_VERSION + "/PreExport ShaderProps")]

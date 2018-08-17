@@ -28,7 +28,7 @@ namespace UniGLTF
             {
                 return new byte[] { };
             }
-            else if(bytes.Offset==0 && bytes.Count == bytes.Array.Length)
+            else if (bytes.Offset == 0 && bytes.Count == bytes.Array.Length)
             {
                 return bytes.Array;
             }
@@ -46,7 +46,7 @@ namespace UniGLTF
             if (m_metallicRoughnessOcclusion != null) yield return m_metallicRoughnessOcclusion;
         }
 
-        public TextureItem(glTF gltf, int index, UnityPath textureBase=default(UnityPath))
+        public TextureItem(glTF gltf, int index, UnityPath textureBase = default(UnityPath))
         {
             m_textureIndex = index;
 
@@ -56,7 +56,7 @@ namespace UniGLTF
                 && !image.uri.StartsWith("data:")
                 && textureBase.IsUnderAssetsFolder)
             {
-                m_assetPath= textureBase.Child(image.uri);
+                m_assetPath = textureBase.Child(image.uri);
                 m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
             }
 #endif
@@ -96,10 +96,11 @@ namespace UniGLTF
                 m_imageBytes = ToArray(byteSegment);
                 m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", m_textureIndex);
             }
-            else 
+            else
             {
                 m_imageBytes = ToArray(storage.Get(image.uri));
-                if (image.uri.StartsWith("data:")) {
+                if (image.uri.StartsWith("data:"))
+                {
                     m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#Base64Embeded", m_textureIndex);
                 }
                 else
@@ -137,78 +138,7 @@ namespace UniGLTF
 
         public void SetSampler(glTF gltf)
         {
-            SetSampler(Texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
-        }
-
-        static void SetSampler(Texture2D texture, glTFTextureSampler sampler)
-        {
-            if (texture == null)
-            {
-                return;
-            }
-
-            switch (sampler.wrapS)
-            {
-#if UNITY_2017_OR_NEWER
-                case glWrap.CLAMP_TO_EDGE:
-                    texture.wrapModeU = TextureWrapMode.Clamp;
-                    break;
-
-                case glWrap.REPEAT:
-                    texture.wrapModeU = TextureWrapMode.Repeat;
-                    break;
-
-                case glWrap.MIRRORED_REPEAT:
-                    texture.wrapModeU = TextureWrapMode.Mirror;
-                    break;
-#else
-                case glWrap.CLAMP_TO_EDGE:
-                case glWrap.MIRRORED_REPEAT:
-                    texture.wrapMode = TextureWrapMode.Clamp;
-                    break;
-
-                case glWrap.REPEAT:
-                    texture.wrapMode = TextureWrapMode.Repeat;
-                    break;
-#endif
-
-                default:
-                    throw new NotImplementedException();
-            }
-
-#if UNITY_2017_OR_NEWER
-            switch (sampler.wrapT)
-            {
-                case glWrap.CLAMP_TO_EDGE:
-                    texture.wrapModeV = TextureWrapMode.Clamp;
-                    break;
-
-                case glWrap.REPEAT:
-                    texture.wrapModeV = TextureWrapMode.Repeat;
-                    break;
-
-                case glWrap.MIRRORED_REPEAT:
-                    texture.wrapModeV = TextureWrapMode.Mirror;
-                    break;
-
-                default:
-                    throw new NotImplementedException();
-            }
-#endif
-
-            switch (sampler.magFilter)
-            {
-                case glFilter.NEAREST:
-                    texture.filterMode = FilterMode.Point;
-                    break;
-
-                case glFilter.LINEAR:
-                    texture.filterMode = FilterMode.Bilinear;
-                    break;
-
-                default:
-                    throw new NotImplementedException();
-            }
+            TextureSamplerUtil.SetSampler(Texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
         }
 
         Texture2D m_metallicRoughnessOcclusion;
@@ -294,7 +224,7 @@ namespace UniGLTF
         {
             var srcAsTexture2D = src as Texture2D;
             if (srcAsTexture2D != null)
-            {               
+            {
                 Debug.LogFormat("{0} format {1}", srcAsTexture2D.name, srcAsTexture2D.format);
                 return srcAsTexture2D.format == TextureFormat.DXT5;
             }
