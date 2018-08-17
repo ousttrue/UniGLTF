@@ -13,7 +13,7 @@ namespace UniGLTF
         public enum TextureWrapType
         {
             All,
-#if UNITY_2017_OR_NEWER
+#if UNITY_2017_1_OR_NEWER
             U,
             V,
             W,
@@ -27,71 +27,79 @@ namespace UniGLTF
 
         public static IEnumerable<KeyValuePair<TextureWrapType, TextureWrapMode>> GetUnityWrapMode(glTFTextureSampler sampler)
         {
-#if UNITY_2017_OR_NEWER
-
-            case glWrap.CLAMP_TO_EDGE:
-                texture.wrapModeU = TextureWrapMode.Clamp;
-                break;
-
-            case glWrap.REPEAT:
-                texture.wrapModeU = TextureWrapMode.Repeat;
-                break;
-
-            case glWrap.MIRRORED_REPEAT:
-                texture.wrapModeU = TextureWrapMode.Mirror;
-                break;
-
-            switch (sampler.wrapS)
+#if UNITY_2017_1_OR_NEWER
+            if (sampler.wrapS == sampler.wrapT)
             {
-#if UNITY_2017_OR_NEWER
-                case glWrap.CLAMP_TO_EDGE:
-                    texture.wrapModeU = TextureWrapMode.Clamp;
-                    break;
+                switch (sampler.wrapS)
+                {
+                    case glWrap.NONE: // default
+                        yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Repeat);
+                        break;
 
-                case glWrap.REPEAT:
-                    texture.wrapModeU = TextureWrapMode.Repeat;
-                    break;
+                    case glWrap.CLAMP_TO_EDGE:
+                        yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Clamp);
+                        break;
 
-                case glWrap.MIRRORED_REPEAT:
-                    texture.wrapModeU = TextureWrapMode.Mirror;
-                    break;
-#else
-                case glWrap.CLAMP_TO_EDGE:
-                case glWrap.MIRRORED_REPEAT:
-                    texture.wrapMode = TextureWrapMode.Clamp;
-                    break;
+                    case glWrap.REPEAT:
+                        yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Repeat);
+                        break;
 
-                case glWrap.REPEAT:
-                    texture.wrapMode = TextureWrapMode.Repeat;
-                    break;
-#endif
+                    case glWrap.MIRRORED_REPEAT:
+                        yield return TypeWithMode(TextureWrapType.All, TextureWrapMode.Mirror);
+                        break;
 
-                default:
-                    throw new NotImplementedException();
+                    default:
+                        throw new NotImplementedException();
+                }
             }
-
-#if UNITY_2017_OR_NEWER
-            switch (sampler.wrapT)
+            else
             {
-                case glWrap.CLAMP_TO_EDGE:
-                    texture.wrapModeV = TextureWrapMode.Clamp;
-                    break;
+                switch (sampler.wrapS)
+                {
+                    case glWrap.NONE: // default
+                        yield return TypeWithMode(TextureWrapType.U, TextureWrapMode.Repeat);
+                        break;
 
-                case glWrap.REPEAT:
-                    texture.wrapModeV = TextureWrapMode.Repeat;
-                    break;
+                    case glWrap.CLAMP_TO_EDGE:
+                        yield return TypeWithMode(TextureWrapType.U, TextureWrapMode.Clamp);
+                        break;
 
-                case glWrap.MIRRORED_REPEAT:
-                    texture.wrapModeV = TextureWrapMode.Mirror;
-                    break;
+                    case glWrap.REPEAT:
+                        yield return TypeWithMode(TextureWrapType.U, TextureWrapMode.Repeat);
+                        break;
 
-                default:
-                    throw new NotImplementedException();
-            }
-#endif
+                    case glWrap.MIRRORED_REPEAT:
+                        yield return TypeWithMode(TextureWrapType.U, TextureWrapMode.Mirror);
+                        break;
 
+                    default:
+                        throw new NotImplementedException();
+                }
+                switch (sampler.wrapT)
+                {
+                    case glWrap.NONE: // default
+                        yield return TypeWithMode(TextureWrapType.V, TextureWrapMode.Repeat);
+                        break;
+
+                    case glWrap.CLAMP_TO_EDGE:
+                        yield return TypeWithMode(TextureWrapType.V, TextureWrapMode.Clamp);
+                        break;
+
+                    case glWrap.REPEAT:
+                        yield return TypeWithMode(TextureWrapType.V, TextureWrapMode.Repeat);
+                        break;
+
+                    case glWrap.MIRRORED_REPEAT:
+                        yield return TypeWithMode(TextureWrapType.V, TextureWrapMode.Mirror);
+                        break;
+
+                    default:
+                        throw new NotImplementedException();
+                }
 #else
-            // Unity2017より前は、wrapSとwrapTの区別が無くてwrapしかない
+            // Unity2017.1より前
+            // * wrapSとwrapTの区別が無くてwrapしかない
+            // * Mirrorが無い
 
             switch (sampler.wrapS)
             {
@@ -145,7 +153,7 @@ namespace UniGLTF
                         texture.wrapMode = kv.Value;
                         break;
 
-#if UNITY_2017_OR_NEWER
+#if UNITY_2017_1_OR_NEWER
                     case TextureWrapType.U:
                         texture.wrapModeU = kv.Value;
                         break;

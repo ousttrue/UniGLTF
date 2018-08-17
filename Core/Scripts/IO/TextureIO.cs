@@ -118,7 +118,7 @@ namespace UniGLTF
                     wrap = glWrap.REPEAT;
                     break;
 
-#if UNITY_2017_OR_NEWER
+#if UNITY_2017_1_OR_NEWER
                     case TextureWrapMode.Mirror:
                         wrap = glWrap.MIRRORED_REPEAT;
                         break;
