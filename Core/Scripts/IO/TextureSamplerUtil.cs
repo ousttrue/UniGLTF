@@ -182,7 +182,7 @@ namespace UniGLTF
         }
 
         #region Export
-        public static glFilter ExportFilter(Texture texture)
+        public static glFilter ExportFilterMode(Texture texture)
         {
             switch (texture.filterMode)
             {
@@ -241,7 +241,7 @@ namespace UniGLTF
 
         public static glTFTextureSampler Export(Texture texture)
         {
-            var filter = ExportFilter(texture);
+            var filter = ExportFilterMode(texture);
             var wrapS = ExportWrapMode(GetWrapS(texture));
             var wrapT = ExportWrapMode(GetWrapT(texture));
             return new glTFTextureSampler

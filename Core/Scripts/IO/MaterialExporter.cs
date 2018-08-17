@@ -13,12 +13,15 @@ namespace UniGLTF
     {
         public virtual glTFMaterial ExportMaterial(Material m, List<Texture> textures)
         {
-            var material = new glTFMaterial
-            {
-                name = m.name,
-                pbrMetallicRoughness = new glTFPbrMetallicRoughness(),
-            };
+            var material = CreateMaterial(m);
 
+            Export_Color(m, textures, material);
+
+            return material;
+        }
+
+        static void Export_Color(Material m, List<Texture> textures, glTFMaterial material)
+        {
             if (m.HasProperty("_Color"))
             {
                 material.pbrMetallicRoughness.baseColorFactor = m.color.ToArray();
@@ -30,6 +33,81 @@ namespace UniGLTF
                 {
                     index = textures.IndexOf(m.mainTexture),
                 };
+            }
+        }
+
+        glTFMaterial CreateMaterial(Material m)
+        {
+            switch (m.shader.name)
+            {
+                case "Unlit/Color":
+                    return Export_UnlitColor(m);
+
+                case "Unlit/Texture":
+                    return Export_UnlitTexture(m);
+
+                case "Unlit/Transparent":
+                    return Export_UnlitTransparent(m);
+
+                case "Unlit/Transparent Cutout":
+                    return Export_UnlitCutout(m);
+
+                default:
+                    return Export_Standard(m);
+            }
+        }
+
+        glTFMaterial Export_UnlitColor(Material m)
+        {
+            var material = glTF_KHR_materials_unlit.CreateDefault();
+            material.alphaMode = "OPAQUE";
+            return material;
+        }
+
+        glTFMaterial Export_UnlitTexture(Material m)
+        {
+            var material = glTF_KHR_materials_unlit.CreateDefault();
+            material.alphaMode = "OPAQUE";
+            return material;
+        }
+
+        glTFMaterial Export_UnlitTransparent(Material m)
+        {
+            var material = glTF_KHR_materials_unlit.CreateDefault();
+            material.alphaMode = "BLEND";
+            return material;
+        }
+
+        glTFMaterial Export_UnlitCutout(Material m)
+        {
+            var material = glTF_KHR_materials_unlit.CreateDefault();
+            material.alphaMode = "MASK";
+            material.alphaCutoff = m.GetFloat("_Cutoff");
+            return material;
+        }
+
+        glTFMaterial Export_Standard(Material m)
+        {
+            var material = new glTFMaterial
+            {
+                name = m.name,
+                pbrMetallicRoughness = new glTFPbrMetallicRoughness(),
+            };
+
+            switch(m.GetTag("RenderType", true))
+            {
+                case "Transparent":
+                    material.alphaMode = "BLEND";
+                    break;
+
+                case "TransparentCutout":
+                    material.alphaMode = "MASK";
+                    material.alphaCutoff = m.GetFloat("_Cutoff");
+                    break;
+
+                default:
+                    material.alphaMode = "OPAQUE";
+                    break;
             }
 
             return material;

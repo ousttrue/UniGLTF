@@ -10,6 +10,23 @@ namespace UniGLTF
         {
             //throw new System.NotImplementedException();
         }
+
+        public static glTFMaterial CreateDefault()
+        {
+            return new glTFMaterial
+            {
+                pbrMetallicRoughness = new glTFPbrMetallicRoughness
+                {
+                    baseColorFactor = new float[] { 1.0f, 1.0f, 1.0f, 1.0f },
+                    roughnessFactor = 0.9f,
+                    metallicFactor = 0.0f,
+                },
+                extensions = new glTFMaterial_extensions
+                {
+                    KHR_materials_unlit = new glTF_KHR_materials_unlit(),
+                },
+            };
+        }
     }
 
     [Serializable]
