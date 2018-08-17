@@ -126,13 +126,9 @@ namespace UniGLTF
             Copy.transform.ReverseZ();
         }
 
-        public virtual void Export()
+        public void Export()
         {
-            var exported = FromGameObject(glTF, Copy, UseSparseAccessorForBlendShape);
-            Meshes = exported.Meshes.Select(x => x.Mesh).ToList();
-            Nodes = exported.Nodes;
-            Materials = exported.Materials;
-            Textures = exported.Textures;
+            FromGameObject(glTF, Copy, UseSparseAccessorForBlendShape);
         }
 
         public void Dispose()
@@ -289,14 +285,6 @@ namespace UniGLTF
             return animation;
         }
 #endif
-
-        public struct Exported
-        {
-            public List<MeshWithRenderer> Meshes;
-            public List<Transform> Nodes;
-            public List<Material> Materials;
-            public List<Texture> Textures;
-        }
 
         static glTFMesh ExportPrimitives(glTF gltf, int bufferIndex,
             string rendererName,
@@ -523,7 +511,7 @@ namespace UniGLTF
             }
         }
 
-        public static Exported FromGameObject(glTF gltf, GameObject go, bool useSparseAccessorForMorphTarget = false)
+        public void FromGameObject(glTF gltf, GameObject go, bool useSparseAccessorForMorphTarget = false)
         {
             var bytesBuffer = new ArrayByteBuffer(new byte[50 * 1024 * 1024]);
             var bufferIndex = gltf.AddBuffer(bytesBuffer);
@@ -658,13 +646,10 @@ namespace UniGLTF
             #endregion
 #endif
 
-            return new Exported
-            {
-                Meshes = unityMeshes,
-                Nodes = unityNodes.Select(x => x.transform).ToList(),
-                Materials = unityMaterials,
-                Textures = textures,
-            };
+            Meshes = unityMeshes.Select(x => x.Mesh).ToList();
+            Nodes = unityNodes.Select(x => x.transform).ToList();
+            Materials = unityMaterials;
+            Textures = textures;
         }
         #endregion
     }
