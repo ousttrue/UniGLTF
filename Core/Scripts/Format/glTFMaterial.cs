@@ -112,7 +112,7 @@ namespace UniGLTF
 
         public bool doubleSided;
 
-        // empty schemas
+        [JsonSchema(SkipSchemaComparison = true)]
         public glTFMaterial_extensions extensions;
         public object extras;
 
