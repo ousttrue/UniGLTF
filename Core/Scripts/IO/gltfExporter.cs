@@ -521,62 +521,68 @@ namespace UniGLTF
             var bytesBuffer = new ArrayByteBuffer(new byte[50 * 1024 * 1024]);
             var bufferIndex = gltf.AddBuffer(bytesBuffer);
 
+            GameObject tmpParent = null;
             if (go.transform.childCount == 0)
             {
-                throw new UniGLTFException("empty root GameObject required");
+                tmpParent = new GameObject("tmpParent");
+                go.transform.SetParent(tmpParent.transform, true);
+                go = tmpParent;
             }
 
-            Nodes = go.transform.Traverse()
-                .Skip(1) // exclude root object for the symmetry with the importer
-                .ToList();
-
-            #region Materials and Textures
-            Materials = Nodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
-            var unityTextures = Materials.SelectMany(x => TextureIO.GetTextures(x)).Where(x => x.Texture != null).Distinct().ToList();
-
-            for (int i = 0; i < unityTextures.Count; ++i)
+            try
             {
-                var texture = unityTextures[i];
-                TextureIO.ExportTexture(gltf, bufferIndex, texture.Texture, texture.IsNormalMap);
-            }
 
-            Textures = unityTextures.Select(y => y.Texture).ToList();
-            var materialExporter = CreateMaterialExporter();
-            gltf.materials = Materials.Select(x => materialExporter.ExportMaterial(x, Textures)).ToList();
-            #endregion
+                Nodes = go.transform.Traverse()
+                    .Skip(1) // exclude root object for the symmetry with the importer
+                    .ToList();
 
-            #region Meshes
-            var unityMeshes = Nodes
-                .Select(x => new MeshWithRenderer
+                #region Materials and Textures
+                Materials = Nodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
+                var unityTextures = Materials.SelectMany(x => TextureIO.GetTextures(x)).Where(x => x.Texture != null).Distinct().ToList();
+
+                for (int i = 0; i < unityTextures.Count; ++i)
                 {
-                    Mesh = x.GetSharedMesh(),
-                    Rendererer = x.GetComponent<Renderer>(),
-                })
-                .Where(x =>
-                {
-                    if (x.Mesh == null)
-                    {
-                        return false;
-                    }
-                    if (x.Rendererer.sharedMaterials == null
-                    || x.Rendererer.sharedMaterials.Length == 0)
-                    {
-                        return false;
-                    }
+                    var texture = unityTextures[i];
+                    TextureIO.ExportTexture(gltf, bufferIndex, texture.Texture, texture.IsNormalMap);
+                }
 
-                    return true;
-                })
-                .ToList();
-            ExportMeshes(gltf, bufferIndex, unityMeshes, Materials, useSparseAccessorForMorphTarget);
-            Meshes = unityMeshes.Select(x => x.Mesh).ToList();
-            #endregion
+                Textures = unityTextures.Select(y => y.Texture).ToList();
+                var materialExporter = CreateMaterialExporter();
+                gltf.materials = Materials.Select(x => materialExporter.ExportMaterial(x, Textures)).ToList();
+                #endregion
 
-            #region Skins
-            var unitySkins = Nodes
-                .Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null)
-                .ToList();
-            gltf.nodes = Nodes.Select(x => ExportNode(x, Nodes, unityMeshes.Select(y => y.Mesh).ToList(), unitySkins)).ToList();
-            gltf.scenes = new List<gltfScene>
+                #region Meshes
+                var unityMeshes = Nodes
+                    .Select(x => new MeshWithRenderer
+                    {
+                        Mesh = x.GetSharedMesh(),
+                        Rendererer = x.GetComponent<Renderer>(),
+                    })
+                    .Where(x =>
+                    {
+                        if (x.Mesh == null)
+                        {
+                            return false;
+                        }
+                        if (x.Rendererer.sharedMaterials == null
+                        || x.Rendererer.sharedMaterials.Length == 0)
+                        {
+                            return false;
+                        }
+
+                        return true;
+                    })
+                    .ToList();
+                ExportMeshes(gltf, bufferIndex, unityMeshes, Materials, useSparseAccessorForMorphTarget);
+                Meshes = unityMeshes.Select(x => x.Mesh).ToList();
+                #endregion
+
+                #region Skins
+                var unitySkins = Nodes
+                    .Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null)
+                    .ToList();
+                gltf.nodes = Nodes.Select(x => ExportNode(x, Nodes, unityMeshes.Select(y => y.Mesh).ToList(), unitySkins)).ToList();
+                gltf.scenes = new List<gltfScene>
             {
                 new gltfScene
                 {
@@ -584,73 +590,89 @@ namespace UniGLTF
                 }
             };
 
-            foreach (var x in unitySkins)
-            {
-                var matrices = x.sharedMesh.bindposes.Select(y => y.ReverseZ()).ToArray();
-                var accessor = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, matrices, glBufferTarget.NONE);
-
-                var skin = new glTFSkin
+                foreach (var x in unitySkins)
                 {
-                    inverseBindMatrices = accessor,
-                    joints = x.bones.Select(y => Nodes.IndexOf(y)).ToArray(),
-                    skeleton = Nodes.IndexOf(x.rootBone),
-                };
-                var skinIndex = gltf.skins.Count;
-                gltf.skins.Add(skin);
+                    var matrices = x.sharedMesh.bindposes.Select(y => y.ReverseZ()).ToArray();
+                    var accessor = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, matrices, glBufferTarget.NONE);
 
-                foreach (var z in Nodes.Where(y => y.Has(x)))
-                {
-                    var nodeIndex = Nodes.IndexOf(z);
-                    var node = gltf.nodes[nodeIndex];
-                    node.skin = skinIndex;
+                    var skin = new glTFSkin
+                    {
+                        inverseBindMatrices = accessor,
+                        joints = x.bones.Select(y => Nodes.IndexOf(y)).ToArray(),
+                        skeleton = Nodes.IndexOf(x.rootBone),
+                    };
+                    var skinIndex = gltf.skins.Count;
+                    gltf.skins.Add(skin);
+
+                    foreach (var z in Nodes.Where(y => y.Has(x)))
+                    {
+                        var nodeIndex = Nodes.IndexOf(z);
+                        var node = gltf.nodes[nodeIndex];
+                        node.skin = skinIndex;
+                    }
                 }
-            }
-            #endregion
+                #endregion
 
 #if UNITY_EDITOR
-            #region Animations
-            var animation = go.GetComponent<Animation>();
-            if (animation != null)
-            {
-                foreach (AnimationState state in animation)
+                #region Animations
+                var animation = go.GetComponent<Animation>();
+                if (animation != null)
                 {
-                    var animationWithCurve = ExportAnimation(state.clip, go.transform, Nodes);
-
-                    foreach (var kv in animationWithCurve.SamplerMap)
+                    foreach (AnimationState state in animation)
                     {
-                        var sampler = animationWithCurve.Animation.samplers[kv.Key];
+                        var animationWithCurve = ExportAnimation(state.clip, go.transform, Nodes);
 
-                        var inputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.Input);
-                        sampler.input = inputAccessorIndex;
-
-                        var outputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.Output);
-                        sampler.output = outputAccessorIndex;
-
-                        // modify accessors
-                        var outputAccessor = gltf.accessors[outputAccessorIndex];
-                        var channel = animationWithCurve.Animation.channels.First(x => x.sampler == kv.Key);
-                        switch (glTFAnimationTarget.GetElementCount(channel.target.path))
+                        foreach (var kv in animationWithCurve.SamplerMap)
                         {
-                            case 3:
-                                outputAccessor.type = "VEC3";
-                                outputAccessor.count /= 3;
-                                break;
+                            var sampler = animationWithCurve.Animation.samplers[kv.Key];
 
-                            case 4:
-                                outputAccessor.type = "VEC4";
-                                outputAccessor.count /= 4;
-                                break;
+                            var inputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.Input);
+                            sampler.input = inputAccessorIndex;
 
-                            default:
-                                throw new NotImplementedException();
+                            var outputAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, kv.Value.Output);
+                            sampler.output = outputAccessorIndex;
+
+                            // modify accessors
+                            var outputAccessor = gltf.accessors[outputAccessorIndex];
+                            var channel = animationWithCurve.Animation.channels.First(x => x.sampler == kv.Key);
+                            switch (glTFAnimationTarget.GetElementCount(channel.target.path))
+                            {
+                                case 3:
+                                    outputAccessor.type = "VEC3";
+                                    outputAccessor.count /= 3;
+                                    break;
+
+                                case 4:
+                                    outputAccessor.type = "VEC4";
+                                    outputAccessor.count /= 4;
+                                    break;
+
+                                default:
+                                    throw new NotImplementedException();
+                            }
                         }
-                    }
 
-                    gltf.animations.Add(animationWithCurve.Animation);
+                        gltf.animations.Add(animationWithCurve.Animation);
+                    }
+                }
+                #endregion
+#endif
+            }
+            finally
+            {
+                if (tmpParent != null)
+                {
+                    tmpParent.transform.GetChild(0).SetParent(null);
+                    if (Application.isPlaying)
+                    {
+                        GameObject.Destroy(tmpParent);
+                    }
+                    else
+                    {
+                        GameObject.DestroyImmediate(tmpParent);
+                    }
                 }
             }
-            #endregion
-#endif
         }
         #endregion
     }
