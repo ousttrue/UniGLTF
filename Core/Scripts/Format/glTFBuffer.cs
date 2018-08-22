@@ -97,10 +97,12 @@ namespace UniGLTF
             {
                 f.Key("target"); f.Value((int)target);
             }
+            /* When this is not defined, data is tightly packed. When two or more accessors use the same bufferView, this field must be defined.
             if (byteStride >= 4)
             {
                 f.KeyValue(() => byteStride);
             }
+            */
         }
     }
 
