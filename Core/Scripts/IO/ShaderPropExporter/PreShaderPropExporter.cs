@@ -118,7 +118,7 @@ namespace UniGLTF.ShaderPropExporter
 
 #if UNITY_EDITOR
             // fallback
-            Debug.LogWarningFormat("Unsupported shader: {0}", shaderName);
+            Debug.LogWarningFormat("{0} is not predefined shader. Use ShaderUtil", shaderName);
             var shader = Shader.Find(shaderName);
             return ShaderProps.FromShader(shader);
 #else
