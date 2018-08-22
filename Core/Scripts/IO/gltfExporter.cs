@@ -362,6 +362,20 @@ namespace UniGLTF
             return gltfMesh;
         }
 
+        static bool UseSparse(
+            bool usePosition, Vector3 position,
+            bool useNormal, Vector3 normal,
+            bool useTangent, Vector3 tangent
+            )
+        {
+            var useSparse =
+            (usePosition &&  position != Vector3.zero)
+            || (useNormal && normal != Vector3.zero)
+            //|| (useTangent && tangent != Vector3.zero)
+            ;
+            return useSparse;
+        }
+
         static gltfMorphTarget ExportMorphTarget(glTF gltf, int bufferIndex,
             Mesh mesh, int j,
             bool useSparseAccessorForMorphTarget)
@@ -369,14 +383,16 @@ namespace UniGLTF
             var blendShapeVertices = mesh.vertices;
             var usePosition = blendShapeVertices != null && blendShapeVertices.Length > 0;
 
-            var blendShpaeNormals = mesh.normals;
-            var useNormal = usePosition && blendShpaeNormals != null && blendShpaeNormals.Length == blendShapeVertices.Length;
+            var blendShapeNormals = mesh.normals;
+            var useNormal = usePosition && blendShapeNormals != null && blendShapeNormals.Length == blendShapeVertices.Length;
 
             var blendShapeTangents = mesh.tangents.Select(y => (Vector3)y).ToArray();
             var useTangent = usePosition && blendShapeTangents != null && blendShapeTangents.Length == blendShapeVertices.Length;
 
             var frameCount = mesh.GetBlendShapeFrameCount(j);
-            mesh.GetBlendShapeFrameVertices(j, frameCount - 1, blendShapeVertices, blendShpaeNormals, null);
+            mesh.GetBlendShapeFrameVertices(j, frameCount - 1, blendShapeVertices, blendShapeNormals, null);
+            //useNormal = blendShapeNormals.Any(x => x != Vector3.zero);
+            //useTangent = blendShapeTangents.Any(x => x != Vector3.zero);
 
             var blendShapePositionAccessorIndex = -1;
             var blendShapeNormalAccessorIndex = -1;
@@ -385,14 +401,10 @@ namespace UniGLTF
             {
                 var accessorCount = blendShapeVertices.Length;
                 var sparseIndices = Enumerable.Range(0, blendShapeVertices.Length)
-                    .Where(x =>
-                    {
-                        return
-                        (usePosition && blendShapeVertices[x] != Vector3.zero)
-                        || (useNormal && blendShpaeNormals[x] != Vector3.zero)
-                        || (useTangent && blendShapeTangents[x] != Vector3.zero)
-                        ;
-                    })
+                    .Where(x => UseSparse(
+                        usePosition,  blendShapeVertices[x], 
+                        useNormal, blendShapeNormals[x], 
+                        useTangent, blendShapeTangents[x]))
                     .ToArray()
                     ;
 
@@ -401,6 +413,10 @@ namespace UniGLTF
                     usePosition = false;
                     useNormal = false;
                     useTangent = false;
+                }
+                else
+                {
+                    Debug.LogFormat("Sparse {0}/{1}", sparseIndices.Length, mesh.vertexCount);
                 }
                 /*
                 var vertexSize = 12;
@@ -427,9 +443,9 @@ namespace UniGLTF
 
                 if (useNormal)
                 {
-                    blendShpaeNormals = sparseIndices.Select(x => blendShpaeNormals[x].ReverseZ()).ToArray();
+                    blendShapeNormals = sparseIndices.Select(x => blendShapeNormals[x].ReverseZ()).ToArray();
                     blendShapeNormalAccessorIndex = gltf.ExtendSparseBufferAndGetAccessorIndex(bufferIndex, accessorCount,
-                        blendShpaeNormals,
+                        blendShapeNormals,
                         sparseIndices, sparseIndicesViewIndex,
                         glBufferTarget.ARRAY_BUFFER);
                 }
@@ -454,9 +470,9 @@ namespace UniGLTF
 
                 if (useNormal)
                 {
-                    for (int i = 0; i < blendShpaeNormals.Length; ++i) blendShpaeNormals[i] = blendShpaeNormals[i].ReverseZ();
+                    for (int i = 0; i < blendShapeNormals.Length; ++i) blendShapeNormals[i] = blendShapeNormals[i].ReverseZ();
                     blendShapeNormalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex,
-                        blendShpaeNormals,
+                        blendShapeNormals,
                         glBufferTarget.ARRAY_BUFFER);
                 }
 
