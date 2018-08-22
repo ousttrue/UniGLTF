@@ -144,6 +144,11 @@ namespace UniGLTF
             }
 
             f.KeyValue(() => doubleSided);
+
+            if (extensions != null)
+            {
+                f.KeyValue(() => extensions);
+            }
         }
     }
 }

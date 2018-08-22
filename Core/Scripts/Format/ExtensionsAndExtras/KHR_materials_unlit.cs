@@ -34,5 +34,26 @@ namespace UniGLTF
     {
         [JsonSchema(Required = true)]
         public glTF_KHR_materials_unlit KHR_materials_unlit;
+
+        [JsonSerializeMembers]
+        void SerializeMembers_unlit(GLTFJsonFormatter f)
+        {
+            if (KHR_materials_unlit != null)
+            {
+                f.KeyValue(() => KHR_materials_unlit);
+            }
+        }
+    }
+
+    public partial class glTFUsedExtensions
+    {
+        [UsedExtension]
+        static string KHR_materials_unlit_GetUsedExtension
+        {
+            get
+            {
+                return "KHR_materials_unlit";
+            }
+        }
     }
 }
