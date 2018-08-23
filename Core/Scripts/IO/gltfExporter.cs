@@ -520,12 +520,13 @@ namespace UniGLTF
                         useSparseAccessorForMorphTarget);
 
                     //
-                    // first primitive has whole blendShape
+                    // all primitive has same blendShape
                     //
-                    var firstPrimitive = gltfMesh.primitives[0];
-                    firstPrimitive.targets.Add(morphTarget);
-
-                    firstPrimitive.extras.targetNames.Add(mesh.GetBlendShapeName(j));
+                    for (int k = 0; k < gltfMesh.primitives.Count; ++k)
+                    {
+                        gltfMesh.primitives[k].targets.Add(morphTarget);
+                        gltfMesh.primitives[k].extras.targetNames.Add(mesh.GetBlendShapeName(j));
+                    }
                 }
 
                 gltf.meshes.Add(gltfMesh);
