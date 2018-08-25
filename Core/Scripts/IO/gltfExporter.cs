@@ -302,7 +302,9 @@ namespace UniGLTF
             gltf.accessors[positionAccessorIndex].max = positions.Aggregate(positions[0], (a, b) => new Vector3(Mathf.Max(a.x, b.x), Math.Max(a.y, b.y), Mathf.Max(a.z, b.z))).ToArray();
 
             var normalAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.normals.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+#if GLTF_EXPORT_TANGENTS
             var tangentAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.tangents.Select(y => y.ReverseZ()).ToArray(), glBufferTarget.ARRAY_BUFFER);
+#endif
             var uvAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.uv.Select(y => y.ReverseUV()).ToArray(), glBufferTarget.ARRAY_BUFFER);
             var colorAccessorIndex = gltf.ExtendBufferAndGetAccessorIndex(bufferIndex, mesh.colors, glBufferTarget.ARRAY_BUFFER);
 
@@ -318,10 +320,12 @@ namespace UniGLTF
             {
                 attributes.NORMAL = normalAccessorIndex;
             }
+#if GLTF_EXPORT_TANGENTS
             if (tangentAccessorIndex != -1)
             {
                 attributes.TANGENT = tangentAccessorIndex;
             }
+#endif
             if (uvAccessorIndex != -1)
             {
                 attributes.TEXCOORD_0 = uvAccessorIndex;
@@ -371,7 +375,7 @@ namespace UniGLTF
             var useSparse =
             (usePosition &&  position != Vector3.zero)
             || (useNormal && normal != Vector3.zero)
-            //|| (useTangent && tangent != Vector3.zero)
+            || (useTangent && tangent != Vector3.zero)
             ;
             return useSparse;
         }
@@ -387,12 +391,11 @@ namespace UniGLTF
             var useNormal = usePosition && blendShapeNormals != null && blendShapeNormals.Length == blendShapeVertices.Length;
 
             var blendShapeTangents = mesh.tangents.Select(y => (Vector3)y).ToArray();
-            var useTangent = usePosition && blendShapeTangents != null && blendShapeTangents.Length == blendShapeVertices.Length;
+            //var useTangent = usePosition && blendShapeTangents != null && blendShapeTangents.Length == blendShapeVertices.Length;
+            var useTangent = false;
 
             var frameCount = mesh.GetBlendShapeFrameCount(j);
             mesh.GetBlendShapeFrameVertices(j, frameCount - 1, blendShapeVertices, blendShapeNormals, null);
-            //useNormal = blendShapeNormals.Any(x => x != Vector3.zero);
-            //useTangent = blendShapeTangents.Any(x => x != Vector3.zero);
 
             var blendShapePositionAccessorIndex = -1;
             var blendShapeNormalAccessorIndex = -1;
@@ -553,7 +556,7 @@ namespace UniGLTF
                     .Skip(1) // exclude root object for the symmetry with the importer
                     .ToList();
 
-                #region Materials and Textures
+#region Materials and Textures
                 Materials = Nodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
                 var unityTextures = Materials.SelectMany(x => TextureIO.GetTextures(x)).Where(x => x.Texture != null).Distinct().ToList();
 
@@ -566,9 +569,9 @@ namespace UniGLTF
                 Textures = unityTextures.Select(y => y.Texture).ToList();
                 var materialExporter = CreateMaterialExporter();
                 gltf.materials = Materials.Select(x => materialExporter.ExportMaterial(x, Textures)).ToList();
-                #endregion
+#endregion
 
-                #region Meshes
+#region Meshes
                 var unityMeshes = Nodes
                     .Select(x => new MeshWithRenderer
                     {
@@ -592,9 +595,9 @@ namespace UniGLTF
                     .ToList();
                 ExportMeshes(gltf, bufferIndex, unityMeshes, Materials, useSparseAccessorForMorphTarget);
                 Meshes = unityMeshes.Select(x => x.Mesh).ToList();
-                #endregion
+#endregion
 
-                #region Skins
+#region Skins
                 var unitySkins = Nodes
                     .Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null)
                     .ToList();
@@ -628,10 +631,10 @@ namespace UniGLTF
                         node.skin = skinIndex;
                     }
                 }
-                #endregion
+#endregion
 
 #if UNITY_EDITOR
-                #region Animations
+#region Animations
                 var animation = go.GetComponent<Animation>();
                 if (animation != null)
                 {
@@ -672,7 +675,7 @@ namespace UniGLTF
                         gltf.animations.Add(animationWithCurve.Animation);
                     }
                 }
-                #endregion
+#endregion
 #endif
             }
             finally
@@ -691,6 +694,6 @@ namespace UniGLTF
                 }
             }
         }
-        #endregion
+#endregion
     }
 }
