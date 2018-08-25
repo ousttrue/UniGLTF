@@ -60,8 +60,8 @@ namespace UniGLTF
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => POSITION);
-            f.KeyValue(() => NORMAL);
-            f.KeyValue(() => TANGENT);
+            if (NORMAL >= 0) f.KeyValue(() => NORMAL);
+            if (TANGENT >= 0) f.KeyValue(() => TANGENT);
         }
     }
 
