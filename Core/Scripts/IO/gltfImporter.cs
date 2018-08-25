@@ -206,15 +206,14 @@ namespace UniGLTF
                 mesh.uv = meshContext.uv;
             }
 
-            bool recalculateTangents = false;
+            bool recalculateTangents = true;
+#if UNIGLTF_IMPORT_TANGENTS
             if (meshContext.tangents != null && meshContext.tangents.Length > 0)
             {
                 mesh.tangents = meshContext.tangents;
+                recalculateTangents = false;
             }
-            else
-            {
-                recalculateTangents = true;
-            }
+#endif
 
             if(meshContext.colors!=null && meshContext.colors.Length > 0)
             {
@@ -234,13 +233,12 @@ namespace UniGLTF
             {
                 mesh.RecalculateNormals();
             }
-            if(recalculateTangents)
+            if (recalculateTangents)
             {
 #if UNITY_5_6_OR_NEWER
                 mesh.RecalculateTangents();
 #else
-                Debug.LogWarning("recalculateTangents")
-               
+                Debug.LogWarning("recalculateTangents")              
 #endif
             }
 
@@ -638,6 +636,6 @@ namespace UniGLTF
                 .OrderBy(x => x.Parents)
                 .First().Transform;
         }
-        #endregion
+#endregion
     }
 }
