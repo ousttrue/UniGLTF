@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
+
 namespace UniGLTF
 {
     public class MeshImporter
@@ -54,7 +55,15 @@ namespace UniGLTF
                 // uv
                 if (prim.attributes.TEXCOORD_0 != -1)
                 {
-                    uv.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
+                    if (ctx.IsGeneratedUniGLTFAndOlder(1, 16))
+                    {
+                        // backward compatibility
+                        uv.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
+                    }
+                    else
+                    {
+                        uv.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseUV()));
+                    }
                 }
                 else
                 {
@@ -148,6 +157,7 @@ namespace UniGLTF
             return meshContext;
         }
 
+
         // multiple submesh sharing same VertexBuffer
         private static MeshContext _ImportMeshSharingVertexBuffer(ImporterContext ctx, glTFMesh gltfMesh)
         {
@@ -172,7 +182,15 @@ namespace UniGLTF
                 // uv
                 if (prim.attributes.TEXCOORD_0 != -1)
                 {
-                    context.uv = ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).SelectInplace(x => x.ReverseY());
+                    if (ctx.IsGeneratedUniGLTFAndOlder(1, 16))
+                    {
+                        // backward compatibility
+                        context.uv = ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).SelectInplace(x => x.ReverseY());
+                    }
+                    else
+                    {
+                        context.uv = ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).SelectInplace(x => x.ReverseUV());
+                    }
                 }
                 else
                 {
@@ -267,6 +285,7 @@ namespace UniGLTF
             return context;
         }
 
+
         [Serializable, StructLayout(LayoutKind.Sequential, Pack = 1)]
         struct Float4
         {
@@ -289,6 +308,7 @@ namespace UniGLTF
             }
         }
 
+
         public class MeshContext
         {
             public string name;
@@ -302,6 +322,7 @@ namespace UniGLTF
             public List<int> materialIndices = new List<int>();
             public List<BlendShape> blendShapes = new List<BlendShape>();
         }
+
 
         public MeshContext ReadMesh(ImporterContext ctx, int meshIndex)
         {

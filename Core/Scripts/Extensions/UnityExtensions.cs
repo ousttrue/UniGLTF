@@ -50,9 +50,15 @@ namespace UniGLTF
             return new Vector3(v.x, v.y, -v.z);
         }
 
+        [Obsolete]
         public static Vector2 ReverseY(this Vector2 v)
         {
             return new Vector2(v.x, -v.y);
+        }
+
+        public static Vector2 ReverseUV(this Vector2 v)
+        {
+            return new Vector2(v.x, 1.0f - v.y);
         }
 
         public static Quaternion ReverseZ(this Quaternion q)

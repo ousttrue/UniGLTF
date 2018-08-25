@@ -52,7 +52,7 @@ namespace UniGLTF
 
             var sb = new StringBuilder();
             sb.AppendLine("【SpeedLog】");
-            foreach(var kv in m_speedReports)
+            foreach (var kv in m_speedReports)
             {
                 sb.AppendLine(string.Format("{0}: {1}ms", kv.Key, (int)kv.Elapsed.TotalMilliseconds));
                 total += kv.Elapsed;
@@ -83,6 +83,47 @@ namespace UniGLTF
         /// GLTF parsed from JSON
         /// </summary>
         public glTF GLTF; // parsed
+
+        public static bool IsGeneratedUniGLTFAndOlderThan(string generatorVersion, int major, int minor)
+        {
+            if (string.IsNullOrEmpty(generatorVersion)) return false;
+            if (!generatorVersion.StartsWith("UniGLTF-")) return false;
+
+            try
+            {
+                var index = generatorVersion.IndexOf('.');
+                var generatorMajor = int.Parse(generatorVersion.Substring(8, index - 8));
+                var generatorMinor = int.Parse(generatorVersion.Substring(index + 1));
+
+                if (generatorMajor < major)
+                {
+                    return true;
+                }
+                else
+                {
+                    if (generatorMinor >= minor)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarningFormat("{0}: {1}", generatorVersion, ex);
+                return false;
+            }
+        }
+
+        public bool IsGeneratedUniGLTFAndOlder(int major, int minor)
+        {
+            if (GLTF == null) return false;
+            if (GLTF.asset == null) return false;
+            return IsGeneratedUniGLTFAndOlderThan(GLTF.asset.generator, major, minor);
+        }
 
         /// <summary>
         /// URI access
