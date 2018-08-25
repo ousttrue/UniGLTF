@@ -191,28 +191,31 @@ namespace UniGLTF
             }
 
             mesh.vertices = meshContext.positions;
+            bool recalculateNormals = false;
             if (meshContext.normals != null && meshContext.normals.Length > 0)
             {
                 mesh.normals = meshContext.normals;
             }
             else
             {
-                mesh.RecalculateNormals();
+                recalculateNormals = true;
             }
+
+            if (meshContext.uv != null && meshContext.uv.Length > 0)
+            {
+                mesh.uv = meshContext.uv;
+            }
+
+            bool recalculateTangents = false;
             if (meshContext.tangents != null && meshContext.tangents.Length > 0)
             {
                 mesh.tangents = meshContext.tangents;
             }
             else
             {
-#if UNITY_5_6_OR_NEWER
-                mesh.RecalculateTangents();
-#endif
+                recalculateTangents = true;
             }
-            if (meshContext.uv != null && meshContext.uv.Length > 0)
-            {
-                mesh.uv = meshContext.uv;
-            }
+
             if(meshContext.colors!=null && meshContext.colors.Length > 0)
             {
                 mesh.colors = meshContext.colors;
@@ -226,6 +229,21 @@ namespace UniGLTF
             {
                 mesh.SetTriangles(meshContext.subMeshes[i], i);
             }
+
+            if (recalculateNormals)
+            {
+                mesh.RecalculateNormals();
+            }
+            if(recalculateTangents)
+            {
+#if UNITY_5_6_OR_NEWER
+                mesh.RecalculateTangents();
+#else
+                Debug.LogWarning("recalculateTangents")
+               
+#endif
+            }
+
             var result = new MeshWithMaterials
             {
                 Mesh = mesh,
