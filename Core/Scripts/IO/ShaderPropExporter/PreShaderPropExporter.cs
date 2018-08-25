@@ -36,7 +36,11 @@ namespace UniGLTF.ShaderPropExporter
         [PreExportShaders]
         static SupportedShader[] SupportedShaders = new SupportedShader[]
         {
-            new SupportedShader(TARGET_FOLDER, "Standard","_BumpMap"),
+            new SupportedShader(TARGET_FOLDER, "Standard", "_BumpMap"),
+            new SupportedShader(TARGET_FOLDER, "Unlit/Color"),
+            new SupportedShader(TARGET_FOLDER, "Unlit/Texture"),
+            new SupportedShader(TARGET_FOLDER, "Unlit/Transparent"),
+            new SupportedShader(TARGET_FOLDER, "Unlit/Transparent Cutout"),
         };
 #pragma warning restore 414
 
