@@ -356,7 +356,7 @@ namespace UniGLTF
 
         public bool MeshAsSubAsset = false;
 
-        public virtual UnityPath GetAssetPath(UnityPath prefabPath, UnityEngine.Object o)
+        protected virtual UnityPath GetAssetPath(UnityPath prefabPath, UnityEngine.Object o)
         {
             if (o is Material)
             {
