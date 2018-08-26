@@ -514,9 +514,9 @@ namespace UniGLTF
                                 {
                                     var time = input[j];
                                     var pos = output[j].ReverseZ();
-                                    curveX.AddKey(time, pos.x);
-                                    curveY.AddKey(time, pos.y);
-                                    curveZ.AddKey(time, pos.z);
+                                    curveX.AddKey(new Keyframe(time, pos.x, 0, 0));
+                                    curveY.AddKey(new Keyframe(time, pos.y, 0, 0));
+                                    curveZ.AddKey(new Keyframe(time, pos.z, 0, 0));
                                 }
 
                                 clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
@@ -550,11 +550,11 @@ namespace UniGLTF
                                             rot.w = -rot.w;
                                         }
                                     }
+                                    curveX.AddKey(new Keyframe(time, rot.x, 0, 0));
+                                    curveY.AddKey(new Keyframe(time, rot.y, 0, 0));
+                                    curveZ.AddKey(new Keyframe(time, rot.z, 0, 0));
+                                    curveW.AddKey(new Keyframe(time, rot.w, 0, 0));
                                     last = rot;
-                                    curveX.AddKey(time, rot.x);
-                                    curveY.AddKey(time, rot.y);
-                                    curveZ.AddKey(time, rot.z);
-                                    curveW.AddKey(time, rot.w);
                                 }
 
                                 clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
@@ -577,9 +577,9 @@ namespace UniGLTF
                                 {
                                     var time = input[j];
                                     var scale = output[j];
-                                    curveX.AddKey(time, scale.x);
-                                    curveY.AddKey(time, scale.y);
-                                    curveZ.AddKey(time, scale.z);
+                                    curveX.AddKey(new Keyframe(time, scale.x, 0, 0));
+                                    curveY.AddKey(new Keyframe(time, scale.y, 0, 0));
+                                    curveZ.AddKey(new Keyframe(time, scale.z, 0, 0));
                                 }
 
                                 clip.SetCurve(relativePath, typeof(Transform), "localScale.x", curveX);
