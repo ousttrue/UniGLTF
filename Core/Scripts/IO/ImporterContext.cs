@@ -356,6 +356,32 @@ namespace UniGLTF
 
         public bool MeshAsSubAsset = false;
 
+        public virtual UnityPath GetAssetPath(UnityPath prefabPath, UnityEngine.Object o)
+        {
+            if (o is Material)
+            {
+                var materialDir = prefabPath.GetAssetFolder(".Materials");
+                var materialPath = materialDir.Child(o.name.EscapeFilePath() + ".asset");
+                return materialPath;
+            }
+            else if (o is Texture2D)
+            {
+                var textureDir = prefabPath.GetAssetFolder(".Textures");
+                var texturePath = textureDir.Child(o.name.EscapeFilePath() + ".asset");
+                return texturePath;
+            }
+            else if (o is Mesh && !MeshAsSubAsset)
+            {
+                var meshDir = prefabPath.GetAssetFolder(".Meshes");
+                var meshPath = meshDir.Child(o.name.EscapeFilePath() + ".asset");
+                return meshPath;
+            }
+            else
+            {
+                return default(UnityPath);
+            }
+        }
+
         public void SaveAsAsset(UnityPath prefabPath)
         {
             ShowMeshes();
@@ -370,39 +396,20 @@ namespace UniGLTF
                 }
             }
 
-            // Add SubAsset
-            var materialDir = prefabPath.GetAssetFolder(".Materials");
-            materialDir.EnsureFolder();
-            var textureDir = prefabPath.GetAssetFolder(".Textures");
-            textureDir.EnsureFolder();
-            var meshDir = prefabPath.GetAssetFolder(".Meshes");
-            if (!MeshAsSubAsset)
-            {
-                meshDir.EnsureFolder();
-            }
-
+            //
+            // save sub assets
+            //
             var paths = new List<UnityPath>(){
                 prefabPath
             };
             foreach (var o in ObjectsForSubAsset())
             {
-                if (o is Material)
+                var assetPath = GetAssetPath(prefabPath, o);
+                if (!assetPath.IsNull)
                 {
-                    var materialPath = materialDir.Child(o.name.EscapeFilePath() + ".asset");
-                    materialPath.CreateAsset(o);
-                    paths.Add(materialPath);
-                }
-                else if (o is Texture2D)
-                {
-                    var texturePath = textureDir.Child(o.name.EscapeFilePath() + ".asset");
-                    texturePath.CreateAsset(o);
-                    paths.Add(texturePath);
-                }
-                else if (o is Mesh && !MeshAsSubAsset)
-                {
-                    var meshPath = meshDir.Child(o.name.EscapeFilePath() + ".asset");
-                    meshPath.CreateAsset(o);
-                    paths.Add(meshPath);
+                    assetPath.Parent.EnsureFolder();
+                    assetPath.CreateAsset(o);
+                    paths.Add(assetPath);
                 }
                 else
                 {
