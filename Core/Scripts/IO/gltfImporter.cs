@@ -535,10 +535,22 @@ namespace UniGLTF
                                 var sampler = animation.samplers[y.sampler];
                                 var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
                                 var output = ctx.GLTF.GetArrayFromAccessor<Quaternion>(sampler.output);
+                                var last = Quaternion.identity;
                                 for (int j = 0; j < input.Length; ++j)
                                 {
                                     var time = input[j];
                                     var rot = output[j].ReverseZ();
+                                    if (j > 0)
+                                    {
+                                        if(Quaternion.Dot(last, rot) < 0)
+                                        {
+                                            rot.x = -rot.x;
+                                            rot.y = -rot.y;
+                                            rot.z = -rot.z;
+                                            rot.w = -rot.w;
+                                        }
+                                    }
+                                    last = rot;
                                     curveX.AddKey(time, rot.x);
                                     curveY.AddKey(time, rot.y);
                                     curveZ.AddKey(time, rot.z);
@@ -595,6 +607,10 @@ namespace UniGLTF
                                     clip.SetCurve(relativePath, typeof(SkinnedMeshRenderer), "blendShape." + k, curve);
                                 }
                             }
+                            break;
+
+                        default:
+                            Debug.LogWarningFormat("unknown path: {0}", y.target.path);
                             break;
                     }
                 }
