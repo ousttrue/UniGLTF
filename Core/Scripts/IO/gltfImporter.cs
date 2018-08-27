@@ -238,7 +238,7 @@ namespace UniGLTF
 #if UNITY_5_6_OR_NEWER
                 mesh.RecalculateTangents();
 #else
-                Debug.LogWarning("recalculateTangents")              
+                Debug.LogWarning("recalculateTangents");
 #endif
             }
 
