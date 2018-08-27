@@ -250,6 +250,7 @@ namespace UniGLTF
 
             if (meshContext.blendShapes != null)
             {
+                Vector3[] emptyVertices = null;
                 foreach (var blendShape in meshContext.blendShapes)
                 {
                     if (blendShape.Positions.Count > 0)
@@ -269,11 +270,14 @@ namespace UniGLTF
                     }
                     else
                     {
+                        if (emptyVertices == null)
+                        {
+                            emptyVertices = new Vector3[mesh.vertexCount];
+                        }
                         Debug.LogFormat("empty blendshape: {0}.{1}", mesh.name, blendShape.Name);
                         // add empty blend shape for keep blend shape index
                         mesh.AddBlendShapeFrame(blendShape.Name, FRAME_WEIGHT,
-                            //Enumerable.Range(0, mesh.vertexCount).Select(x => Vector3.zero).ToArray(),
-                            null,
+                            emptyVertices,
                             null,
                             null
                             );
