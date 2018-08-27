@@ -60,7 +60,7 @@ namespace UniGLTF
             var shader = m_shaderStore.GetShader(x);
             Debug.LogFormat("[{0}]{1}", i, shader.name);
             var material = new Material(shader);
-            material.name = (x==null || string.IsNullOrEmpty(x.name))
+            material.name = (x == null || string.IsNullOrEmpty(x.name))
                 ? string.Format("material_{0:00}", i)
                 : x.name
                 ;
@@ -69,7 +69,7 @@ namespace UniGLTF
             {
                 if (x.pbrMetallicRoughness != null)
                 {
-                    if (x.pbrMetallicRoughness.baseColorFactor != null && x.pbrMetallicRoughness.baseColorFactor.Length==4)
+                    if (x.pbrMetallicRoughness.baseColorFactor != null && x.pbrMetallicRoughness.baseColorFactor.Length == 4)
                     {
                         var color = x.pbrMetallicRoughness.baseColorFactor;
                         material.color = new Color(color[0], color[1], color[2], color[3]);
@@ -95,7 +95,7 @@ namespace UniGLTF
                     }
                 }
 
-                if (x.normalTexture!=null && x.normalTexture.index != -1)
+                if (x.normalTexture != null && x.normalTexture.index != -1)
                 {
                     material.EnableKeyword("_NORMALMAP");
                     var texture = Context.GetTexture(x.normalTexture.index);
@@ -112,7 +112,7 @@ namespace UniGLTF
                     }
                 }
 
-                if (x.occlusionTexture!=null && x.occlusionTexture.index != -1)
+                if (x.occlusionTexture != null && x.occlusionTexture.index != -1)
                 {
                     var texture = Context.GetTexture(x.occlusionTexture.index);
                     if (texture != null)
@@ -122,12 +122,12 @@ namespace UniGLTF
                 }
 
                 if (x.emissiveFactor != null
-                    || (x.emissiveTexture!=null && x.emissiveTexture.index != -1))
+                    || (x.emissiveTexture != null && x.emissiveTexture.index != -1))
                 {
                     material.EnableKeyword("_EMISSION");
                     material.globalIlluminationFlags &= ~MaterialGlobalIlluminationFlags.EmissiveIsBlack;
 
-                    if (x.emissiveFactor != null)
+                    if (x.emissiveFactor != null && x.emissiveFactor.Length == 3)
                     {
                         material.SetColor("_EmissionColor", new Color(x.emissiveFactor[0], x.emissiveFactor[1], x.emissiveFactor[2]));
                     }
