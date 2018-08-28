@@ -87,6 +87,7 @@ namespace UniGLTF
         public static bool IsGeneratedUniGLTFAndOlderThan(string generatorVersion, int major, int minor)
         {
             if (string.IsNullOrEmpty(generatorVersion)) return false;
+            if (generatorVersion == "UniGLTF") return true;
             if (!generatorVersion.StartsWith("UniGLTF-")) return false;
 
             try
