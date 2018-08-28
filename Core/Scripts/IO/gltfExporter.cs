@@ -373,7 +373,7 @@ namespace UniGLTF
             )
         {
             var useSparse =
-            (usePosition &&  position != Vector3.zero)
+            (usePosition && position != Vector3.zero)
             || (useNormal && normal != Vector3.zero)
             || (useTangent && tangent != Vector3.zero)
             ;
@@ -405,8 +405,8 @@ namespace UniGLTF
                 var accessorCount = blendShapeVertices.Length;
                 var sparseIndices = Enumerable.Range(0, blendShapeVertices.Length)
                     .Where(x => UseSparse(
-                        usePosition,  blendShapeVertices[x], 
-                        useNormal, blendShapeNormals[x], 
+                        usePosition, blendShapeVertices[x],
+                        useNormal, blendShapeNormals[x],
                         useTangent, blendShapeTangents[x]))
                     .ToArray()
                     ;
@@ -556,7 +556,7 @@ namespace UniGLTF
                     .Skip(1) // exclude root object for the symmetry with the importer
                     .ToList();
 
-#region Materials and Textures
+                #region Materials and Textures
                 Materials = Nodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
                 var unityTextures = Materials.SelectMany(x => TextureIO.GetTextures(x)).Where(x => x.Texture != null).Distinct().ToList();
 
@@ -569,9 +569,9 @@ namespace UniGLTF
                 Textures = unityTextures.Select(y => y.Texture).ToList();
                 var materialExporter = CreateMaterialExporter();
                 gltf.materials = Materials.Select(x => materialExporter.ExportMaterial(x, Textures)).ToList();
-#endregion
+                #endregion
 
-#region Meshes
+                #region Meshes
                 var unityMeshes = Nodes
                     .Select(x => new MeshWithRenderer
                     {
@@ -595,11 +595,14 @@ namespace UniGLTF
                     .ToList();
                 ExportMeshes(gltf, bufferIndex, unityMeshes, Materials, useSparseAccessorForMorphTarget);
                 Meshes = unityMeshes.Select(x => x.Mesh).ToList();
-#endregion
+                #endregion
 
-#region Skins
+                #region Skins
                 var unitySkins = Nodes
-                    .Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null && x.bones.Length>0)
+                    .Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x =>
+                        x != null
+                        && x.bones != null
+                        && x.bones.Length > 0)
                     .ToList();
                 gltf.nodes = Nodes.Select(x => ExportNode(x, Nodes, unityMeshes.Select(y => y.Mesh).ToList(), unitySkins)).ToList();
                 gltf.scenes = new List<gltfScene>
@@ -631,10 +634,10 @@ namespace UniGLTF
                         node.skin = skinIndex;
                     }
                 }
-#endregion
+                #endregion
 
 #if UNITY_EDITOR
-#region Animations
+                #region Animations
                 var animation = go.GetComponent<Animation>();
                 if (animation != null)
                 {
@@ -675,7 +678,7 @@ namespace UniGLTF
                         gltf.animations.Add(animationWithCurve.Animation);
                     }
                 }
-#endregion
+                #endregion
 #endif
             }
             finally
@@ -694,6 +697,6 @@ namespace UniGLTF
                 }
             }
         }
-#endregion
+        #endregion
     }
 }
