@@ -599,16 +599,16 @@ namespace UniGLTF
 
 #region Skins
                 var unitySkins = Nodes
-                    .Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null)
+                    .Select(x => x.GetComponent<SkinnedMeshRenderer>()).Where(x => x != null && x.bones.Length>0)
                     .ToList();
                 gltf.nodes = Nodes.Select(x => ExportNode(x, Nodes, unityMeshes.Select(y => y.Mesh).ToList(), unitySkins)).ToList();
                 gltf.scenes = new List<gltfScene>
-            {
-                new gltfScene
                 {
-                    nodes = go.transform.GetChildren().Select(x => Nodes.IndexOf(x)).ToArray(),
-                }
-            };
+                    new gltfScene
+                    {
+                        nodes = go.transform.GetChildren().Select(x => Nodes.IndexOf(x)).ToArray(),
+                    }
+                };
 
                 foreach (var x in unitySkins)
                 {
