@@ -164,6 +164,7 @@ namespace UniGLTF
 
                 ctx.Animation.wrapMode = WrapMode.Loop;
                 var animation = ctx.Root.AddComponent<Animation>();
+                animation.AddClip(ctx.Animation, ctx.Animation.name);
                 animation.clip = ctx.Animation;
             }
         }
