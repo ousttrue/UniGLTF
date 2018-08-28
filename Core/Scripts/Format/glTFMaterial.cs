@@ -145,6 +145,11 @@ namespace UniGLTF
 
             f.KeyValue(() => doubleSided);
 
+            if (!string.IsNullOrEmpty(alphaMode))
+            {
+                f.KeyValue(() => alphaMode);
+            }
+
             if (extensions != null)
             {
                 f.KeyValue(() => extensions);
