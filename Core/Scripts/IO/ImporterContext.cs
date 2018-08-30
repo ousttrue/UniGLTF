@@ -309,6 +309,12 @@ namespace UniGLTF
         {
             return m_materials;
         }
+        public Material GetMaterial(int index)
+        {
+            if (index < 0) return null;
+            if (index >= m_materials.Count) return null;
+            return m_materials[index];
+        }
 
         public List<MeshWithMaterials> Meshes = new List<MeshWithMaterials>();
         public void ShowMeshes()

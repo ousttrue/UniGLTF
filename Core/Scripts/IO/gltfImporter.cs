@@ -246,7 +246,7 @@ namespace UniGLTF
             var result = new MeshWithMaterials
             {
                 Mesh = mesh,
-                Materials = meshContext.materialIndices.Select(x => ctx.GetMaterials()[x]).ToArray()
+                Materials = meshContext.materialIndices.Select(x => ctx.GetMaterial(x)).ToArray()
             };
 
             if (meshContext.blendShapes != null)
