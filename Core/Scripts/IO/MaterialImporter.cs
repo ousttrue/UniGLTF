@@ -101,14 +101,26 @@ namespace UniGLTF
                     var texture = Context.GetTexture(x.normalTexture.index);
                     if (texture != null)
                     {
-#if UNITY_EDITOR
-                        var textureAssetPath = AssetDatabase.GetAssetPath(texture.Texture);
-                        if (!string.IsNullOrEmpty(textureAssetPath))
+                        if (Application.isPlaying)
                         {
-                            TextureIO.MarkTextureAssetAsNormalMap(textureAssetPath);
+                            Debug.LogWarning("require nomal map conversion");
+                            material.SetTexture("_BumpMap", texture.GetNormalMapConverted());
                         }
+                        else
+                        {
+#if UNITY_EDITOR
+                            var textureAssetPath = AssetDatabase.GetAssetPath(texture.Texture);
+                            if (!string.IsNullOrEmpty(textureAssetPath))
+                            {
+                                TextureIO.MarkTextureAssetAsNormalMap(textureAssetPath);
+                            }
+                            else
+                            {
+                                Debug.LogWarningFormat("no asset for {0}", texture.Texture);
+                            }
+                            material.SetTexture("_BumpMap", texture.Texture);
 #endif
-                        material.SetTexture("_BumpMap", texture.Texture);
+                        }
                     }
                 }
 

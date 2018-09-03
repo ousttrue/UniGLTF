@@ -141,6 +141,34 @@ namespace UniGLTF
             TextureSamplerUtil.SetSampler(Texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
         }
 
+        #region NormalMap
+        Texture2D m_normalMap;
+        public Texture2D GetNormalMapConverted()
+        {
+            if (m_normalMap == null)
+            {
+                var texture = CopyTexture(Texture, false);
+                texture.SetPixels32(texture.GetPixels32().Select(ConvertNormalMap).ToArray());
+                texture.Apply();
+                texture.name = this.Texture.name + ".normalMap";
+                m_normalMap = texture;
+            }
+            return m_normalMap;
+        }
+
+        static Color32 ConvertNormalMap(Color32 src)
+        {
+            return new Color32
+            {
+                r = 0,
+                g = src.g,
+                b = 0,
+                a = src.r,
+            };
+        }
+        #endregion
+
+        #region MetallicRoughness
         Texture2D m_metallicRoughnessOcclusion;
         public Texture2D GetMetallicRoughnessOcclusionConverted()
         {
@@ -148,6 +176,7 @@ namespace UniGLTF
             {
                 var texture = CopyTexture(Texture, false);
                 texture.SetPixels32(texture.GetPixels32().Select(ConvertMetallicRoughnessOcclusion).ToArray());
+                texture.Apply();
                 texture.name = this.Texture.name + ".metallicRoughnessOcclusion";
                 m_metallicRoughnessOcclusion = texture;
             }
@@ -186,7 +215,7 @@ namespace UniGLTF
                 a = 255,
             };
         }
-
+        #endregion
 
         class sRGBScope : IDisposable
         {
