@@ -8,6 +8,7 @@
 
         [HideInInspector] _BlendMode ("_BlendMode", Float) = 0.0
         [HideInInspector] _CullMode ("_CullMode", Float) = 2.0
+        [HideInInspector] _VColBlendMode ("_VColBlendMode", Float) = 0.0
         [HideInInspector] _SrcBlend ("_SrcBlend", Float) = 1.0
         [HideInInspector] _DstBlend ("_DstBlend", Float) = 0.0
         [HideInInspector] _ZWrite ("_ZWrite", Float) = 1.0
@@ -32,6 +33,7 @@
             #pragma fragment frag
             #pragma multi_compile_fog
             #pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
+            #pragma multi_compile _ _VERTEXCOL_MUL _VERTEXCOL_ADD
             
             #include "UnityCG.cginc"
 
@@ -39,13 +41,19 @@
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
+            #if defined(_VERTEXCOL_MUL) || defined(_VERTEXCOL_ADD)
+                fixed4 color : COLOR;
+            #endif
             };
 
             struct v2f
             {
+                float4 vertex : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
-                float4 vertex : SV_POSITION;
+            #if defined(_VERTEXCOL_MUL) || defined(_VERTEXCOL_ADD)
+                fixed4 color : COLOR;
+            #endif
             };
 
             sampler2D _MainTex;
@@ -59,6 +67,10 @@
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 UNITY_TRANSFER_FOG(o,o.vertex);
+                
+            #if defined(_VERTEXCOL_MUL) || defined(_VERTEXCOL_ADD)
+                o.color = v.color;
+            #endif
                 return o;
             }
             
@@ -66,7 +78,12 @@
             {
                 fixed4 col = tex2D(_MainTex, i.uv) * _Color;
                 
-                // alpha cutoff
+                #if defined(_VERTEXCOL_MUL)
+                    col *= i.color;
+                #elif defined(_VERTEXCOL_ADD)
+                    col += i.color;
+                #endif
+                
                 #ifdef _ALPHATEST_ON
                     clip(col.a - _Cutoff);
                 #endif

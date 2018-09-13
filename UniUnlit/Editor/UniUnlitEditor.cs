@@ -14,6 +14,13 @@ namespace UniGLTF.UniUnlit
         Transparent,
         TransparentWithZWrite
     }
+
+    public enum UniUnlitVertexColorBlendOp
+    {
+        None,
+        Multiply,
+        Additive,
+    }
         
     public class UniUnlitEditor : ShaderGUI
     {
@@ -22,6 +29,7 @@ namespace UniGLTF.UniUnlit
         private const string PropNameCutoff = "_Cutoff";
         private const string PropNameBlendMode = "_BlendMode";
         private const string PropNameCullMode = "_CullMode";
+        private const string PropeNameVColBlendMode = "_VColBlendMode";
         private const string PropNameSrcBlend = "_SrcBlend";
         private const string PropNameDstBlend = "_DstBlend";
         private const string PropNameZWrite = "_ZWrite";
@@ -33,6 +41,7 @@ namespace UniGLTF.UniUnlit
         private MaterialProperty _cutoff;
         private MaterialProperty _blendMode;
         private MaterialProperty _cullMode;
+        private MaterialProperty _vColBlendMode;
         private MaterialProperty _srcBlend;
         private MaterialProperty _dstBlend;
         private MaterialProperty _zWrite;
@@ -46,6 +55,7 @@ namespace UniGLTF.UniUnlit
             _cutoff = FindProperty(PropNameCutoff, properties);
             _blendMode = FindProperty(PropNameBlendMode, properties);
             _cullMode = FindProperty(PropNameCullMode, properties);
+            _vColBlendMode = FindProperty(PropeNameVColBlendMode, properties);
             _srcBlend = FindProperty(PropNameSrcBlend, properties);
             _dstBlend = FindProperty(PropNameDstBlend, properties);
             _zWrite = FindProperty(PropNameZWrite, properties);
@@ -55,7 +65,7 @@ namespace UniGLTF.UniUnlit
             EditorGUI.BeginChangeCheck();
             {
                 DrawRenderingBox(materialEditor, material);
-                DrawMainTexBox(materialEditor, material);
+                DrawColorBox(materialEditor, material);
                 DrawOptionsBox(materialEditor, material);
             }
             EditorGUI.EndChangeCheck();
@@ -73,20 +83,13 @@ namespace UniGLTF.UniUnlit
                 blendMode = (UniUnlitRenderMode) Math.Min(2f, material.GetFloat("_Mode"));
             }
 
-            var cullMode = CullMode.Back;
-            if (material.HasProperty(PropNameCullMode))
-            {
-                cullMode = (CullMode) material.GetFloat(PropNameCullMode);
-            }
-            
             // assigns UniUnlit's properties...
             base.AssignNewShaderToMaterial(material, oldShader, newShader);
 
             // take over old value
             material.SetFloat(PropNameBlendMode, (float) blendMode);
-            material.SetFloat(PropNameCullMode, (float) cullMode);
             
-            MaterialChanged(material, isChangedByUser: true);
+            ModeChanged(material, isChangedByUser: true);
         }
 
         private void DrawRenderingBox(MaterialEditor materialEditor, Material material)
@@ -96,11 +99,11 @@ namespace UniGLTF.UniUnlit
             {
                 if (PopupEnum<UniUnlitRenderMode>("Rendering Type", _blendMode, materialEditor))
                 {
-                    MaterialChanged(material, isChangedByUser: true);
+                    ModeChanged(material, isChangedByUser: true);
                 }
                 if (PopupEnum<CullMode>("Cull Mode", _cullMode, materialEditor))
                 {
-                    MaterialChanged(material, isChangedByUser: true);
+                    ModeChanged(material, isChangedByUser: true);
                 }
                 EditorGUILayout.Space();
 
@@ -118,18 +121,24 @@ namespace UniGLTF.UniUnlit
             EditorGUILayout.Space();
         }
         
-        private void DrawMainTexBox(MaterialEditor materialEditor, Material material)
+        private void DrawColorBox(MaterialEditor materialEditor, Material material)
         {
-            EditorGUILayout.LabelField("Main Map", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Color", EditorStyles.boldLabel);
             EditorGUILayout.BeginVertical(GUI.skin.box);
             {
-                materialEditor.TexturePropertySingleLine(new GUIContent("Color", "(RGBA)"), _mainTex, _color);
+                materialEditor.TexturePropertySingleLine(new GUIContent("Main Tex", "(RGBA)"), _mainTex, _color);
                 materialEditor.TextureScaleOffsetProperty(_mainTex);
+                EditorGUILayout.Space();
+                
+                if (PopupEnum<UniUnlitVertexColorBlendOp>("Vertex Color Blend Mode", _vColBlendMode, materialEditor))
+                {
+                    ModeChanged(material, isChangedByUser: true);
+                }
             }
             EditorGUILayout.EndVertical();
             EditorGUILayout.Space();
         }
-        
+
         private void DrawOptionsBox(MaterialEditor materialEditor, Material material)
         {
             EditorGUILayout.LabelField("Options", EditorStyles.boldLabel);
@@ -160,10 +169,10 @@ namespace UniGLTF.UniUnlit
             return changed;
         }
 
-        private static void MaterialChanged(Material material, bool isChangedByUser = false)
+        private static void ModeChanged(Material material, bool isChangedByUser = false)
         {
             SetupBlendMode(material, (UniUnlitRenderMode) material.GetFloat(PropNameBlendMode), isChangedByUser);
-            SetupCullMode(material, (CullMode) material.GetFloat(PropNameCullMode));
+            SetupVertexColorBlendOp(material, (UniUnlitVertexColorBlendOp) material.GetFloat(PropeNameVColBlendMode));
         }
         
         private static void SetupBlendMode(Material material, UniUnlitRenderMode renderMode, bool isChangedByUser = false)
@@ -209,18 +218,21 @@ namespace UniGLTF.UniUnlit
             }
         }
         
-        private static void SetupCullMode(Material material, CullMode cullMode)
+        private static void SetupVertexColorBlendOp(Material material, UniUnlitVertexColorBlendOp vColBlendOp)
         {
-            switch (cullMode)
+            switch (vColBlendOp)
             {
-                case CullMode.Back:
-                    material.SetInt("_CullMode", (int) CullMode.Back);
+                case UniUnlitVertexColorBlendOp.None:
+                    SetKeyword(material, "_VERTEXCOL_MUL", false);
+                    SetKeyword(material, "_VERTEXCOL_ADD", false);
                     break;
-                case CullMode.Front:
-                    material.SetInt("_CullMode", (int) CullMode.Front);
+                case UniUnlitVertexColorBlendOp.Multiply:
+                    SetKeyword(material, "_VERTEXCOL_MUL", true);
+                    SetKeyword(material, "_VERTEXCOL_ADD", false);
                     break;
-                case CullMode.Off:
-                    material.SetInt("_CullMode", (int) CullMode.Off);
+                case UniUnlitVertexColorBlendOp.Additive:
+                    SetKeyword(material, "_VERTEXCOL_MUL", false);
+                    SetKeyword(material, "_VERTEXCOL_ADD", true);
                     break;
             }
         }
