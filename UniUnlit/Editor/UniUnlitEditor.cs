@@ -7,11 +7,12 @@ using UnityEngine.Rendering;
 
 namespace UniGLTF.UniUnlit
 {
-    public enum RenderMode
+    public enum UniUnlitRenderMode
     {
         Opaque,
         Cutout,
-        Transparent
+        Transparent,
+        TransparentWithZWrite
     }
         
     public class UniUnlitEditor : ShaderGUI
@@ -62,14 +63,14 @@ namespace UniGLTF.UniUnlit
 
         public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)
         {
-            var blendMode = RenderMode.Opaque;
+            var blendMode = UniUnlitRenderMode.Opaque;
             if (material.HasProperty(PropNameBlendMode)) // from MToon shader
             {
-                blendMode = (RenderMode) material.GetFloat(PropNameBlendMode);
+                blendMode = (UniUnlitRenderMode) material.GetFloat(PropNameBlendMode);
             }
             else if (material.HasProperty("_Mode")) // from Standard shader
             {
-                blendMode = (RenderMode) Math.Min(2f, material.GetFloat("_Mode"));
+                blendMode = (UniUnlitRenderMode) Math.Min(2f, material.GetFloat("_Mode"));
             }
 
             var cullMode = CullMode.Back;
@@ -93,7 +94,7 @@ namespace UniGLTF.UniUnlit
             EditorGUILayout.LabelField("Rendering", EditorStyles.boldLabel);
             EditorGUILayout.BeginVertical(GUI.skin.box);
             {
-                if (PopupEnum<RenderMode>("Rendering Type", _blendMode, materialEditor))
+                if (PopupEnum<UniUnlitRenderMode>("Rendering Type", _blendMode, materialEditor))
                 {
                     MaterialChanged(material, isChangedByUser: true);
                 }
@@ -103,13 +104,13 @@ namespace UniGLTF.UniUnlit
                 }
                 EditorGUILayout.Space();
 
-                switch ((RenderMode) _blendMode.floatValue)
+                switch ((UniUnlitRenderMode) _blendMode.floatValue)
                 {
-                    case RenderMode.Cutout:
+                    case UniUnlitRenderMode.Cutout:
                         materialEditor.ShaderProperty(_cutoff, "Cutoff");
                         break;
-                    case RenderMode.Opaque:
-                    case RenderMode.Transparent:
+                    case UniUnlitRenderMode.Opaque:
+                    case UniUnlitRenderMode.Transparent:
                         break;
                 }
             }
@@ -161,15 +162,15 @@ namespace UniGLTF.UniUnlit
 
         private static void MaterialChanged(Material material, bool isChangedByUser = false)
         {
-            SetupBlendMode(material, (RenderMode) material.GetFloat(PropNameBlendMode), isChangedByUser);
+            SetupBlendMode(material, (UniUnlitRenderMode) material.GetFloat(PropNameBlendMode), isChangedByUser);
             SetupCullMode(material, (CullMode) material.GetFloat(PropNameCullMode));
         }
         
-        private static void SetupBlendMode(Material material, RenderMode renderMode, bool isChangedByUser = false)
+        private static void SetupBlendMode(Material material, UniUnlitRenderMode renderMode, bool isChangedByUser = false)
         {
             switch (renderMode)
             {
-                case RenderMode.Opaque:
+                case UniUnlitRenderMode.Opaque:
                     material.SetOverrideTag("RenderType", "Opaque");
                     material.SetInt("_SrcBlend", (int) BlendMode.One);
                     material.SetInt("_DstBlend", (int) BlendMode.Zero);
@@ -178,7 +179,7 @@ namespace UniGLTF.UniUnlit
                     SetKeyword(material, "_ALPHABLEND_ON", false);
                     if (isChangedByUser) material.renderQueue = -1;
                     break;
-                case RenderMode.Cutout:
+                case UniUnlitRenderMode.Cutout:
                     material.SetOverrideTag("RenderType", "TransparentCutout");
                     material.SetInt("_SrcBlend", (int) BlendMode.One);
                     material.SetInt("_DstBlend", (int) BlendMode.Zero);
@@ -187,11 +188,20 @@ namespace UniGLTF.UniUnlit
                     SetKeyword(material, "_ALPHABLEND_ON", false);
                     if (isChangedByUser) material.renderQueue = (int) RenderQueue.AlphaTest;
                     break;
-                case RenderMode.Transparent:
+                case UniUnlitRenderMode.Transparent:
                     material.SetOverrideTag("RenderType", "Transparent");
                     material.SetInt("_SrcBlend", (int) BlendMode.SrcAlpha);
                     material.SetInt("_DstBlend", (int) BlendMode.OneMinusSrcAlpha);
                     material.SetInt("_ZWrite", 0);
+                    SetKeyword(material, "_ALPHATEST_ON", false);
+                    SetKeyword(material, "_ALPHABLEND_ON", true);
+                    if (isChangedByUser) material.renderQueue = (int) RenderQueue.Transparent;
+                    break;
+                case UniUnlitRenderMode.TransparentWithZWrite:
+                    material.SetOverrideTag("RenderType", "Transparent");
+                    material.SetInt("_SrcBlend", (int) BlendMode.SrcAlpha);
+                    material.SetInt("_DstBlend", (int) BlendMode.OneMinusSrcAlpha);
+                    material.SetInt("_ZWrite", 1);
                     SetKeyword(material, "_ALPHATEST_ON", false);
                     SetKeyword(material, "_ALPHABLEND_ON", true);
                     if (isChangedByUser) material.renderQueue = (int) RenderQueue.Transparent;
