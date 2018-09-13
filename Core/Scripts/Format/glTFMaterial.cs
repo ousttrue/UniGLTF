@@ -64,7 +64,7 @@ namespace UniGLTF
         public float metallicFactor;
 
         [JsonSchema(Minimum = 0.0, Maximum = 1.0)]
-        public float roughnessFactor;
+        public float roughnessFactor = 0.5f;
 
         // empty schemas
         public object extensions;
