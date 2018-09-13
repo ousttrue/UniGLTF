@@ -55,7 +55,7 @@ namespace UniGLTF.UniUnlit
             EditorGUI.BeginChangeCheck();
             {
                 DrawRenderingBox(materialEditor, material);
-                DrawColorBox(materialEditor, material);
+                DrawMainTexBox(materialEditor, material);
                 DrawOptionsBox(materialEditor, material);
             }
             EditorGUI.EndChangeCheck();
@@ -118,12 +118,12 @@ namespace UniGLTF.UniUnlit
             EditorGUILayout.Space();
         }
         
-        private void DrawColorBox(MaterialEditor materialEditor, Material material)
+        private void DrawMainTexBox(MaterialEditor materialEditor, Material material)
         {
-            EditorGUILayout.LabelField("Color", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Main Map", EditorStyles.boldLabel);
             EditorGUILayout.BeginVertical(GUI.skin.box);
             {
-                materialEditor.TexturePropertySingleLine(new GUIContent("Main Color", "(RGBA)"), _mainTex, _color);
+                materialEditor.TexturePropertySingleLine(new GUIContent("Color", "(RGBA)"), _mainTex, _color);
                 materialEditor.TextureScaleOffsetProperty(_mainTex);
             }
             EditorGUILayout.EndVertical();
