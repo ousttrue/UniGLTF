@@ -4,12 +4,14 @@
     {
         _MainTex ("Texture", 2D) = "white" {}
         _Color ("Main Color", COLOR) = (1,1,1,1)
+        _Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
 
+        [HideInInspector] _BlendMode ("_BlendMode", Float) = 0.0
         [HideInInspector] _CullMode ("_CullMode", Float) = 2.0
         [HideInInspector] _SrcBlend ("_SrcBlend", Float) = 1.0
         [HideInInspector] _DstBlend ("_DstBlend", Float) = 0.0
+        [HideInInspector] _ZWrite ("_ZWrite", Float) = 1.0
 
-        // ZWrite
         // VertexColor
     }
     SubShader
@@ -19,11 +21,17 @@
 
         Pass
         {
+            Cull [_CullMode]
+            Blend [_SrcBlend] [_DstBlend]
+            ZWrite [_ZWrite]
+            ZTest LEqual
+            BlendOp Add, Max
+            
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            // make fog work
             #pragma multi_compile_fog
+            #pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
             
             #include "UnityCG.cginc"
 
@@ -42,7 +50,8 @@
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            fixed4 _Color;
+            half4 _Color;
+            half _Cutoff;
             
             v2f vert (appdata v)
             {
@@ -55,14 +64,18 @@
             
             fixed4 frag (v2f i) : SV_Target
             {
-                // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv) * _Color;
-                // apply fog
+                
+                // alpha cutoff
+                #ifdef _ALPHATEST_ON
+                    clip(col.a - _Cutoff);
+                #endif
+                
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;
             }
             ENDCG
         }
     }
-    CustomEditor "UniGLTF.UniUnlitEditor"
+    CustomEditor "UniGLTF.UniUnlit.UniUnlitEditor"
 }
