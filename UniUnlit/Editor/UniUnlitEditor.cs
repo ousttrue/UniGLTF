@@ -228,7 +228,7 @@ namespace UniGLTF.UniUnlit
                     material.SetInt(PropNameZWrite, 1);
                     SetKeyword(material, KeywordAlphaTestOn, false);
                     SetKeyword(material, KeywordAlphaBlendOn, true);
-                    if (isRenderModeChangedByUser) material.renderQueue = (int) RenderQueue.Transparent;
+                    if (isRenderModeChangedByUser) material.renderQueue = (int) RenderQueue.AlphaTest + 150;
                     break;
             }
         }
