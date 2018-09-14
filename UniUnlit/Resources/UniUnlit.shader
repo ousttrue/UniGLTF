@@ -33,7 +33,7 @@
             #pragma fragment frag
             #pragma multi_compile_fog
             #pragma multi_compile _ _ALPHATEST_ON _ALPHABLEND_ON
-            #pragma multi_compile _ _VERTEXCOL_MUL _VERTEXCOL_ADD
+            #pragma multi_compile _ _VERTEXCOL_MUL
             
             #include "UnityCG.cginc"
 
@@ -41,7 +41,7 @@
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
-            #if defined(_VERTEXCOL_MUL) || defined(_VERTEXCOL_ADD)
+            #if defined(_VERTEXCOL_MUL)
                 fixed4 color : COLOR;
             #endif
             };
@@ -51,7 +51,7 @@
                 float4 vertex : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
-            #if defined(_VERTEXCOL_MUL) || defined(_VERTEXCOL_ADD)
+            #if defined(_VERTEXCOL_MUL)
                 fixed4 color : COLOR;
             #endif
             };
@@ -68,7 +68,7 @@
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 
-            #if defined(_VERTEXCOL_MUL) || defined(_VERTEXCOL_ADD)
+            #if defined(_VERTEXCOL_MUL)
                 o.color = v.color;
             #endif
                 return o;
@@ -80,8 +80,6 @@
                 
                 #if defined(_VERTEXCOL_MUL)
                     col *= i.color;
-                #elif defined(_VERTEXCOL_ADD)
-                    col += i.color;
                 #endif
                 
                 #if defined(_ALPHATEST_ON)

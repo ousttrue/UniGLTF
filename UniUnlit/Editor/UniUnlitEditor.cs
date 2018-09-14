@@ -20,7 +20,6 @@ namespace UniGLTF.UniUnlit
     {
         None,
         Multiply,
-        Additive,
     }
         
     public class UniUnlitEditor : ShaderGUI
@@ -40,7 +39,6 @@ namespace UniGLTF.UniUnlit
         private const string KeywordAlphaTestOn = "_ALPHATEST_ON";
         private const string KeywordAlphaBlendOn = "_ALPHABLEND_ON";
         private const string KeywordVertexColMul = "_VERTEXCOL_MUL";
-        private const string KeywordVertexColAdd = "_VERTEXCOL_ADD";
 
         private const string TagRenderTypeKey = "RenderType";
         private const string TagRenderTypeValueOpaque = "Opaque";
@@ -239,15 +237,9 @@ namespace UniGLTF.UniUnlit
             {
                 case UniUnlitVertexColorBlendOp.None:
                     SetKeyword(material, KeywordVertexColMul, false);
-                    SetKeyword(material, KeywordVertexColAdd, false);
                     break;
                 case UniUnlitVertexColorBlendOp.Multiply:
                     SetKeyword(material, KeywordVertexColMul, true);
-                    SetKeyword(material, KeywordVertexColAdd, false);
-                    break;
-                case UniUnlitVertexColorBlendOp.Additive:
-                    SetKeyword(material, KeywordVertexColMul, false);
-                    SetKeyword(material, KeywordVertexColAdd, true);
                     break;
             }
         }
