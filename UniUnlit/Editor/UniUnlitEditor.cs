@@ -51,9 +51,9 @@ namespace UniGLTF.UniUnlit
         private MaterialProperty _blendMode;
         private MaterialProperty _cullMode;
         private MaterialProperty _vColBlendMode;
-        private MaterialProperty _srcBlend;
-        private MaterialProperty _dstBlend;
-        private MaterialProperty _zWrite;
+//        private MaterialProperty _srcBlend;
+//        private MaterialProperty _dstBlend;
+//        private MaterialProperty _zWrite;
         
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
         {
@@ -63,9 +63,9 @@ namespace UniGLTF.UniUnlit
             _blendMode = FindProperty(PropNameBlendMode, properties);
             _cullMode = FindProperty(PropNameCullMode, properties);
             _vColBlendMode = FindProperty(PropeNameVColBlendMode, properties);
-            _srcBlend = FindProperty(PropNameSrcBlend, properties);
-            _dstBlend = FindProperty(PropNameDstBlend, properties);
-            _zWrite = FindProperty(PropNameZWrite, properties);
+//            _srcBlend = FindProperty(PropNameSrcBlend, properties);
+//            _dstBlend = FindProperty(PropNameDstBlend, properties);
+//            _zWrite = FindProperty(PropNameZWrite, properties);
 
             var materials = materialEditor.targets.Select(x => x as Material).ToArray();
             
