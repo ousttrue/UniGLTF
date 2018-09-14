@@ -84,7 +84,7 @@
                     col += i.color;
                 #endif
                 
-                #ifdef _ALPHATEST_ON
+                #if defined(_ALPHATEST_ON)
                     clip(col.a - _Cutoff);
                 #endif
                 

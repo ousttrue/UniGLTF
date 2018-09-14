@@ -48,8 +48,6 @@ namespace UniGLTF.UniUnlit
         
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
         {
-//            base.OnGUI(materialEditor, properties);
-
             _mainTex = FindProperty(PropNameMainTex, properties);
             _color = FindProperty(PropNameColor, properties);
             _cutoff = FindProperty(PropNameCutoff, properties);
