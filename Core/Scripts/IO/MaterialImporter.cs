@@ -28,6 +28,14 @@ namespace UniGLTF
             m_context = context;
         }
 
+        private enum BlendMode
+        {
+            Opaque,
+            Cutout,
+            Fade,
+            Transparent
+        }
+
         /// StandardShader vaiables
         /// 
         /// _Color
@@ -93,6 +101,16 @@ namespace UniGLTF
                             material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessOcclusionConverted());
                         }
                     }
+
+                    if (x.pbrMetallicRoughness.metallicFactor != 0.0f)
+                    {
+                        material.SetFloat("_Metallic", x.pbrMetallicRoughness.metallicFactor);
+                    }
+
+                    if (x.pbrMetallicRoughness.roughnessFactor != 0.5f)
+                    {
+                        material.SetFloat("_Glossiness", 1.0f - x.pbrMetallicRoughness.roughnessFactor);
+                    }
                 }
 
                 if (x.normalTexture != null && x.normalTexture.index != -1)
@@ -154,21 +172,24 @@ namespace UniGLTF
                     }
                 }
 
+                BlendMode blendMode = BlendMode.Opaque;
                 // https://forum.unity.com/threads/standard-material-shader-ignoring-setfloat-property-_mode.344557/#post-2229980
                 switch (x.alphaMode)
                 {
                     case "BLEND":
+                        blendMode = BlendMode.Fade;
                         material.SetOverrideTag("RenderType", "Transparent");
-                        material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                        material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
                         material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                         material.SetInt("_ZWrite", 0);
                         material.DisableKeyword("_ALPHATEST_ON");
-                        material.DisableKeyword("_ALPHABLEND_ON");
-                        material.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                        material.EnableKeyword("_ALPHABLEND_ON");
+                        material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
                         material.renderQueue = 3000;
                         break;
 
                     case "MASK":
+                        blendMode = BlendMode.Cutout;
                         material.SetOverrideTag("RenderType", "TransparentCutout");
                         material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
                         material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
@@ -177,9 +198,11 @@ namespace UniGLTF
                         material.DisableKeyword("_ALPHABLEND_ON");
                         material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
                         material.renderQueue = 2450;
+                        
                         break;
 
                     default: // OPAQUE
+                        blendMode = BlendMode.Opaque;
                         material.SetOverrideTag("RenderType", "");
                         material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.One);
                         material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.Zero);
@@ -190,8 +213,9 @@ namespace UniGLTF
                         material.renderQueue = -1;
                         break;
                 }
-            }
 
+                material.SetFloat("_Mode", (float)blendMode);
+            }
             return material;
         }
     }
