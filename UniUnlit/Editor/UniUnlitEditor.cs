@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -57,14 +58,14 @@ namespace UniGLTF.UniUnlit
             _srcBlend = FindProperty(PropNameSrcBlend, properties);
             _dstBlend = FindProperty(PropNameDstBlend, properties);
             _zWrite = FindProperty(PropNameZWrite, properties);
-            
-            var material = materialEditor.target as Material;
+
+            var materials = materialEditor.targets.Select(x => x as Material).ToArray();
             
             EditorGUI.BeginChangeCheck();
             {
-                DrawRenderingBox(materialEditor, material);
-                DrawColorBox(materialEditor, material);
-                DrawOptionsBox(materialEditor, material);
+                DrawRenderingBox(materialEditor, materials);
+                DrawColorBox(materialEditor, materials);
+                DrawOptionsBox(materialEditor, materials);
             }
             EditorGUI.EndChangeCheck();
         }
@@ -87,21 +88,21 @@ namespace UniGLTF.UniUnlit
             // take over old value
             material.SetFloat(PropNameBlendMode, (float) blendMode);
             
-            ModeChanged(material, isChangedByUser: true);
+            ModeChanged(material, isRenderModeChangedByUser: true);
         }
 
-        private void DrawRenderingBox(MaterialEditor materialEditor, Material material)
+        private void DrawRenderingBox(MaterialEditor materialEditor, Material[] materials)
         {
             EditorGUILayout.LabelField("Rendering", EditorStyles.boldLabel);
             EditorGUILayout.BeginVertical(GUI.skin.box);
             {
                 if (PopupEnum<UniUnlitRenderMode>("Rendering Type", _blendMode, materialEditor))
                 {
-                    ModeChanged(material, isChangedByUser: true);
+                    ModeChanged(materials, isRenderModeChangedByUser: true);
                 }
                 if (PopupEnum<CullMode>("Cull Mode", _cullMode, materialEditor))
                 {
-                    ModeChanged(material, isChangedByUser: true);
+                    ModeChanged(materials, isRenderModeChangedByUser: true);
                 }
                 EditorGUILayout.Space();
 
@@ -119,7 +120,7 @@ namespace UniGLTF.UniUnlit
             EditorGUILayout.Space();
         }
         
-        private void DrawColorBox(MaterialEditor materialEditor, Material material)
+        private void DrawColorBox(MaterialEditor materialEditor, Material[] materials)
         {
             EditorGUILayout.LabelField("Color", EditorStyles.boldLabel);
             EditorGUILayout.BeginVertical(GUI.skin.box);
@@ -130,14 +131,14 @@ namespace UniGLTF.UniUnlit
                 
                 if (PopupEnum<UniUnlitVertexColorBlendOp>("Vertex Color Blend Mode", _vColBlendMode, materialEditor))
                 {
-                    ModeChanged(material, isChangedByUser: true);
+                    ModeChanged(materials, isRenderModeChangedByUser: true);
                 }
             }
             EditorGUILayout.EndVertical();
             EditorGUILayout.Space();
         }
 
-        private void DrawOptionsBox(MaterialEditor materialEditor, Material material)
+        private void DrawOptionsBox(MaterialEditor materialEditor, Material[] materials)
         {
             EditorGUILayout.LabelField("Options", EditorStyles.boldLabel);
             EditorGUILayout.BeginVertical(GUI.skin.box);
@@ -167,13 +168,23 @@ namespace UniGLTF.UniUnlit
             return changed;
         }
 
-        private static void ModeChanged(Material material, bool isChangedByUser = false)
+
+        private static void ModeChanged(Material[] materials, bool isRenderModeChangedByUser = false)
         {
-            SetupBlendMode(material, (UniUnlitRenderMode) material.GetFloat(PropNameBlendMode), isChangedByUser);
+            foreach (var material in materials)
+            {
+                ModeChanged(material, isRenderModeChangedByUser);
+            }
+        }
+        private static void ModeChanged(Material material, bool isRenderModeChangedByUser = false)
+        {
+            SetupBlendMode(material, (UniUnlitRenderMode) material.GetFloat(PropNameBlendMode),
+                isRenderModeChangedByUser);
             SetupVertexColorBlendOp(material, (UniUnlitVertexColorBlendOp) material.GetFloat(PropeNameVColBlendMode));
         }
         
-        private static void SetupBlendMode(Material material, UniUnlitRenderMode renderMode, bool isChangedByUser = false)
+        private static void SetupBlendMode(Material material, UniUnlitRenderMode renderMode,
+            bool isRenderModeChangedByUser = false)
         {
             switch (renderMode)
             {
@@ -184,7 +195,7 @@ namespace UniGLTF.UniUnlit
                     material.SetInt("_ZWrite", 1);
                     SetKeyword(material, "_ALPHATEST_ON", false);
                     SetKeyword(material, "_ALPHABLEND_ON", false);
-                    if (isChangedByUser) material.renderQueue = -1;
+                    if (isRenderModeChangedByUser) material.renderQueue = -1;
                     break;
                 case UniUnlitRenderMode.Cutout:
                     material.SetOverrideTag("RenderType", "TransparentCutout");
@@ -193,7 +204,7 @@ namespace UniGLTF.UniUnlit
                     material.SetInt("_ZWrite", 1);
                     SetKeyword(material, "_ALPHATEST_ON", true);
                     SetKeyword(material, "_ALPHABLEND_ON", false);
-                    if (isChangedByUser) material.renderQueue = (int) RenderQueue.AlphaTest;
+                    if (isRenderModeChangedByUser) material.renderQueue = (int) RenderQueue.AlphaTest;
                     break;
                 case UniUnlitRenderMode.Transparent:
                     material.SetOverrideTag("RenderType", "Transparent");
@@ -202,7 +213,7 @@ namespace UniGLTF.UniUnlit
                     material.SetInt("_ZWrite", 0);
                     SetKeyword(material, "_ALPHATEST_ON", false);
                     SetKeyword(material, "_ALPHABLEND_ON", true);
-                    if (isChangedByUser) material.renderQueue = (int) RenderQueue.Transparent;
+                    if (isRenderModeChangedByUser) material.renderQueue = (int) RenderQueue.Transparent;
                     break;
                 case UniUnlitRenderMode.TransparentWithZWrite:
                     material.SetOverrideTag("RenderType", "Transparent");
@@ -211,7 +222,7 @@ namespace UniGLTF.UniUnlit
                     material.SetInt("_ZWrite", 1);
                     SetKeyword(material, "_ALPHATEST_ON", false);
                     SetKeyword(material, "_ALPHABLEND_ON", true);
-                    if (isChangedByUser) material.renderQueue = (int) RenderQueue.Transparent;
+                    if (isRenderModeChangedByUser) material.renderQueue = (int) RenderQueue.Transparent;
                     break;
             }
         }
