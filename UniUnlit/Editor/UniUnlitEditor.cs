@@ -34,9 +34,19 @@ namespace UniGLTF.UniUnlit
         private const string PropNameSrcBlend = "_SrcBlend";
         private const string PropNameDstBlend = "_DstBlend";
         private const string PropNameZWrite = "_ZWrite";
-        
-        private Dictionary<string, MaterialProperty> _properties = new Dictionary<string, MaterialProperty>();
 
+        private const string PropNameStandardShadersRenderMode = "_Mode";
+
+        private const string KeywordAlphaTestOn = "_ALPHATEST_ON";
+        private const string KeywordAlphaBlendOn = "_ALPHABLEND_ON";
+        private const string KeywordVertexColMul = "_VERTEXCOL_MUL";
+        private const string KeywordVertexColAdd = "_VERTEXCOL_ADD";
+
+        private const string TagRenderTypeKey = "RenderType";
+        private const string TagRenderTypeValueOpaque = "Opaque";
+        private const string TagRenderTypeValueTransparentCutout = "TransparentCutout";
+        private const string TagRenderTypeValueTransparent = "Transparent";
+        
         private MaterialProperty _mainTex;
         private MaterialProperty _color;
         private MaterialProperty _cutoff;
@@ -73,13 +83,9 @@ namespace UniGLTF.UniUnlit
         public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)
         {
             var blendMode = UniUnlitRenderMode.Opaque;
-            if (material.HasProperty(PropNameBlendMode)) // from MToon shader
+            if (material.HasProperty(PropNameStandardShadersRenderMode)) // from Standard shader
             {
-                blendMode = (UniUnlitRenderMode) material.GetFloat(PropNameBlendMode);
-            }
-            else if (material.HasProperty("_Mode")) // from Standard shader
-            {
-                blendMode = (UniUnlitRenderMode) Math.Min(2f, material.GetFloat("_Mode"));
+                blendMode = (UniUnlitRenderMode) Math.Min(2f, material.GetFloat(PropNameStandardShadersRenderMode));
             }
 
             // assigns UniUnlit's properties...
@@ -189,39 +195,39 @@ namespace UniGLTF.UniUnlit
             switch (renderMode)
             {
                 case UniUnlitRenderMode.Opaque:
-                    material.SetOverrideTag("RenderType", "Opaque");
-                    material.SetInt("_SrcBlend", (int) BlendMode.One);
-                    material.SetInt("_DstBlend", (int) BlendMode.Zero);
-                    material.SetInt("_ZWrite", 1);
-                    SetKeyword(material, "_ALPHATEST_ON", false);
-                    SetKeyword(material, "_ALPHABLEND_ON", false);
+                    material.SetOverrideTag(TagRenderTypeKey, TagRenderTypeValueOpaque);
+                    material.SetInt(PropNameSrcBlend, (int) BlendMode.One);
+                    material.SetInt(PropNameDstBlend, (int) BlendMode.Zero);
+                    material.SetInt(PropNameZWrite, 1);
+                    SetKeyword(material, KeywordAlphaTestOn, false);
+                    SetKeyword(material, KeywordAlphaBlendOn, false);
                     if (isRenderModeChangedByUser) material.renderQueue = -1;
                     break;
                 case UniUnlitRenderMode.Cutout:
-                    material.SetOverrideTag("RenderType", "TransparentCutout");
-                    material.SetInt("_SrcBlend", (int) BlendMode.One);
-                    material.SetInt("_DstBlend", (int) BlendMode.Zero);
-                    material.SetInt("_ZWrite", 1);
-                    SetKeyword(material, "_ALPHATEST_ON", true);
-                    SetKeyword(material, "_ALPHABLEND_ON", false);
+                    material.SetOverrideTag(TagRenderTypeKey, TagRenderTypeValueTransparentCutout);
+                    material.SetInt(PropNameSrcBlend, (int) BlendMode.One);
+                    material.SetInt(PropNameDstBlend, (int) BlendMode.Zero);
+                    material.SetInt(PropNameZWrite, 1);
+                    SetKeyword(material, KeywordAlphaTestOn, true);
+                    SetKeyword(material, KeywordAlphaBlendOn, false);
                     if (isRenderModeChangedByUser) material.renderQueue = (int) RenderQueue.AlphaTest;
                     break;
                 case UniUnlitRenderMode.Transparent:
-                    material.SetOverrideTag("RenderType", "Transparent");
-                    material.SetInt("_SrcBlend", (int) BlendMode.SrcAlpha);
-                    material.SetInt("_DstBlend", (int) BlendMode.OneMinusSrcAlpha);
-                    material.SetInt("_ZWrite", 0);
-                    SetKeyword(material, "_ALPHATEST_ON", false);
-                    SetKeyword(material, "_ALPHABLEND_ON", true);
+                    material.SetOverrideTag(TagRenderTypeKey, TagRenderTypeValueTransparent);
+                    material.SetInt(PropNameSrcBlend, (int) BlendMode.SrcAlpha);
+                    material.SetInt(PropNameDstBlend, (int) BlendMode.OneMinusSrcAlpha);
+                    material.SetInt(PropNameZWrite, 0);
+                    SetKeyword(material, KeywordAlphaTestOn, false);
+                    SetKeyword(material, KeywordAlphaBlendOn, true);
                     if (isRenderModeChangedByUser) material.renderQueue = (int) RenderQueue.Transparent;
                     break;
                 case UniUnlitRenderMode.TransparentWithZWrite:
-                    material.SetOverrideTag("RenderType", "Transparent");
-                    material.SetInt("_SrcBlend", (int) BlendMode.SrcAlpha);
-                    material.SetInt("_DstBlend", (int) BlendMode.OneMinusSrcAlpha);
-                    material.SetInt("_ZWrite", 1);
-                    SetKeyword(material, "_ALPHATEST_ON", false);
-                    SetKeyword(material, "_ALPHABLEND_ON", true);
+                    material.SetOverrideTag(TagRenderTypeKey, TagRenderTypeValueTransparent);
+                    material.SetInt(PropNameSrcBlend, (int) BlendMode.SrcAlpha);
+                    material.SetInt(PropNameDstBlend, (int) BlendMode.OneMinusSrcAlpha);
+                    material.SetInt(PropNameZWrite, 1);
+                    SetKeyword(material, KeywordAlphaTestOn, false);
+                    SetKeyword(material, KeywordAlphaBlendOn, true);
                     if (isRenderModeChangedByUser) material.renderQueue = (int) RenderQueue.Transparent;
                     break;
             }
@@ -232,16 +238,16 @@ namespace UniGLTF.UniUnlit
             switch (vColBlendOp)
             {
                 case UniUnlitVertexColorBlendOp.None:
-                    SetKeyword(material, "_VERTEXCOL_MUL", false);
-                    SetKeyword(material, "_VERTEXCOL_ADD", false);
+                    SetKeyword(material, KeywordVertexColMul, false);
+                    SetKeyword(material, KeywordVertexColAdd, false);
                     break;
                 case UniUnlitVertexColorBlendOp.Multiply:
-                    SetKeyword(material, "_VERTEXCOL_MUL", true);
-                    SetKeyword(material, "_VERTEXCOL_ADD", false);
+                    SetKeyword(material, KeywordVertexColMul, true);
+                    SetKeyword(material, KeywordVertexColAdd, false);
                     break;
                 case UniUnlitVertexColorBlendOp.Additive:
-                    SetKeyword(material, "_VERTEXCOL_MUL", false);
-                    SetKeyword(material, "_VERTEXCOL_ADD", true);
+                    SetKeyword(material, KeywordVertexColMul, false);
+                    SetKeyword(material, KeywordVertexColAdd, true);
                     break;
             }
         }
