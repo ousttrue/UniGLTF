@@ -52,8 +52,8 @@ namespace UniGLTF
                     context.SaveTexturesAsPng(prefabPath);
                     EditorApplication.delayCall += () =>
                     {
-                            // delay and can import png texture
-                            gltfImporter.Load(context);
+                        // delay and can import png texture
+                        gltfImporter.Load(context);
                         context.SaveAsAsset(prefabPath);
                         context.Destroy(false);
                     };

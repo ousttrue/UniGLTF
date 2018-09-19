@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -10,6 +11,54 @@ namespace UniGLTF
 {
     public static class TextureIO
     {
+        public static RenderTextureReadWrite GetColorSpace(glTFTextureTypes textureType)
+        {
+            switch (textureType)
+            {
+                case glTFTextureTypes.Metallic:
+                case glTFTextureTypes.Normal:
+                case glTFTextureTypes.Occlusion:
+                    return RenderTextureReadWrite.Linear;
+                case glTFTextureTypes.BaseColor:
+                case glTFTextureTypes.Emissive:
+                    return RenderTextureReadWrite.sRGB;
+                default:
+                    return RenderTextureReadWrite.sRGB;
+            }
+        }
+
+        public static glTFTextureTypes GetglTFTextureType(string shaderName, string propName)
+        {
+            switch (propName)
+            {
+                case "_Color":
+                    return glTFTextureTypes.BaseColor;
+                case "_MetallicGlossMap":
+                    return glTFTextureTypes.Metallic;
+                case "_BumpMap":
+                    return glTFTextureTypes.Normal;
+                case "_OcclusionMap":
+                    return glTFTextureTypes.Occlusion;
+                case "_EmissionMap":
+                    return glTFTextureTypes.Emissive;
+                default:
+                    return glTFTextureTypes.Unknown;
+            }
+        }
+
+        public static glTFTextureTypes GetglTFTextureType(glTF glTf, int textureIndex)
+        {
+            foreach (var material in glTf.materials)
+            {
+                var textureInfo = material.GetTextures().FirstOrDefault(x => (x!=null) && x.index == textureIndex);
+                if (textureInfo != null)
+                {
+                    return textureInfo.TextreType;
+                }
+            }
+            return glTFTextureTypes.Unknown;
+        }
+
 #if UNITY_EDITOR
         public static void MarkTextureAssetAsNormalMap(string assetPath)
         {
@@ -33,16 +82,12 @@ namespace UniGLTF
         public struct TextureExportItem
         {
             public Texture Texture;
-            public bool IsNormalMap;
+            public glTFTextureTypes TextureType;
 
-            public TextureExportItem(Texture texture, bool isNormalMap)
+            public TextureExportItem(Texture texture, glTFTextureTypes textureType)
             {
                 Texture = texture;
-                IsNormalMap = isNormalMap;
-            }
-
-            public TextureExportItem(Texture texture) : this(texture, false)
-            {
+                TextureType = textureType;
             }
         }
 
@@ -51,14 +96,15 @@ namespace UniGLTF
             var props = ShaderPropExporter.PreShaderPropExporter.GetPropsForSupportedShader(m.shader.name);
             if (props == null)
             {
-                yield return new TextureExportItem(m.mainTexture);
+                yield return new TextureExportItem(m.mainTexture, glTFTextureTypes.BaseColor);
             }
 
             foreach (var prop in props.Properties)
             {
+
                 if (prop.ShaderPropertyType == ShaderPropExporter.ShaderPropertyType.TexEnv)
                 {
-                    yield return new TextureExportItem(m.GetTexture(prop.Key), prop.IsNormalMap);
+                    yield return new TextureExportItem(m.GetTexture(prop.Key), GetglTFTextureType(m.shader.name, prop.Key));
                 }
             }
         }
@@ -69,17 +115,29 @@ namespace UniGLTF
             //public string Path;
             public string Mime;
 
-            public BytesWithPath(Texture texture, bool isNormalMap)
+            public BytesWithPath(Texture texture, glTFTextureTypes textureType)
             {
+#if false
+                var path = UnityPath.FromAsset(texture);
+                if (path.IsUnderAssetsFolder)
+                {
+                    if (path.Extension == ".png")
+                    {
+                        Bytes = System.IO.File.ReadAllBytes(path.FullPath);
+                        Mime = "image/png";
+                        return;
+                    }                    
+                }
+#endif
                 //Path = "";
-                Bytes = TextureItem.CopyTexture(texture, isNormalMap).EncodeToPNG();
+                Bytes = TextureItem.CopyTexture(texture, TextureIO.GetColorSpace(textureType), null).EncodeToPNG();
                 Mime = "image/png";
             }
         }
 
-        public static int ExportTexture(glTF gltf, int bufferIndex, Texture texture, bool isNormalMap)
+        public static int ExportTexture(glTF gltf, int bufferIndex, Texture texture, glTFTextureTypes textureType)
         {
-            var bytesWithPath = new BytesWithPath(texture, isNormalMap); ;
+            var bytesWithPath = new BytesWithPath(texture, textureType); ;
 
             // add view
             var view = gltf.buffers[bufferIndex].Append(bytesWithPath.Bytes, glBufferTarget.NONE);

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 
@@ -18,6 +19,10 @@ namespace UniGLTF
             // common params
             material.name = m.name;
             Export_Color(m, textures, material);
+            Export_Metallic(m, textures, material);
+            Export_Normal(m, textures, material);
+            Export_Occlusion(m, textures, material);
+            Export_Emission(m, textures, material);
 
             return material;
         }
@@ -31,10 +36,77 @@ namespace UniGLTF
 
             if (m.mainTexture != null)
             {
-                material.pbrMetallicRoughness.baseColorTexture = new glTFTextureInfo
+                material.pbrMetallicRoughness.baseColorTexture = new glTFMaterialBaseColorTextureInfo()
                 {
                     index = textures.IndexOf(m.mainTexture),
                 };
+            }
+        }
+
+        static void Export_Metallic(Material m, List<Texture> textures, glTFMaterial material)
+        {
+            if (m.HasProperty("_Metallic"))
+            {
+                material.pbrMetallicRoughness.metallicFactor = m.GetFloat("_Metallic");
+            }
+
+            if (m.HasProperty("_Glossiness"))
+            {
+                material.pbrMetallicRoughness.roughnessFactor = 1.0f - m.GetFloat("_Glossiness");
+            }
+
+            var index = textures.IndexOf(m.GetTexture("_MetallicGlossMap"));
+            if (index != -1 && m.HasProperty("_MetallicGlossMap"))
+            {
+                textures[index] = (new MetallicRoughnessConverter()).GetExportTexture(textures[index] as Texture2D);
+                material.pbrMetallicRoughness.metallicRoughnessTexture = new glTFMaterialMetallicRoughnessTextureInfo()
+                {
+                    index = index,
+                };
+            } 
+        }
+
+        static void Export_Normal(Material m, List<Texture> textures, glTFMaterial material)
+        {
+            var index = textures.IndexOf(m.GetTexture("_BumpMap"));
+            if (index != -1 && m.HasProperty("_BumpMap"))
+            {
+                textures[index] = (new NormalConverter()).GetExportTexture(textures[index] as Texture2D);
+                material.normalTexture = new glTFMaterialNormalTextureInfo()
+                {
+                    index = index,
+                };
+            }
+        }
+
+        static void Export_Occlusion(Material m, List<Texture> textures, glTFMaterial material)
+        {
+            var index = textures.IndexOf(m.GetTexture("_OcclusionMap"));
+            if (index != -1 && m.HasProperty("_OcclusionMap"))
+            {
+                textures[index] = (new OcclusionConverter()).GetExportTexture(textures[index] as Texture2D);
+                material.occlusionTexture = new glTFMaterialOcclusionTextureInfo()
+                {
+                    index = index,
+                };
+            }
+        }
+
+        static void Export_Emission(Material m, List<Texture> textures, glTFMaterial material)
+        {
+            var index = textures.IndexOf(m.GetTexture("_EmissionMap"));
+            if (index != -1 && m.HasProperty("_EmissionMap"))
+            {
+                material.emissiveTexture = new glTFMaterialEmissiveTextureInfo()
+                {
+                    index = index,
+                };
+            }
+
+            if (m.HasProperty("_EmissionColor"))
+            {
+                var color = m.GetColor("_EmissionColor");
+                material.emissiveFactor = new float[]{ color.r, color.g, color.b };
             }
         }
 

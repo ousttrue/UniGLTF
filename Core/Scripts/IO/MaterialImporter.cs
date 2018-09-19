@@ -98,7 +98,8 @@ namespace UniGLTF
                         var texture = Context.GetTexture(x.pbrMetallicRoughness.metallicRoughnessTexture.index);
                         if (texture != null)
                         {
-                            material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessOcclusionConverted());
+                            texture.Converted = (new MetallicRoughnessConverter()).GetImportTexture(texture.Texture);
+                            material.SetTexture("_MetallicGlossMap", texture.Converted);
                         }
                     }
 
@@ -122,7 +123,9 @@ namespace UniGLTF
                         if (Application.isPlaying)
                         {
                             Debug.LogWarning("require nomal map conversion");
-                            material.SetTexture("_BumpMap", texture.GetNormalMapConverted());
+
+                            texture.Converted = (new NormalConverter()).GetImportTexture(texture.Texture);
+                            material.SetTexture("_BumpMap", texture.Converted);
                         }
                         else
                         {
@@ -147,7 +150,8 @@ namespace UniGLTF
                     var texture = Context.GetTexture(x.occlusionTexture.index);
                     if (texture != null)
                     {
-                        material.SetTexture("_OcclusionMap", texture.GetMetallicRoughnessOcclusionConverted());
+                        texture.Converted = (new OcclusionConverter()).GetImportTexture(texture.Texture);
+                        material.SetTexture("_OcclusionMap", texture.Converted);
                     }
                 }
 

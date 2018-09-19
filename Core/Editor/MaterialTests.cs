@@ -34,7 +34,7 @@ namespace UniGLTF
                     alphaMode = "OPAQUE",
                     pbrMetallicRoughness = new glTFPbrMetallicRoughness
                     {
-                        baseColorTexture = new glTFTextureInfo(),
+                        baseColorTexture = new glTFMaterialBaseColorTextureInfo(),
                     },
                     extensions = new glTFMaterial_extensions
                     {
@@ -52,7 +52,7 @@ namespace UniGLTF
                     pbrMetallicRoughness = new glTFPbrMetallicRoughness
                     {
                         baseColorFactor = new float[] { 1, 0, 0, 1 },
-                        baseColorTexture = new glTFTextureInfo(),
+                        baseColorTexture = new glTFMaterialBaseColorTextureInfo(),
                     },
                     extensions = new glTFMaterial_extensions
                     {
@@ -86,7 +86,7 @@ namespace UniGLTF
                     alphaMode = "BLEND",
                     pbrMetallicRoughness = new glTFPbrMetallicRoughness
                     {
-                        baseColorTexture = new glTFTextureInfo(),
+                        baseColorTexture = new glTFMaterialBaseColorTextureInfo(),
                     },
                     extensions = new glTFMaterial_extensions
                     {
@@ -104,7 +104,7 @@ namespace UniGLTF
                     pbrMetallicRoughness = new glTFPbrMetallicRoughness
                     {
                         baseColorFactor = new float[] { 1, 0, 0, 1 },
-                        baseColorTexture = new glTFTextureInfo(),
+                        baseColorTexture = new glTFMaterialBaseColorTextureInfo(),
                     },
                     extensions = new glTFMaterial_extensions
                     {
@@ -121,7 +121,7 @@ namespace UniGLTF
                     alphaMode = "MASK",
                     pbrMetallicRoughness = new glTFPbrMetallicRoughness
                     {
-                        baseColorTexture = new glTFTextureInfo(),
+                        baseColorTexture = new glTFMaterialBaseColorTextureInfo(),
                     },
                     extensions = new glTFMaterial_extensions
                     {
@@ -139,7 +139,7 @@ namespace UniGLTF
                     pbrMetallicRoughness = new glTFPbrMetallicRoughness
                     {
                         baseColorFactor = new float[] { 1, 0, 0, 1 },
-                        baseColorTexture = new glTFTextureInfo(),
+                        baseColorTexture = new glTFMaterialBaseColorTextureInfo(),
                     },
                     extensions = new glTFMaterial_extensions
                     {
