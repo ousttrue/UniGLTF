@@ -34,7 +34,7 @@ namespace UniGLTF
                 material.pbrMetallicRoughness.baseColorFactor = m.color.ToArray();
             }
 
-            var index = textures.IndexOf(m.mainTexture);
+            var index = textures.IndexOf(m.GetTexture("_MainTex"));
             if (index != -1 && m.mainTexture != null)
             {
                 textures[index] = TextureItem.CopyTexture(m.mainTexture, RenderTextureReadWrite.sRGB, null);
