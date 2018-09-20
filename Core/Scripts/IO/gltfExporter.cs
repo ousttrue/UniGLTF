@@ -560,16 +560,18 @@ namespace UniGLTF
                 Materials = Nodes.SelectMany(x => x.GetSharedMaterials()).Where(x => x != null).Distinct().ToList();
                 var unityTextures = Materials.SelectMany(x => TextureIO.GetTextures(x)).Where(x => x.Texture != null).Distinct().ToList();
 
-                for (int i = 0; i < unityTextures.Count; ++i)
-                {
-                    var texture = unityTextures[i];
-                    TextureIO.ExportTexture(gltf, bufferIndex, texture.Texture, texture.IsNormalMap);
-                }
-
+                List<Texture> exportTextures = new List<Texture>();
                 Textures = unityTextures.Select(y => y.Texture).ToList();
                 var materialExporter = CreateMaterialExporter();
-                gltf.materials = Materials.Select(x => materialExporter.ExportMaterial(x, Textures)).ToList();
+                gltf.materials = Materials.Select(x => materialExporter.ExportMaterial(x, Textures, ref exportTextures)).ToList();
+
+                for (int i = 0; i < unityTextures.Count; ++i)
+                {
+                    var unityTexture = unityTextures[i];
+                    TextureIO.ExportTexture(gltf, bufferIndex, exportTextures[i], unityTexture.TextureType);
+                }
                 #endregion
+
 
                 #region Meshes
                 var unityMeshes = Nodes
