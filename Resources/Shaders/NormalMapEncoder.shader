@@ -1,8 +1,8 @@
-﻿Shader "UniGLTF/Dxt5Decoder"
+﻿Shader "UniGLTF/NormalMapEncoder"
 {
 	Properties
 	{
-		_MainTex ("Texture", 2D) = "white" {}
+		_MainTex("Texture", 2D) = "white" {}
 	}
 	SubShader
 	{
@@ -14,7 +14,7 @@
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
-			
+
 			#include "UnityCG.cginc"
 
 			struct appdata
@@ -29,26 +29,27 @@
 				float4 vertex : SV_POSITION;
 			};
 
-			v2f vert (appdata v)
+			v2f vert(appdata v)
 			{
 				v2f o;
 				o.vertex = UnityObjectToClipPos(v.vertex);
 				o.uv = v.uv;
 				return o;
 			}
-			
+
 			sampler2D _MainTex;
 
-			fixed4 frag (v2f i) : SV_Target
+			fixed3 frag(v2f i) : SV_Target
 			{
 				fixed4 col = tex2D(_MainTex, i.uv);
+			    fixed3 normal;
+				normal.xy = col.wy * 2 - 1;
+				normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
 
-				col.xyz = (UnpackNormal(col) + 1) * 0.5;
-				col.w = 1;
-
-				return col;
+				return normal;
 			}
 			ENDCG
 		}
 	}
 }
+

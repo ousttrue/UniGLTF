@@ -34,26 +34,19 @@ namespace UniGLTF
                 material.pbrMetallicRoughness.baseColorFactor = m.color.ToArray();
             }
 
-            if (m.mainTexture != null)
+            var index = textures.IndexOf(m.mainTexture);
+            if (index != -1 && m.mainTexture != null)
             {
+                textures[index] = TextureItem.CopyTexture(m.mainTexture, RenderTextureReadWrite.sRGB, null);
                 material.pbrMetallicRoughness.baseColorTexture = new glTFMaterialBaseColorTextureInfo()
                 {
-                    index = textures.IndexOf(m.mainTexture),
+                    index = index,
                 };
             }
         }
 
         static void Export_Metallic(Material m, List<Texture> textures, glTFMaterial material)
         {
-            if (m.HasProperty("_Metallic"))
-            {
-                material.pbrMetallicRoughness.metallicFactor = m.GetFloat("_Metallic");
-            }
-
-            if (m.HasProperty("_Glossiness"))
-            {
-                material.pbrMetallicRoughness.roughnessFactor = 1.0f - m.GetFloat("_Glossiness");
-            }
 
             var index = textures.IndexOf(m.GetTexture("_MetallicGlossMap"));
             if (index != -1 && m.HasProperty("_MetallicGlossMap"))
@@ -63,7 +56,28 @@ namespace UniGLTF
                 {
                     index = index,
                 };
-            } 
+            }
+
+            if (index != -1)
+            {
+                material.pbrMetallicRoughness.metallicFactor = 1.0f;
+                if (m.HasProperty("_GlossMapScale"))
+                {
+                    material.pbrMetallicRoughness.roughnessFactor = 1.0f - m.GetFloat("_GlossMapScale");
+                }
+            }
+            else
+            {
+                if (m.HasProperty("_Metallic"))
+                {
+                    material.pbrMetallicRoughness.metallicFactor = m.GetFloat("_Metallic");
+                }
+                if (m.HasProperty("_Glossiness"))
+                {
+                    material.pbrMetallicRoughness.roughnessFactor = 1.0f - m.GetFloat("_Glossiness");
+                }
+
+            }
         }
 
         static void Export_Normal(Material m, List<Texture> textures, glTFMaterial material)
@@ -76,6 +90,11 @@ namespace UniGLTF
                 {
                     index = index,
                 };
+            }
+
+            if (index != -1 && m.HasProperty("_BumpScale"))
+            {
+                material.normalTexture.scale = m.GetFloat("_BumpScale");
             }
         }
 
@@ -90,23 +109,29 @@ namespace UniGLTF
                     index = index,
                 };
             }
+
+            if (index != -1 && m.HasProperty("_OcclusionStrength"))
+            {
+                material.occlusionTexture.strength = m.GetFloat("_OcclusionStrength");
+            }
         }
 
         static void Export_Emission(Material m, List<Texture> textures, glTFMaterial material)
         {
+            if (m.HasProperty("_EmissionColor"))
+            {
+                var color = m.GetColor("_EmissionColor");
+                material.emissiveFactor = new float[] { color.r, color.g, color.b };
+            }
+
             var index = textures.IndexOf(m.GetTexture("_EmissionMap"));
             if (index != -1 && m.HasProperty("_EmissionMap"))
             {
+                textures[index] = TextureItem.CopyTexture(textures[index], RenderTextureReadWrite.sRGB, null);
                 material.emissiveTexture = new glTFMaterialEmissiveTextureInfo()
                 {
                     index = index,
                 };
-            }
-
-            if (m.HasProperty("_EmissionColor"))
-            {
-                var color = m.GetColor("_EmissionColor");
-                material.emissiveFactor = new float[]{ color.r, color.g, color.b };
             }
         }
 

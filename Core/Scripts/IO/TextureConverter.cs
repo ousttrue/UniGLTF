@@ -14,7 +14,7 @@ namespace UniGLTF
     {
         public delegate Color32 ColorConversion(Color32 color);
 
-        public static Texture2D Convert(Texture2D texture, glTFTextureTypes textureType, ColorConversion colorConversion, Material convertMaterial, string extension)
+        public static Texture2D Convert(Texture2D texture, glTFTextureTypes textureType, ColorConversion colorConversion, Material convertMaterial)
         {
             var copyTexture = TextureItem.CopyTexture(texture, TextureIO.GetColorSpace(textureType), convertMaterial);
             if (colorConversion != null)
@@ -22,10 +22,24 @@ namespace UniGLTF
                 copyTexture.SetPixels32(copyTexture.GetPixels32().Select(x => colorConversion(x)).ToArray());
                 copyTexture.Apply();
             }
-
-            if(string.IsNullOrEmpty(copyTexture.name) || !texture.name.EndsWith(extension))
-                copyTexture.name = texture.name + extension;
+            copyTexture.name = texture.name;
             return copyTexture;
+        }
+
+        public static void AppendTextureExtension(Texture texture, string extension)
+        {
+            if (!texture.name.EndsWith(extension))
+            {
+                texture.name = texture.name + extension;
+            }
+        }
+
+        public static void RemoveTextureExtension(Texture texture, string extension)
+        {
+            if (texture.name.EndsWith(extension))
+            {
+                texture.name = texture.name.Replace(extension, "");
+            }
         }
     }
 
@@ -35,22 +49,26 @@ namespace UniGLTF
 
         public Texture2D GetImportTexture(Texture2D texture)
         {
-            return TextureConverter.Convert(texture, glTFTextureTypes.Metallic, Import, null, m_extension);
+            var converted = TextureConverter.Convert(texture, glTFTextureTypes.Metallic, Import, null);
+            TextureConverter.AppendTextureExtension(converted, m_extension);
+            return converted;
         }
 
         public Texture2D GetExportTexture(Texture2D texture)
         {
-            return TextureConverter.Convert(texture, glTFTextureTypes.Metallic, Export, null, m_extension);
+            var converted = TextureConverter.Convert(texture, glTFTextureTypes.Metallic, Export, null);
+            TextureConverter.RemoveTextureExtension(converted, m_extension);
+            return converted;
         }
 
         public Color32 Import(Color32 src)
         {
             return new Color32
             {
-                r = src.b, // metallic
+                r = src.b,
                 g = 0,
                 b = 0,
-                a = (byte)(255 - src.g), // smoothness
+                a = (byte)(255 - src.g),
             };
         }
 
@@ -61,7 +79,7 @@ namespace UniGLTF
                 r = 0,
                 g = (byte)(255 - src.a),
                 b = src.r,
-                a = 1,
+                a = 255,
             };
         }
     }
@@ -70,40 +88,47 @@ namespace UniGLTF
     {
         private const string m_extension = ".normal";
 
-        private Material m_dxt5decode;
-        private Material GetDecodeDxt5()
+        private Material m_decoder;
+        private Material GetDecoder()
         {
-            if (m_dxt5decode == null)
+            if (m_decoder == null)
             {
-                m_dxt5decode = new Material(Shader.Find("UniGLTF/Dxt5Decoder"));
+                m_decoder = new Material(Shader.Find("UniGLTF/NormalMapDecoder"));
             }
-            return m_dxt5decode;
+            return m_decoder;
+        }
+
+        private Material m_encoder;
+        private Material GetEncoder()
+        {
+            if (m_encoder == null)
+            {
+                m_encoder = new Material(Shader.Find("UniGLTF/NormalMapEncoder"));
+            }
+            return m_encoder;
         }
 
         public Texture2D GetImportTexture(Texture2D texture)
         {
-#if UNITY_EDITOR
-            return texture;
-#endif
-            return TextureConverter.Convert(texture, glTFTextureTypes.Normal, Import, null, m_extension);
-
+            if (!Application.isPlaying)
+            {
+                return texture;
+            }
+            else
+            {
+                var mat = GetEncoder();
+                var converted = TextureConverter.Convert(texture, glTFTextureTypes.Normal, null, mat);
+                TextureConverter.AppendTextureExtension(converted, m_extension);
+                return converted;
+            }
         }
 
         public Texture2D GetExportTexture(Texture2D texture)
         {
-            var mat = GetDecodeDxt5();
-            return TextureConverter.Convert(texture, glTFTextureTypes.Normal, null, mat, m_extension);
-        }
-
-        public Color32 Import(Color32 src)
-        {
-            return new Color32
-            {
-                r = 0,
-                g = src.g,
-                b = 0,
-                a = src.r,
-            };
+            var mat = GetDecoder();
+            var converted = TextureConverter.Convert(texture, glTFTextureTypes.Normal, null, mat);
+            TextureConverter.RemoveTextureExtension(converted, m_extension);
+            return converted;
         }
     }
 
@@ -113,12 +138,16 @@ namespace UniGLTF
 
         public Texture2D GetImportTexture(Texture2D texture)
         {
-            return TextureConverter.Convert(texture, glTFTextureTypes.Occlusion, Import, null, m_extension);
+            var converted = TextureConverter.Convert(texture, glTFTextureTypes.Occlusion, Import, null);
+            TextureConverter.AppendTextureExtension(converted, m_extension);
+            return converted;
         }
 
         public Texture2D GetExportTexture(Texture2D texture)
         {
-            return TextureConverter.Convert(texture, glTFTextureTypes.Occlusion, Export, null, m_extension);
+            var converted = TextureConverter.Convert(texture, glTFTextureTypes.Occlusion, Export, null);
+            TextureConverter.RemoveTextureExtension(converted, m_extension);
+            return converted;
         }
 
         public Color32 Import(Color32 src)
@@ -128,7 +157,7 @@ namespace UniGLTF
                 r = 0,
                 g = src.r,
                 b = 0,
-                a = 1,
+                a = 255,
             };
         }
 
@@ -139,7 +168,7 @@ namespace UniGLTF
                 r = src.g,
                 g = 0,
                 b = 0,
-                a = 1,
+                a = 255,
             };
         }
     }

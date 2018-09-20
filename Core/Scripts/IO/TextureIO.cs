@@ -117,7 +117,7 @@ namespace UniGLTF
 
             public BytesWithPath(Texture texture, glTFTextureTypes textureType)
             {
-#if false
+#if UNITY_EDITOR
                 var path = UnityPath.FromAsset(texture);
                 if (path.IsUnderAssetsFolder)
                 {

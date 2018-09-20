@@ -62,7 +62,7 @@ namespace UniGLTF
     [Serializable]
     public class glTFMaterialNormalTextureInfo : glTFTextureInfo
     {
-        public float scale;
+        public float scale = 1.0f;
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
@@ -80,7 +80,7 @@ namespace UniGLTF
     public class glTFMaterialOcclusionTextureInfo : glTFTextureInfo
     {
         [JsonSchema(Minimum = 0.0, Maximum = 1.0)]
-        public float strength;
+        public float strength = 1.0f;
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
@@ -115,10 +115,10 @@ namespace UniGLTF
         public glTFMaterialMetallicRoughnessTextureInfo metallicRoughnessTexture = null;
 
         [JsonSchema(Minimum = 0.0, Maximum = 1.0)]
-        public float metallicFactor;
+        public float metallicFactor = 1.0f;
 
         [JsonSchema(Minimum = 0.0, Maximum = 1.0)]
-        public float roughnessFactor = 0.5f;
+        public float roughnessFactor = 1.0f;
 
         // empty schemas
         public object extensions;

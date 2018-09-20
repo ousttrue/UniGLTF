@@ -103,15 +103,8 @@ namespace UniGLTF
                         }
                     }
 
-                    if (x.pbrMetallicRoughness.metallicFactor != 0.0f)
-                    {
-                        material.SetFloat("_Metallic", x.pbrMetallicRoughness.metallicFactor);
-                    }
-
-                    if (x.pbrMetallicRoughness.roughnessFactor != 0.5f)
-                    {
-                        material.SetFloat("_Glossiness", 1.0f - x.pbrMetallicRoughness.roughnessFactor);
-                    }
+                    material.SetFloat("_Metallic", x.pbrMetallicRoughness.metallicFactor);
+                    material.SetFloat("_Glossiness", 1.0f - x.pbrMetallicRoughness.roughnessFactor);
                 }
 
                 if (x.normalTexture != null && x.normalTexture.index != -1)
@@ -122,8 +115,6 @@ namespace UniGLTF
                     {
                         if (Application.isPlaying)
                         {
-                            Debug.LogWarning("require nomal map conversion");
-
                             texture.Converted = (new NormalConverter()).GetImportTexture(texture.Texture);
                             material.SetTexture("_BumpMap", texture.Converted);
                         }
@@ -142,6 +133,8 @@ namespace UniGLTF
                             material.SetTexture("_BumpMap", texture.Texture);
 #endif
                         }
+
+                        material.SetFloat("_BumpScale", x.normalTexture.scale);
                     }
                 }
 
@@ -152,6 +145,7 @@ namespace UniGLTF
                     {
                         texture.Converted = (new OcclusionConverter()).GetImportTexture(texture.Texture);
                         material.SetTexture("_OcclusionMap", texture.Converted);
+                        material.SetFloat("_OcclusionStrength", x.occlusionTexture.strength);
                     }
                 }
 
