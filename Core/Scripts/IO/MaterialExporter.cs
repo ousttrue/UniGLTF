@@ -29,12 +29,16 @@ namespace UniGLTF
                 material.pbrMetallicRoughness.baseColorFactor = m.color.ToArray();
             }
 
-            if (m.mainTexture != null)
+            if (m.HasProperty("_MainTex"))
             {
-                material.pbrMetallicRoughness.baseColorTexture = new glTFTextureInfo
+                var mainTexture = m.GetTexture("_MainTex");
+                if (mainTexture != null)
                 {
-                    index = textures.IndexOf(m.mainTexture),
-                };
+                    material.pbrMetallicRoughness.baseColorTexture = new glTFTextureInfo
+                    {
+                        index = textures.IndexOf(mainTexture),
+                    };
+                }
             }
         }
 
