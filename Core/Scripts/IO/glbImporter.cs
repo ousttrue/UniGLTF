@@ -29,6 +29,11 @@ namespace UniGLTF
 
         public static List<GlbChunk> ParseGlbChanks(Byte[] bytes)
         {
+            if (bytes.Length == 0)
+            {
+                throw new Exception("empty bytes");
+            }
+
             int pos = 0;
             if (Encoding.ASCII.GetString(bytes, 0, 4) != GLB_MAGIC)
             {

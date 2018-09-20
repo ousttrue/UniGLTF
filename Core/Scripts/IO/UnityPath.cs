@@ -265,7 +265,7 @@ namespace UniGLTF
             {
                 yield return this;
 
-                foreach(var child in Children)
+                foreach(var child in ChildDirs)
                 {
                     foreach(var x in child.TravserseDir())
                     {
@@ -275,7 +275,7 @@ namespace UniGLTF
             }
         }
 
-        public IEnumerable<UnityPath> Children
+        public IEnumerable<UnityPath> ChildDirs
         {
             get
             {
@@ -286,7 +286,18 @@ namespace UniGLTF
             }
         }
 
-        #if UNITY_EDITOR
+        public IEnumerable<UnityPath> ChildFiles
+        {
+            get
+            {
+                foreach (var x in Directory.GetFiles(FullPath))
+                {
+                    yield return UnityPath.FromFullpath(x);
+                }
+            }
+        }
+
+#if UNITY_EDITOR
         public T GetImporter<T>() where T : AssetImporter
         {
             return AssetImporter.GetAtPath(Value) as T;
