@@ -28,21 +28,81 @@ namespace UniGLTF
             }
         }
 
+        public enum Interpolations
+        {
+            LINEAR,
+            STEP,
+            CUBICSPLINE
+        }
+
         public const string PATH_TRANSLATION = "translation";
+        public const string PATH_EULER_ROTATION = "rotation";
         public const string PATH_ROTATION = "rotation";
         public const string PATH_SCALE = "scale";
         public const string PATH_WEIGHT = "weights";
         public const string NOT_IMPLEMENTED = "NotImplemented";
 
-        public static int GetElementCount(string target)
+        public enum AnimationPropertys
         {
-            switch (target)
+            Translation,
+            EulerRotation,
+            Rotation,
+            Scale,
+            Weight,
+            BlendShape,
+
+            NotImplemented
+        }
+
+        public static string GetPathName(AnimationPropertys property)
+        {
+            switch (property)
             {
-                case PATH_TRANSLATION: return 3;
-                case PATH_ROTATION: return 4;
-                case PATH_SCALE: return 3;
+                case AnimationPropertys.Translation:
+                    return PATH_TRANSLATION;
+                case AnimationPropertys.EulerRotation: 
+                case AnimationPropertys.Rotation:
+                    return PATH_ROTATION;
+                case AnimationPropertys.Scale:
+                    return PATH_SCALE;
+                case AnimationPropertys.BlendShape:
+                    return PATH_WEIGHT;
                 default: throw new NotImplementedException();
             }
+        }
+
+        public static AnimationPropertys GetAnimationProperty(string path)
+        {
+            switch (path)
+            {
+                case PATH_TRANSLATION:
+                    return AnimationPropertys.Translation;
+                case PATH_ROTATION:
+                    return AnimationPropertys.Rotation;
+                case PATH_SCALE:
+                    return AnimationPropertys.Scale;
+                case PATH_WEIGHT:
+                    return AnimationPropertys.BlendShape;
+                default: throw new NotImplementedException();
+            }
+        }
+
+        public static int GetElementCount(AnimationPropertys property)
+        {
+            switch (property)
+            {
+                case AnimationPropertys.Translation: return 3;
+                case AnimationPropertys.EulerRotation: return 3;
+                case AnimationPropertys.Rotation: return 4;
+                case AnimationPropertys.Scale: return 3;
+                case AnimationPropertys.BlendShape: return 1;
+                default: throw new NotImplementedException();
+            }
+        }
+
+        public static int GetElementCount(string path)
+        {
+            return GetElementCount(GetAnimationProperty(path));
         }
     }
 
@@ -119,10 +179,10 @@ namespace UniGLTF
             f.KeyValue(() => samplers);
         }
 
-        public int AddChannelAndGetSampler(int nodeIndex, string path)
+        public int AddChannelAndGetSampler(int nodeIndex, glTFAnimationTarget.AnimationPropertys property)
         {
             // find channel
-            var channel = channels.FirstOrDefault(x => x.target.node == nodeIndex && x.target.path == path);
+            var channel = channels.FirstOrDefault(x => x.target.node == nodeIndex && x.target.path == glTFAnimationTarget.GetPathName(property));
             if (channel != null)
             {
                 return channel.sampler;
@@ -139,7 +199,7 @@ namespace UniGLTF
                 target = new glTFAnimationTarget
                 {
                     node = nodeIndex,
-                    path = path,
+                    path = glTFAnimationTarget.GetPathName(property),
                 },
             };
             channels.Add(channel);

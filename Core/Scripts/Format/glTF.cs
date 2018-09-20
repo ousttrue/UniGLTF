@@ -191,6 +191,35 @@ namespace UniGLTF
             }
             return result;
         }
+
+        public float[] GetArrayFromAccessorAsFloat(int accessorIndex)
+        {
+            var vertexAccessor = accessors[accessorIndex];
+
+            if (vertexAccessor.count <= 0) return new float[] { };
+
+            var bufferCount = vertexAccessor.count * vertexAccessor.TypeCount;
+            var result = (vertexAccessor.bufferView != -1)
+                    ? GetAttrib<float>(bufferCount, vertexAccessor.byteOffset, bufferViews[vertexAccessor.bufferView])
+                    : new float[bufferCount]
+                ;
+
+            var sparse = vertexAccessor.sparse;
+            if (sparse != null && sparse.count > 0)
+            {
+                // override sparse values
+                var indices = _GetIndices(bufferViews[sparse.indices.bufferView], sparse.count, sparse.indices.byteOffset, sparse.indices.componentType);
+                var values = GetAttrib<float>(sparse.count * vertexAccessor.TypeCount, sparse.values.byteOffset, bufferViews[sparse.values.bufferView]);
+
+                var it = indices.GetEnumerator();
+                for (int i = 0; i < sparse.count; ++i)
+                {
+                    it.MoveNext();
+                    result[it.Current] = values[i];
+                }
+            }
+            return result;
+        }
         #endregion
 
         [JsonSchema(MinItems = 1)]
