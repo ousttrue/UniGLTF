@@ -109,38 +109,43 @@ namespace UniGLTF
             }
         }
 
-        struct BytesWithPath
+
+        struct BytesWithMime
         {
             public Byte[] Bytes;
-            //public string Path;
             public string Mime;
+        }
 
-            public BytesWithPath(Texture texture, glTFTextureTypes textureType)
-            {
+        static BytesWithMime GetBytesWithMime(Texture texture, glTFTextureTypes textureType)
+        {
 #if UNITY_EDITOR
-                var path = UnityPath.FromAsset(texture);
-                if (path.IsUnderAssetsFolder)
+            var path = UnityPath.FromAsset(texture);
+            if (path.IsUnderAssetsFolder)
+            {
+                if (path.Extension == ".png")
                 {
-                    if (path.Extension == ".png")
+                    return new BytesWithMime
                     {
-                        Bytes = System.IO.File.ReadAllBytes(path.FullPath);
-                        Mime = "image/png";
-                        return;
-                    }                    
-                }
-#endif
-                //Path = "";
-                Bytes = TextureItem.CopyTexture(texture, TextureIO.GetColorSpace(textureType), null).EncodeToPNG();
-                Mime = "image/png";
+                        Bytes = System.IO.File.ReadAllBytes(path.FullPath),
+                        Mime = "image/png",
+                    };
+                }                    
             }
+#endif
+
+            return new BytesWithMime
+            {
+                Bytes = TextureItem.CopyTexture(texture, TextureIO.GetColorSpace(textureType), null).EncodeToPNG(),
+                Mime = "image/png",
+            };
         }
 
         public static int ExportTexture(glTF gltf, int bufferIndex, Texture texture, glTFTextureTypes textureType)
         {
-            var bytesWithPath = new BytesWithPath(texture, textureType); ;
+            var bytesWithMime = GetBytesWithMime(texture, textureType); ;
 
             // add view
-            var view = gltf.buffers[bufferIndex].Append(bytesWithPath.Bytes, glBufferTarget.NONE);
+            var view = gltf.buffers[bufferIndex].Append(bytesWithMime.Bytes, glBufferTarget.NONE);
             var viewIndex = gltf.AddBufferView(view);
 
             // add image
@@ -149,7 +154,7 @@ namespace UniGLTF
             {
                 name = texture.name,
                 bufferView = viewIndex,
-                mimeType = bytesWithPath.Mime,
+                mimeType = bytesWithMime.Mime,
             });
 
             // add sampler
