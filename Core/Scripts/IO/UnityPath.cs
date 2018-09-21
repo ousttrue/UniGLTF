@@ -303,24 +303,6 @@ namespace UniGLTF
             return AssetImporter.GetAtPath(Value) as T;
         }
 
-        public void MarkTextureAssetAsNormalMap()
-        {
-            if (IsNull)
-            {
-                return;
-            }
-
-            var textureImporter = GetImporter<TextureImporter>();
-            if (null == textureImporter)
-            {
-                return;
-            }
-
-            //Debug.LogFormat("[MarkTextureAssetAsNormalMap] {0}", assetPath);
-            textureImporter.textureType = TextureImporterType.NormalMap;
-            textureImporter.SaveAndReimport();
-        }
-
         public static UnityPath FromAsset(UnityEngine.Object asset)
         {
             return new UnityPath(AssetDatabase.GetAssetPath(asset));

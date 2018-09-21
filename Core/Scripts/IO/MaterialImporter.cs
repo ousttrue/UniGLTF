@@ -98,19 +98,13 @@ namespace UniGLTF
                         var texture = Context.GetTexture(x.pbrMetallicRoughness.metallicRoughnessTexture.index);
                         if (texture != null)
                         {
-                            material.SetTexture("_MetallicGlossMap", texture.GetMetallicRoughnessOcclusionConverted());
+                            texture.Converted = (new MetallicRoughnessConverter()).GetImportTexture(texture.Texture);
+                            material.SetTexture("_MetallicGlossMap", texture.Converted);
                         }
                     }
 
-                    if (x.pbrMetallicRoughness.metallicFactor != 0.0f)
-                    {
-                        material.SetFloat("_Metallic", x.pbrMetallicRoughness.metallicFactor);
-                    }
-
-                    if (x.pbrMetallicRoughness.roughnessFactor != 0.5f)
-                    {
-                        material.SetFloat("_Glossiness", 1.0f - x.pbrMetallicRoughness.roughnessFactor);
-                    }
+                    material.SetFloat("_Metallic", x.pbrMetallicRoughness.metallicFactor);
+                    material.SetFloat("_Glossiness", 1.0f - x.pbrMetallicRoughness.roughnessFactor);
                 }
 
                 if (x.normalTexture != null && x.normalTexture.index != -1)
@@ -121,8 +115,8 @@ namespace UniGLTF
                     {
                         if (Application.isPlaying)
                         {
-                            Debug.LogWarning("require nomal map conversion");
-                            material.SetTexture("_BumpMap", texture.GetNormalMapConverted());
+                            texture.Converted = (new NormalConverter()).GetImportTexture(texture.Texture);
+                            material.SetTexture("_BumpMap", texture.Converted);
                         }
                         else
                         {
@@ -139,6 +133,8 @@ namespace UniGLTF
                             material.SetTexture("_BumpMap", texture.Texture);
 #endif
                         }
+
+                        material.SetFloat("_BumpScale", x.normalTexture.scale);
                     }
                 }
 
@@ -147,7 +143,9 @@ namespace UniGLTF
                     var texture = Context.GetTexture(x.occlusionTexture.index);
                     if (texture != null)
                     {
-                        material.SetTexture("_OcclusionMap", texture.GetMetallicRoughnessOcclusionConverted());
+                        texture.Converted = (new OcclusionConverter()).GetImportTexture(texture.Texture);
+                        material.SetTexture("_OcclusionMap", texture.Converted);
+                        material.SetFloat("_OcclusionStrength", x.occlusionTexture.strength);
                     }
                 }
 

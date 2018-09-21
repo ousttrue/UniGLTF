@@ -3,8 +3,23 @@ using UniJSON;
 
 namespace UniGLTF
 {
+    public enum glTFTextureTypes
+    {
+        BaseColor,
+        Metallic,
+        Normal,
+        Occlusion,
+        Emissive,
+        Unknown
+    }
+
+    public interface IglTFTextureinfo
+    {
+        glTFTextureTypes TextreType { get; }
+    }
+
     [Serializable]
-    public class glTFTextureInfo : JsonSerializableBase
+    public abstract class glTFTextureInfo : JsonSerializableBase, IglTFTextureinfo
     {
         [JsonSchema(Required = true, Minimum = 0)]
         public int index = -1;
@@ -21,18 +36,43 @@ namespace UniGLTF
             f.KeyValue(() => index);
             f.KeyValue(() => texCoord);
         }
+
+        public abstract glTFTextureTypes TextreType { get; }
     }
 
 
     [Serializable]
+    public class glTFMaterialBaseColorTextureInfo : glTFTextureInfo
+    {
+        public override glTFTextureTypes TextreType
+        {
+            get { return glTFTextureTypes.BaseColor; }
+        }
+    }
+
+    [Serializable]
+    public class glTFMaterialMetallicRoughnessTextureInfo : glTFTextureInfo
+    {
+        public override glTFTextureTypes TextreType
+        {
+            get { return glTFTextureTypes.Metallic; }
+        }
+    }
+
+    [Serializable]
     public class glTFMaterialNormalTextureInfo : glTFTextureInfo
     {
-        public float scale;
+        public float scale = 1.0f;
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => scale);
             base.SerializeMembers(f);
+        }
+
+        public override glTFTextureTypes TextreType
+        {
+            get { return glTFTextureTypes.Normal; }
         }
     }
 
@@ -40,31 +80,45 @@ namespace UniGLTF
     public class glTFMaterialOcclusionTextureInfo : glTFTextureInfo
     {
         [JsonSchema(Minimum = 0.0, Maximum = 1.0)]
-        public float strength;
+        public float strength = 1.0f;
 
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             f.KeyValue(() => strength);
             base.SerializeMembers(f);
         }
+
+        public override glTFTextureTypes TextreType
+        {
+            get { return glTFTextureTypes.Occlusion; }
+        }
+    }
+
+    [Serializable]
+    public class glTFMaterialEmissiveTextureInfo : glTFTextureInfo
+    {
+        public override glTFTextureTypes TextreType
+        {
+            get { return glTFTextureTypes.Emissive; }
+        }
     }
 
     [Serializable]
     public class glTFPbrMetallicRoughness : JsonSerializableBase
     {
-        public glTFTextureInfo baseColorTexture = null;
+        public glTFMaterialBaseColorTextureInfo baseColorTexture = null;
 
         [JsonSchema(MinItems = 4, MaxItems = 4)]
         [ItemJsonSchema(Minimum = 0.0, Maximum = 1.0)]
         public float[] baseColorFactor;
 
-        public glTFTextureInfo metallicRoughnessTexture = null;
+        public glTFMaterialMetallicRoughnessTextureInfo metallicRoughnessTexture = null;
 
         [JsonSchema(Minimum = 0.0, Maximum = 1.0)]
-        public float metallicFactor;
+        public float metallicFactor = 1.0f;
 
         [JsonSchema(Minimum = 0.0, Maximum = 1.0)]
-        public float roughnessFactor = 0.5f;
+        public float roughnessFactor = 1.0f;
 
         // empty schemas
         public object extensions;
@@ -98,7 +152,7 @@ namespace UniGLTF
 
         public glTFMaterialOcclusionTextureInfo occlusionTexture = null;
 
-        public glTFTextureInfo emissiveTexture = null;
+        public glTFMaterialEmissiveTextureInfo emissiveTexture = null;
 
         [JsonSchema(MinItems = 3, MaxItems = 3)]
         [ItemJsonSchema(Minimum = 0.0, Maximum = 1.0)]
@@ -154,6 +208,18 @@ namespace UniGLTF
             {
                 f.KeyValue(() => extensions);
             }
+        }
+
+        public glTFTextureInfo[] GetTextures()
+        {
+            return new glTFTextureInfo[]
+            {
+                pbrMetallicRoughness.baseColorTexture,
+                pbrMetallicRoughness.metallicRoughnessTexture,
+                normalTexture,
+                occlusionTexture,
+                emissiveTexture
+            };
         }
     }
 }

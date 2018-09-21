@@ -3,15 +3,32 @@ using System.Linq;
 using System.Collections.Generic;
 using System;
 using System.IO;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 
 namespace UniGLTF
 {
     public class TextureItem
     {
-        int m_textureIndex;
+        private int m_textureIndex;
+        private string m_textureName;
 
-        public Texture2D Texture;
+        private Texture2D m_texture;
+        private Texture2D m_converted;
+
+        public Texture2D Texture
+        {
+            get { return m_texture; }
+        }
+
+        public Texture2D Converted
+        {
+            get { return m_converted; }
+            set { m_converted = value; }
+        }
+
         UnityPath m_assetPath;
         public bool IsAsset
         {
@@ -19,6 +36,12 @@ namespace UniGLTF
             {
                 return m_assetPath.IsUnderAssetsFolder;
             }
+        }
+
+        public IEnumerable<Texture2D> GetTexturesForSaveAssets()
+        {
+            if (!IsAsset) yield return m_texture;
+            if (m_converted != null) yield return m_converted;
         }
 
         Byte[] m_imageBytes;
@@ -36,14 +59,6 @@ namespace UniGLTF
             {
                 return bytes.Array.Skip(bytes.Offset).Take(bytes.Count).ToArray();
             }
-        }
-
-        string m_textureName;
-
-        public IEnumerable<Texture2D> GetTexturesForSaveAssets()
-        {
-            if (!IsAsset) yield return Texture;
-            if (m_metallicRoughnessOcclusion != null) yield return m_metallicRoughnessOcclusion;
         }
 
         public TextureItem(glTF gltf, int index, UnityPath textureBase = default(UnityPath))
@@ -78,7 +93,9 @@ namespace UniGLTF
 
         public void ProcessOnMainThread(glTF gltf)
         {
-            GetOrCreateTexture();
+            var textureType = TextureIO.GetglTFTextureType(gltf, m_textureIndex);
+            var colorSpace = TextureIO.GetColorSpace(textureType);
+            GetOrCreateTexture(colorSpace == RenderTextureReadWrite.Linear);
             SetSampler(gltf);
         }
 
@@ -110,7 +127,7 @@ namespace UniGLTF
             }
         }
 
-        public void GetOrCreateTexture()
+        public void GetOrCreateTexture(bool isLinear)
         {
 #if UNITY_EDITOR
             if (IsAsset)
@@ -119,7 +136,10 @@ namespace UniGLTF
                 // texture from assets
                 //
                 m_assetPath.ImportAsset();
-                Texture = m_assetPath.LoadAsset<Texture2D>();
+                TextureImporter importer = m_assetPath.GetImporter<TextureImporter>();
+                importer.sRGBTexture = !isLinear;
+                importer.SaveAndReimport();
+                m_texture = m_assetPath.LoadAsset<Texture2D>();
             }
             else
 #endif
@@ -127,169 +147,40 @@ namespace UniGLTF
                 //
                 // texture from image(png etc) bytes
                 //
-                Texture = new Texture2D(2, 2);
+                m_texture = new Texture2D(2, 2, TextureFormat.ARGB32, false, isLinear);
                 if (m_imageBytes != null)
                 {
-                    Texture.LoadImage(m_imageBytes);
+                    m_texture.LoadImage(m_imageBytes);
                 }
             }
-            Texture.name = m_textureName;
+            m_texture.name = m_textureName;
         }
 
         public void SetSampler(glTF gltf)
         {
-            TextureSamplerUtil.SetSampler(Texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
+            TextureSamplerUtil.SetSampler(m_texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
         }
 
-        #region NormalMap
-        Texture2D m_normalMap;
-        public Texture2D GetNormalMapConverted()
-        {
-            if (m_normalMap == null)
-            {
-                var texture = CopyTexture(Texture, false);
-                texture.SetPixels32(texture.GetPixels32().Select(ConvertNormalMap).ToArray());
-                texture.Apply();
-                texture.name = this.Texture.name + ".normalMap";
-                m_normalMap = texture;
-            }
-            return m_normalMap;
-        }
-
-        static Color32 ConvertNormalMap(Color32 src)
-        {
-            return new Color32
-            {
-                r = 0,
-                g = src.g,
-                b = 0,
-                a = src.r,
-            };
-        }
-        #endregion
-
-        #region MetallicRoughness
-        Texture2D m_metallicRoughnessOcclusion;
-        public Texture2D GetMetallicRoughnessOcclusionConverted()
-        {
-            if (m_metallicRoughnessOcclusion == null)
-            {
-                var texture = CopyTexture(Texture, false);
-                texture.SetPixels32(texture.GetPixels32().Select(ConvertMetallicRoughnessOcclusion).ToArray());
-                texture.Apply();
-                texture.name = this.Texture.name + ".metallicRoughnessOcclusion";
-                m_metallicRoughnessOcclusion = texture;
-            }
-            return m_metallicRoughnessOcclusion;
-        }
-
-        static Color32 ConvertMetallicRoughness(Color32 src)
-        {
-            return new Color32
-            {
-                r = src.b,
-                g = src.b,
-                b = src.b,
-                a = (byte)(255 - src.g),
-            };
-        }
-
-        static Color32 ConvertMetallicRoughnessOcclusion(Color32 src)
-        {
-            return new Color32
-            {
-                r = src.b, // metallic
-                g = src.r, // occlusion
-                b = 0,
-                a = (byte)(255 - src.g), // smoothness
-            };
-        }
-
-        static Color32 ConvertOcclusion(Color32 src)
-        {
-            return new Color32
-            {
-                r = src.r,
-                g = src.r,
-                b = src.r,
-                a = 255,
-            };
-        }
-        #endregion
-
-        class sRGBScope : IDisposable
-        {
-            bool m_sRGBWrite;
-            public sRGBScope(bool sRGBWrite)
-            {
-                m_sRGBWrite = GL.sRGBWrite;
-                GL.sRGBWrite = sRGBWrite;
-            }
-
-            public void Dispose()
-            {
-                GL.sRGBWrite = m_sRGBWrite;
-            }
-        }
-
-        static Texture2D DTXnm2RGBA(Texture2D tex)
-        {
-            Color[] colors = tex.GetPixels();
-            for (int i = 0; i < colors.Length; i++)
-            {
-                Color c = colors[i];
-                c.r = c.a * 2 - 1;  //red<-alpha (x<-w)
-                c.g = c.g * 2 - 1; //green is always the same (y)
-                Vector2 xy = new Vector2(c.r, c.g); //this is the xy vector
-                c.b = Mathf.Sqrt(1 - Mathf.Clamp01(Vector2.Dot(xy, xy))); //recalculate the blue channel (z)
-                colors[i] = new Color(c.r * 0.5f + 0.5f, c.g * 0.5f + 0.5f, c.b * 0.5f + 0.5f); //back to 0-1 range
-            }
-            tex.SetPixels(colors); //apply pixels to the texture
-            tex.Apply();
-            return tex;
-        }
-
-        static bool IsDxt5(Texture src)
-        {
-            var srcAsTexture2D = src as Texture2D;
-            if (srcAsTexture2D != null)
-            {
-                Debug.LogFormat("{0} format {1}", srcAsTexture2D.name, srcAsTexture2D.format);
-                return srcAsTexture2D.format == TextureFormat.DXT5;
-            }
-            return false;
-        }
-
-        static Material s_dxt5decode;
-        static Material GetDecodeDxt5()
-        {
-            if (s_dxt5decode == null)
-            {
-                s_dxt5decode = new Material(Shader.Find("UniGLTF/Dxt5Decoder"));
-            }
-            return s_dxt5decode;
-        }
-
-        public static Texture2D CopyTexture(Texture src, bool isNormal)
+        public static Texture2D CopyTexture(Texture src, RenderTextureReadWrite colorSpace, Material material)
         {
             Texture2D dst = null;
 
-            var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32, colorSpace);
 
-            using (var scope = new sRGBScope(true))
+            if (material != null)
             {
-                if (isNormal && IsDxt5(src))
-                {
-                    var mat = GetDecodeDxt5();
-                    Graphics.Blit(src, renderTexture, mat);
-                }
-                else
-                {
-                    Graphics.Blit(src, renderTexture);
-                }
+                Graphics.Blit(src, renderTexture, material);
             }
-            dst = new Texture2D(src.width, src.height, TextureFormat.ARGB32, false, false);
+            else
+            {
+                Graphics.Blit(src, renderTexture);
+            }
+
+            dst = new Texture2D(src.width, src.height, TextureFormat.ARGB32, false, colorSpace == RenderTextureReadWrite.Linear);
             dst.ReadPixels(new Rect(0, 0, src.width, src.height), 0, 0);
+            dst.name = src.name;
+            dst.Apply();
+
 
             RenderTexture.active = null;
             if (Application.isEditor)
