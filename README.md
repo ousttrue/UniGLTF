@@ -2,6 +2,12 @@
 
 [glTF](https://github.com/KhronosGroup/glTF) 2.0 importer and exporter for Unity 5.6 or later
 
+Improved material importer ! 
+
+![standard shader](doc/pbr_to_standard.png)
+
+from UniGLTF-1.21
+
 ![duck](doc/duck.png)
 ![animation](doc/animation.gif)
 
