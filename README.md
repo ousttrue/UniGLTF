@@ -4,7 +4,7 @@
 
 Improved material importer(UniGLTF-1.21) ! 
 
-Import gltf from (DamagedHelmet)[https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/DamagedHelmet]. Below is converted to unity standard shader.
+Import gltf from [DamagedHelmet](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/DamagedHelmet). Below is converted to unity standard shader.
 
 ![standard shader](doc/pbr_to_standard.png)
 
