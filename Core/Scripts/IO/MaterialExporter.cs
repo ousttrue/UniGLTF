@@ -1,9 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using UniGLTF.UniUnlit;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 
 namespace UniGLTF
 {
+    public enum glTFBlendMode
+    {
+        OPAQUE,
+        MASK,
+        BLEND
+    }
+
     public interface IMaterialExporter
     {
         glTFMaterial ExportMaterial(Material m, List<Texture> textures, out List<Texture> exportTextures);
@@ -168,6 +178,9 @@ namespace UniGLTF
                 case "Unlit/Transparent Cutout":
                     return Export_UnlitCutout(m);
 
+                case "UniGLTF/UniUnlit":
+                    return Export_UniUnlit(m);
+
                 default:
                     return Export_Standard(m);
             }
@@ -176,29 +189,64 @@ namespace UniGLTF
         static glTFMaterial Export_UnlitColor(Material m)
         {
             var material = glTF_KHR_materials_unlit.CreateDefault();
-            material.alphaMode = "OPAQUE";
+            material.alphaMode = glTFBlendMode.OPAQUE.ToString();
             return material;
         }
 
         static glTFMaterial Export_UnlitTexture(Material m)
         {
             var material = glTF_KHR_materials_unlit.CreateDefault();
-            material.alphaMode = "OPAQUE";
+            material.alphaMode = glTFBlendMode.OPAQUE.ToString();
             return material;
         }
 
         static glTFMaterial Export_UnlitTransparent(Material m)
         {
             var material = glTF_KHR_materials_unlit.CreateDefault();
-            material.alphaMode = "BLEND";
+            material.alphaMode = glTFBlendMode.BLEND.ToString();
             return material;
         }
 
         static glTFMaterial Export_UnlitCutout(Material m)
         {
             var material = glTF_KHR_materials_unlit.CreateDefault();
-            material.alphaMode = "MASK";
+            material.alphaMode = glTFBlendMode.MASK.ToString();
             material.alphaCutoff = m.GetFloat("_Cutoff");
+            return material;
+        }
+
+        private glTFMaterial Export_UniUnlit(Material m)
+        {
+            var material = glTF_KHR_materials_unlit.CreateDefault();
+
+            var renderMode = UniUnlit.Utils.GetRenderMode(m);
+            if (renderMode == UniUnlitRenderMode.Opaque)
+            {
+                material.alphaMode = glTFBlendMode.OPAQUE.ToString();
+            }
+            else if (renderMode == UniUnlitRenderMode.Transparent)
+            {
+                material.alphaMode = glTFBlendMode.BLEND.ToString();
+            }
+            else if (renderMode == UniUnlitRenderMode.Cutout)
+            {
+                material.alphaMode = glTFBlendMode.MASK.ToString();
+            }
+            else
+            {
+                material.alphaMode = glTFBlendMode.OPAQUE.ToString();
+            }
+
+            var cullMode = UniUnlit.Utils.GetCullMode(m);
+            if (cullMode == CullMode.Off)
+            {
+                material.doubleSided = true;
+            }
+            else
+            {
+                material.doubleSided = false;
+            }
+
             return material;
         }
 
@@ -212,16 +260,16 @@ namespace UniGLTF
             switch(m.GetTag("RenderType", true))
             {
                 case "Transparent":
-                    material.alphaMode = "BLEND";
+                    material.alphaMode = glTFBlendMode.BLEND.ToString();
                     break;
 
                 case "TransparentCutout":
-                    material.alphaMode = "MASK";
+                    material.alphaMode = glTFBlendMode.MASK.ToString();
                     material.alphaCutoff = m.GetFloat("_Cutoff");
                     break;
 
                 default:
-                    material.alphaMode = "OPAQUE";
+                    material.alphaMode = glTFBlendMode.OPAQUE.ToString();
                     break;
             }
 
