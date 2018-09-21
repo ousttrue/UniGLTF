@@ -245,33 +245,6 @@ namespace UniGLTF
 
         public IMaterialImporter MaterialImporter;
 
-        public bool MaterialHasVertexColor(glTFMaterial material)
-        {
-            if (material == null)
-            {
-                return false;
-            }
-
-            var materialIndex = GLTF.materials.IndexOf(material);
-            if (materialIndex == -1)
-            {
-                return false;
-            }
-
-            return MaterialHasVertexColor(materialIndex);
-        }
-
-        public bool MaterialHasVertexColor(int materialIndex)
-        {
-            if (materialIndex < 0 || materialIndex >= GLTF.materials.Count)
-            {
-                return false;
-            }
-
-            var hasVertexColor = GLTF.meshes.SelectMany(x => x.primitives).Any(x => x.material == materialIndex && x.HasVertexColor);
-            return hasVertexColor;
-        }
-
         #region Imported
         public GameObject Root;
         public List<Transform> Nodes = new List<Transform>();
