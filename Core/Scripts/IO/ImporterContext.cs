@@ -4,8 +4,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Text;
+using System.Collections;
+using DepthFirstScheduler;
 #if UNITY_EDITOR
 using UnityEditor;
+#endif
+#if (NET_4_6 && UNITY_2017_1_OR_NEWER)
+using System.Threading.Tasks;
 #endif
 
 
@@ -305,7 +310,7 @@ namespace UniGLTF
         /// <summary>
         /// Build unity objects from parsed gltf
         /// </summary>
-        public void Load()
+        public virtual void Load()
         {
             // textures
             if (GLTF.textures != null)
@@ -397,6 +402,207 @@ namespace UniGLTF
 
             //Debug.LogFormat("Import {0}", Path);
         }
+        #endregion
+
+        #region Load async
+        public void LoadAsync(Action<GameObject> onLoaded, Action<Exception> onError = null, bool show = true)
+        {
+            if (onError == null)
+            {
+                onError = Debug.LogError;
+            }
+
+            LoadAsync()
+                .Subscribe(Scheduler.MainThread,
+                go =>
+                {
+                    if (show)
+                    {
+                        ShowMeshes();
+                    }
+                    onLoaded(go);
+                },
+                onError
+                );
+        }
+
+        protected virtual Schedulable<GameObject> LoadAsync()
+        {
+            return Schedulable.Create()
+                .OnExecute(Scheduler.ThreadPool, parent =>
+                {
+                    // textures
+                    for (int i = 0; i < GLTF.textures.Count; ++i)
+                    {
+                        var index = i;
+                        parent.AddTask(Scheduler.MainThread,
+                                () =>
+                                {
+                                    using (MeasureTime("texture.Process"))
+                                    {
+                                        var texture = new TextureItem(GLTF, index);
+                                        texture.Process(GLTF, Storage);
+                                        return texture;
+                                    }
+                                })
+                            .ContinueWith(Scheduler.ThreadPool, x => AddTexture(x));
+                    }
+                })
+                .ContinueWithCoroutine(Scheduler.MainThread, () => LoadMaterials())
+                .OnExecute(Scheduler.ThreadPool, parent =>
+                {
+                    // meshes
+                    var meshImporter = new MeshImporter();
+                    for (int i = 0; i < GLTF.meshes.Count; ++i)
+                    {
+                        var index = i;
+                        parent.AddTask(Scheduler.ThreadPool,
+                                () =>
+                                {
+                                    using (MeasureTime("ReadMesh"))
+                                    {
+                                        return meshImporter.ReadMesh(this, index);
+                                    }
+                                })
+                        .ContinueWith(Scheduler.MainThread, x =>
+                        {
+                            using (MeasureTime("BuildMesh"))
+                            {
+                                return MeshImporter.BuildMesh(this, x);
+                            }
+                        })
+                        .ContinueWith(Scheduler.ThreadPool, x => Meshes.Add(x))
+                        ;
+                    }
+                })
+                .ContinueWithCoroutine(Scheduler.MainThread, () =>
+                {
+                    using (MeasureTime("LoadNodes"))
+                    {
+                        return LoadNodes();
+                    }
+                })
+                .ContinueWithCoroutine(Scheduler.MainThread, () =>
+                {
+                    using (MeasureTime("BuildHierarchy"))
+                    {
+                        return BuildHierarchy();
+                    }
+                })
+                .ContinueWith(Scheduler.CurrentThread,
+                    _ =>
+                    {
+                        Root.name = "GLTF";
+                        Debug.Log(GetSpeedLog());
+                        return Root;
+                    });
+        }
+
+        protected IEnumerator LoadTextures(IStorage storage)
+        {
+            for (int i = 0; i < GLTF.textures.Count; ++i)
+            {
+                var x = new TextureItem(GLTF, i);
+                x.Process(GLTF, storage);
+                AddTexture(x);
+                yield return null;
+            }
+        }
+
+        protected IEnumerator LoadMaterials()
+        {
+            if (GLTF.materials == null || !GLTF.materials.Any())
+            {
+                AddMaterial(MaterialImporter.CreateMaterial(0, null));
+            }
+            else
+            {
+                for (int i = 0; i < GLTF.materials.Count; ++i)
+                {
+                    AddMaterial(MaterialImporter.CreateMaterial(i, GLTF.materials[i]));
+                    yield return null;
+                }
+            }
+        }
+
+        protected IEnumerator LoadMeshes()
+        {
+            var meshImporter = new MeshImporter();
+            for (int i = 0; i < GLTF.meshes.Count; ++i)
+            {
+                var meshContext = meshImporter.ReadMesh(this, i);
+                var meshWithMaterials = MeshImporter.BuildMesh(this, meshContext);
+                var mesh = meshWithMaterials.Mesh;
+                if (string.IsNullOrEmpty(mesh.name))
+                {
+                    mesh.name = string.Format("UniGLTF import#{0}", i);
+                }
+                Meshes.Add(meshWithMaterials);
+
+                yield return null;
+            }
+        }
+
+        protected IEnumerator LoadNodes()
+        {
+            foreach (var x in GLTF.nodes)
+            {
+                Nodes.Add(NodeImporter.ImportNode(x).transform);
+            }
+
+            yield return null;
+        }
+
+        protected IEnumerator BuildHierarchy()
+        {
+            var nodes = new List<NodeImporter.TransformWithSkin>();
+            for (int i = 0; i < Nodes.Count; ++i)
+            {
+                nodes.Add(NodeImporter.BuildHierarchy(this, i));
+            }
+
+            NodeImporter.FixCoordinate(this, nodes);
+
+            // skinning
+            for (int i = 0; i < nodes.Count; ++i)
+            {
+                NodeImporter.SetupSkinning(this, nodes, i);
+            }
+
+            // connect root
+            Root = new GameObject("_root_");
+            foreach (var x in GLTF.rootnodes)
+            {
+                var t = nodes[x].Transform;
+                t.SetParent(Root.transform, false);
+            }
+
+            yield return null;
+        }
+
+#if (NET_4_6 && UNITY_2017_1_OR_NEWER)
+
+        public static Task<GameObject> LoadVrmAsync(string path, bool show=true)
+        {
+            var context = new VRMImporterContext(UnityPath.FromFullpath(path));
+            context.ParseGlb(File.ReadAllBytes(path));
+            return LoadVrmAsyncInternal(context, show).ToTask();
+        }
+
+
+        public static Task<GameObject> LoadVrmAsync(Byte[] bytes, bool show=true)
+        {
+            var context = new VRMImporterContext();
+            context.ParseGlb(bytes);
+            return LoadVrmAsync(context, show);
+        }
+
+
+        public static Task<GameObject> LoadVrmAsync(VRMImporterContext ctx, bool show=true)
+        {
+            return LoadVrmAsyncInternal(ctx, show).ToTask();
+        }
+#endif
         #endregion
 
         public IMaterialImporter MaterialImporter;
