@@ -478,7 +478,7 @@ namespace UniGLTF
             }
         }
 
-        public static string ANIMATION_NAME = "animation";
+        //public static string ANIMATION_NAME = "animation";
 
         public static T GetOrCreate<T>(UnityEngine.Object[] assets, string name, Func<T> create) where T : UnityEngine.Object
         {
@@ -500,122 +500,99 @@ namespace UniGLTF
                     animation.name = string.Format("animation:{0}", i);
                 }
 
-                foreach (var y in animation.channels)
+                foreach (var channel in animation.channels)
                 {
-                    var targetTransform = ctx.Nodes[y.target.node];
+                    var targetTransform = ctx.Nodes[channel.target.node];
                     var relativePath = targetTransform.RelativePathFrom(ctx.Root.transform);
-                    switch (y.target.path)
+                    switch (channel.target.path)
                     {
                         case glTFAnimationTarget.PATH_TRANSLATION:
                             {
-                                var curveX = new AnimationCurve();
-                                var curveY = new AnimationCurve();
-                                var curveZ = new AnimationCurve();
-
-                                var sampler = animation.samplers[y.sampler];
+                                var sampler = animation.samplers[channel.sampler];
                                 var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
-                                var output = ctx.GLTF.GetArrayFromAccessor<Vector3>(sampler.output);
-                                for (int j = 0; j < input.Length; ++j)
-                                {
-                                    var time = input[j];
-                                    var pos = output[j].ReverseZ();
-                                    curveX.AddKey(new Keyframe(time, pos.x, 0, 0));
-                                    curveY.AddKey(new Keyframe(time, pos.y, 0, 0));
-                                    curveZ.AddKey(new Keyframe(time, pos.z, 0, 0));
-                                }
+                                var output = ctx.GLTF.GetArrayFromAccessorAsFloat(sampler.output);
 
-                                clip.SetCurve(relativePath, typeof(Transform), "localPosition.x", curveX);
-                                clip.SetCurve(relativePath, typeof(Transform), "localPosition.y", curveY);
-                                clip.SetCurve(relativePath, typeof(Transform), "localPosition.z", curveZ);
+                                AnimationImporter.SetAnimationCurve(
+                                    clip,
+                                    relativePath,
+                                    new string[]{ "localPosition.x" , "localPosition.y" , "localPosition.z" }, 
+                                    input,
+                                    output,
+                                    sampler.interpolation,
+                                    (values, last) =>
+                                    {
+                                        Vector3 temp = new Vector3(values[0], values[1], values[2]);
+                                        return temp.ReverseZ().ToArray();
+                                    }
+                                    );
                             }
                             break;
 
                         case glTFAnimationTarget.PATH_ROTATION:
                             {
-                                var curveX = new AnimationCurve();
-                                var curveY = new AnimationCurve();
-                                var curveZ = new AnimationCurve();
-                                var curveW = new AnimationCurve();
-
-                                var sampler = animation.samplers[y.sampler];
+                                var sampler = animation.samplers[channel.sampler];
                                 var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
-                                var output = ctx.GLTF.GetArrayFromAccessor<Quaternion>(sampler.output);
-                                var last = Quaternion.identity;
-                                for (int j = 0; j < input.Length; ++j)
-                                {
-                                    var time = input[j];
-                                    var rot = output[j].ReverseZ();
-                                    if (j > 0)
-                                    {
-                                        if(Quaternion.Dot(last, rot) < 0)
-                                        {
-                                            rot.x = -rot.x;
-                                            rot.y = -rot.y;
-                                            rot.z = -rot.z;
-                                            rot.w = -rot.w;
-                                        }
-                                    }
-                                    curveX.AddKey(new Keyframe(time, rot.x, 0, 0));
-                                    curveY.AddKey(new Keyframe(time, rot.y, 0, 0));
-                                    curveZ.AddKey(new Keyframe(time, rot.z, 0, 0));
-                                    curveW.AddKey(new Keyframe(time, rot.w, 0, 0));
-                                    last = rot;
-                                }
+                                var output = ctx.GLTF.GetArrayFromAccessorAsFloat(sampler.output);
 
-                                clip.SetCurve(relativePath, typeof(Transform), "localRotation.x", curveX);
-                                clip.SetCurve(relativePath, typeof(Transform), "localRotation.y", curveY);
-                                clip.SetCurve(relativePath, typeof(Transform), "localRotation.z", curveZ);
-                                clip.SetCurve(relativePath, typeof(Transform), "localRotation.w", curveW);
+                                AnimationImporter.SetAnimationCurve(
+                                    clip,
+                                    relativePath,
+                                    new string[] { "localRotation.x", "localRotation.y", "localRotation.z", "localRotation.w" },
+                                    input,
+                                    output,
+                                    sampler.interpolation,
+                                    (values, last) =>
+                                    {
+                                        Quaternion currentQuaternion = new Quaternion(values[0], values[1], values[2], values[3]);
+                                        Quaternion lastQuaternion = new Quaternion(last[0], last[1], last[2], last[3]);
+                                        return AnimationImporter.GetShortest(lastQuaternion, currentQuaternion.ReverseZ()).ToArray();
+                                    }
+                                );
+
+                                clip.EnsureQuaternionContinuity();
                             }
                             break;
 
                         case glTFAnimationTarget.PATH_SCALE:
                             {
-                                var curveX = new AnimationCurve();
-                                var curveY = new AnimationCurve();
-                                var curveZ = new AnimationCurve();
-
-                                var sampler = animation.samplers[y.sampler];
+                                var sampler = animation.samplers[channel.sampler];
                                 var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
-                                var output = ctx.GLTF.GetArrayFromAccessor<Vector3>(sampler.output);
-                                for (int j = 0; j < input.Length; ++j)
-                                {
-                                    var time = input[j];
-                                    var scale = output[j];
-                                    curveX.AddKey(new Keyframe(time, scale.x, 0, 0));
-                                    curveY.AddKey(new Keyframe(time, scale.y, 0, 0));
-                                    curveZ.AddKey(new Keyframe(time, scale.z, 0, 0));
-                                }
+                                var output = ctx.GLTF.GetArrayFromAccessorAsFloat(sampler.output);
 
-                                clip.SetCurve(relativePath, typeof(Transform), "localScale.x", curveX);
-                                clip.SetCurve(relativePath, typeof(Transform), "localScale.y", curveY);
-                                clip.SetCurve(relativePath, typeof(Transform), "localScale.z", curveZ);
+                                AnimationImporter.SetAnimationCurve(
+                                    clip,
+                                    relativePath,
+                                    new string[] { "localScale.x", "localScale.y", "localScale.z" },
+                                    input,
+                                    output,
+                                    sampler.interpolation,
+                                    (values, last) => values);
                             }
                             break;
 
                         case glTFAnimationTarget.PATH_WEIGHT:
+                        {
+                            var node = ctx.GLTF.nodes[channel.target.node];
+                            var mesh = ctx.GLTF.meshes[node.mesh];
+                            for (int k = 0; k < mesh.weights.Length; ++k)
                             {
-                                var node = ctx.GLTF.nodes[y.target.node];
-                                var mesh = ctx.GLTF.meshes[node.mesh];
-                                for (int k = 0; k < mesh.weights.Length; ++k)
+                                //var weight = mesh.weights[k];
+                                var curve = new AnimationCurve();
+                                var sampler = animation.samplers[channel.sampler];
+                                var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
+                                var output = ctx.GLTF.GetArrayFromAccessor<float>(sampler.output);
+                                for (int j = 0, l = k; j < input.Length; ++j, l += mesh.weights.Length)
                                 {
-                                    //var weight = mesh.weights[k];
-                                    var curve = new AnimationCurve();
-                                    var sampler = animation.samplers[y.sampler];
-                                    var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
-                                    var output = ctx.GLTF.GetArrayFromAccessor<float>(sampler.output);
-                                    for (int j = 0, l = k; j < input.Length; ++j, l += mesh.weights.Length)
-                                    {
-                                        curve.AddKey(input[j], output[l] * 100);
-                                    }
-
-                                    clip.SetCurve(relativePath, typeof(SkinnedMeshRenderer), "blendShape." + k, curve);
+                                    curve.AddKey(input[j], output[l] * 100);
                                 }
+
+                                clip.SetCurve(relativePath, typeof(SkinnedMeshRenderer), "blendShape." + k, curve);
                             }
+                        }
                             break;
 
                         default:
-                            Debug.LogWarningFormat("unknown path: {0}", y.target.path);
+                            Debug.LogWarningFormat("unknown path: {0}", channel.target.path);
                             break;
                     }
                 }

@@ -146,6 +146,10 @@ namespace UniGLTF
         {
             f.KeyValue(() => name);
             f.Key("primitives"); f.GLTFValue(primitives);
+            if (weights != null && weights.Length > 0)
+            {
+                f.KeyValue(() => weights);
+            }
         }
     }
 }

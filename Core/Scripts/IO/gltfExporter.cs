@@ -176,121 +176,6 @@ namespace UniGLTF
             return node;
         }
 
-        static int GetNodeIndex(Transform root, List<Transform> nodes, string path)
-        {
-            var descendant = root.GetFromPath(path);
-            return nodes.IndexOf(descendant);
-        }
-
-        static string PropertyToTarget(string property)
-        {
-            if (property.StartsWith("m_LocalPosition."))
-            {
-                return glTFAnimationTarget.PATH_TRANSLATION;
-            }
-            else if (property.StartsWith("m_LocalRotation."))
-            {
-                return glTFAnimationTarget.PATH_ROTATION;
-            }
-            else if (property.StartsWith("m_LocalScale."))
-            {
-                return glTFAnimationTarget.PATH_SCALE;
-            }
-            else
-            {
-                return glTFAnimationTarget.NOT_IMPLEMENTED;
-            }
-        }
-
-        static int GetElementOffset(string property)
-        {
-            if (property.EndsWith(".x"))
-            {
-                return 0;
-            }
-            if (property.EndsWith(".y"))
-            {
-                return 1;
-            }
-            if (property.EndsWith(".z"))
-            {
-                return 2;
-            }
-            if (property.EndsWith(".w"))
-            {
-                return 3;
-            }
-            else
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        class InputOutputValues
-        {
-            public float[] Input;
-            public float[] Output;
-        }
-
-        class AnimationWithSampleCurves
-        {
-            public glTFAnimation Animation;
-            public Dictionary<int, InputOutputValues> SamplerMap = new Dictionary<int, InputOutputValues>();
-        }
-
-#if UNITY_EDITOR
-        static AnimationWithSampleCurves ExportAnimation(AnimationClip clip, Transform root, List<Transform> nodes)
-        {
-            var animation = new AnimationWithSampleCurves
-            {
-                Animation = new glTFAnimation(),
-            };
-
-            foreach (var binding in AnimationUtility.GetCurveBindings(clip))
-            {
-                var curve = AnimationUtility.GetEditorCurve(clip, binding);
-
-                var nodeIndex = GetNodeIndex(root, nodes, binding.path);
-                var target = PropertyToTarget(binding.propertyName);
-                if (target == glTFAnimationTarget.NOT_IMPLEMENTED)
-                {
-                    continue;
-                }
-                var samplerIndex = animation.Animation.AddChannelAndGetSampler(nodeIndex, target);
-                var sampler = animation.Animation.samplers[samplerIndex];
-
-                var keys = curve.keys;
-                var elementCount = glTFAnimationTarget.GetElementCount(target);
-                var values = default(InputOutputValues);
-                if (!animation.SamplerMap.TryGetValue(samplerIndex, out values))
-                {
-                    values = new InputOutputValues();
-                    values.Input = new float[keys.Length];
-                    values.Output = new float[keys.Length * elementCount];
-                    animation.SamplerMap[samplerIndex] = values;
-                }
-
-                var j = GetElementOffset(binding.propertyName);
-                for (int i = 0; i < keys.Length; ++i, j += elementCount)
-                {
-                    values.Input[i] = keys[i].time;
-                    if (binding.propertyName == "m_LocalPosition.z" ||
-                        binding.propertyName == "m_LocalRotation.z" ||
-                        binding.propertyName == "m_LocalRotation.w")
-                    {
-                        values.Output[j] = -keys[i].value;
-                    }
-                    else
-                    {
-                        values.Output[j] = keys[i].value;
-                    }
-                }
-            }
-
-            return animation;
-        }
-#endif
-
         static glTFMesh ExportPrimitives(glTF gltf, int bufferIndex,
             string rendererName,
             Mesh mesh, Material[] materials,
@@ -640,12 +525,24 @@ namespace UniGLTF
 
 #if UNITY_EDITOR
                 #region Animations
+
+                var clips = new List<AnimationClip>();
+                var animator = go.GetComponent<Animator>();
                 var animation = go.GetComponent<Animation>();
-                if (animation != null)
+                if (animator != null)
                 {
-                    foreach (AnimationState state in animation)
+                    clips = AnimationExporter.GetAnimationClips(animator);
+                }
+                else if (animation != null)
+                {
+                    clips = AnimationExporter.GetAnimationClips(animation);
+                }
+
+                if (clips.Any())
+                {
+                    foreach (AnimationClip clip in clips)
                     {
-                        var animationWithCurve = ExportAnimation(state.clip, go.transform, Nodes);
+                        var animationWithCurve = AnimationExporter.Export(clip, go.transform, Nodes);
 
                         foreach (var kv in animationWithCurve.SamplerMap)
                         {
@@ -662,6 +559,10 @@ namespace UniGLTF
                             var channel = animationWithCurve.Animation.channels.First(x => x.sampler == kv.Key);
                             switch (glTFAnimationTarget.GetElementCount(channel.target.path))
                             {
+                                case 1:
+                                    outputAccessor.type = "SCALAR";
+                                    outputAccessor.count = 1;
+                                    break;
                                 case 3:
                                     outputAccessor.type = "VEC3";
                                     outputAccessor.count /= 3;
