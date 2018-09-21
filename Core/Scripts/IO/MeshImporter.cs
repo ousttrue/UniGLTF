@@ -57,8 +57,10 @@ namespace UniGLTF
                 {
                     if (ctx.IsGeneratedUniGLTFAndOlder(1, 16))
                     {
+#pragma warning disable 0612
                         // backward compatibility
                         uv.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
+#pragma warning restore 0612
                     }
                     else
                     {
@@ -184,8 +186,10 @@ namespace UniGLTF
                 {
                     if (ctx.IsGeneratedUniGLTFAndOlder(1, 16))
                     {
+#pragma warning disable 0612
                         // backward compatibility
                         context.uv = ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).SelectInplace(x => x.ReverseY());
+#pragma warning restore 0612
                     }
                     else
                     {
