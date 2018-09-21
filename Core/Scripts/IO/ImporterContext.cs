@@ -11,33 +11,38 @@ using UnityEditor;
 
 namespace UniGLTF
 {
-    public struct KeyElapsed
-    {
-        public string Key;
-        public TimeSpan Elapsed;
-        public KeyElapsed(string key, TimeSpan elapsed)
-        {
-            Key = key;
-            Elapsed = elapsed;
-        }
-    }
-
-    public struct MeasureScope : IDisposable
-    {
-        Action m_onDispose;
-        public MeasureScope(Action onDispose)
-        {
-            m_onDispose = onDispose;
-        }
-        public void Dispose()
-        {
-            m_onDispose();
-        }
-    }
-
+    /// <summary>
+    /// GLTF importer
+    /// </summary>
     public class ImporterContext
     {
+        #region MeasureTime
+        public struct KeyElapsed
+        {
+            public string Key;
+            public TimeSpan Elapsed;
+            public KeyElapsed(string key, TimeSpan elapsed)
+            {
+                Key = key;
+                Elapsed = elapsed;
+            }
+        }
+
+        public struct MeasureScope : IDisposable
+        {
+            Action m_onDispose;
+            public MeasureScope(Action onDispose)
+            {
+                m_onDispose = onDispose;
+            }
+            public void Dispose()
+            {
+                m_onDispose();
+            }
+        }
+
         public List<KeyElapsed> m_speedReports = new List<KeyElapsed>();
+
         public IDisposable MeasureTime(string key)
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -46,6 +51,7 @@ namespace UniGLTF
                 m_speedReports.Add(new KeyElapsed(key, sw.Elapsed));
             });
         }
+
         public string GetSpeedLog()
         {
             var total = TimeSpan.Zero;
@@ -61,12 +67,18 @@ namespace UniGLTF
 
             return sb.ToString();
         }
+        #endregion
+
 
         public UnityPath TextureBaseDir
         {
             get; private set;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="gltfPath">target gltf or glb path</param>
         public ImporterContext(UnityPath gltfPath = default(UnityPath))
         {
             TextureBaseDir = gltfPath.Parent;
@@ -131,6 +143,42 @@ namespace UniGLTF
         /// </summary>
         public IStorage Storage;
         #endregion
+
+        #region Parse
+        public static ImporterContext Parse(string path, Byte[] bytes)
+        {
+            var ext = Path.GetExtension(path).ToLower();
+            var context = new ImporterContext(UnityPath.FromFullpath(path));
+
+            switch (ext)
+            {
+                case ".gltf":
+                    context.ParseJson(Encoding.UTF8.GetString(bytes), new FileSystemStorage(Path.GetDirectoryName(path)));
+                    break;
+
+                case ".zip":
+                    {
+                        var zipArchive = Zip.ZipArchiveStorage.Parse(bytes);
+                        var gltf = zipArchive.Entries.FirstOrDefault(x => x.FileName.ToLower().EndsWith(".gltf"));
+                        if (gltf == null)
+                        {
+                            throw new Exception("no gltf in archive");
+                        }
+                        var jsonBytes = zipArchive.Extract(gltf);
+                        var json = Encoding.UTF8.GetString(jsonBytes);
+                        context.ParseJson(json, zipArchive);
+                    }
+                    break;
+
+                case ".glb":
+                    context.ParseGlb(bytes);
+                    break;
+
+                default:
+                    throw new NotImplementedException();
+            }
+            return context;
+        }
 
         /// <summary>
         /// 
@@ -242,6 +290,114 @@ namespace UniGLTF
             }
 #endif
         }
+        #endregion
+
+        #region Load. Build unity objects
+        public static ImporterContext Load(string path)
+        {
+            var bytes = File.ReadAllBytes(path);
+            var context = Parse(path, bytes);
+            context.Load();
+            context.Root.name = Path.GetFileNameWithoutExtension(path);
+            return context;
+        }
+
+        /// <summary>
+        /// Build unity objects from parsed gltf
+        /// </summary>
+        public void Load()
+        {
+            // textures
+            if (GLTF.textures != null)
+            {
+                for (int i = 0; i < GLTF.textures.Count; ++i)
+                {
+                    var item = new TextureItem(GLTF, i, TextureBaseDir);
+                    AddTexture(item);
+                }
+            }
+            foreach (var x in GetTextures())
+            {
+                x.Process(GLTF, Storage);
+            }
+
+            // materials
+            if (MaterialImporter == null)
+            {
+                MaterialImporter = new MaterialImporter(new ShaderStore(this), this);
+            }
+
+            if (GLTF.materials == null || !GLTF.materials.Any())
+            {
+                // no material
+                AddMaterial(MaterialImporter.CreateMaterial(0, null));
+            }
+            else
+            {
+                for (int i = 0; i < GLTF.materials.Count; ++i)
+                {
+                    var index = i;
+                    var material = MaterialImporter.CreateMaterial(index, GLTF.materials[i]);
+                    AddMaterial(material);
+                }
+            }
+
+            // meshes
+            if (GLTF.meshes
+                .SelectMany(x => x.primitives)
+                .Any(x => x.extensions.KHR_draco_mesh_compression != null))
+            {
+                throw new UniGLTFNotSupportedException("draco is not supported");
+            }
+
+            var meshImporter = new MeshImporter();
+            for (int i = 0; i < GLTF.meshes.Count; ++i)
+            {
+                var meshContext = meshImporter.ReadMesh(this, i);
+                var meshWithMaterials = MeshImporter.BuildMesh(this, meshContext);
+
+                var mesh = meshWithMaterials.Mesh;
+
+                // mesh name
+                if (string.IsNullOrEmpty(mesh.name))
+                {
+                    mesh.name = string.Format("UniGLTF import#{0}", i);
+                }
+                var originalName = mesh.name;
+                for (int j = 1; Meshes.Any(x => x.Mesh.name == mesh.name); ++j)
+                {
+                    mesh.name = string.Format("{0}({1})", originalName, j);
+                }
+
+                Meshes.Add(meshWithMaterials);
+            }
+
+            // nodes
+            Nodes.AddRange(GLTF.nodes.Select(x => NodeImporter.ImportNode(x).transform));
+
+            var nodes = Nodes.Select((x, i) => NodeImporter.BuildHierarchy(this, i)).ToList();
+
+            NodeImporter.FixCoordinate(this, nodes);
+
+            // skinning
+            for (int i = 0; i < nodes.Count; ++i)
+            {
+                NodeImporter.SetupSkinning(this, nodes, i);
+            }
+
+            // connect root
+            Root = new GameObject("_root_");
+            foreach (var x in GLTF.rootnodes)
+            {
+                var t = nodes[x].Transform;
+                t.SetParent(Root.transform, false);
+            }
+
+            AnimationImporter.ImportAnimation(this);
+
+            //Debug.LogFormat("Import {0}", Path);
+        }
+        #endregion
 
         public IMaterialImporter MaterialImporter;
 

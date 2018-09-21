@@ -19,7 +19,7 @@ namespace UniGLTF
             if (Application.isPlaying)
             {
                 // load into scene
-                var context = gltfImporter.Load(path);
+                var context = ImporterContext.Load(path);
                 context.ShowMeshes();
                 Selection.activeGameObject = context.Root;
             }
@@ -51,14 +51,14 @@ namespace UniGLTF
         static void Import(string readPath, UnityPath prefabPath)
         {
             var bytes = File.ReadAllBytes(readPath);
-            var context = gltfImporter.Parse(readPath, bytes);
+            var context = ImporterContext.Parse(readPath, bytes);
 
             context.SaveTexturesAsPng(prefabPath);
 
             EditorApplication.delayCall += () =>
             {
                 // delay and can import png texture
-                gltfImporter.Load(context);
+                context.Load();
                 context.SaveAsAsset(prefabPath);
                 context.Destroy(false);
             };
