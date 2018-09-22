@@ -53,12 +53,22 @@ or
 ## Import in runTime
 
 ```cs
-string path; // gltf, glb or zip(include gltf)
+//
+// UniGLTF-1.22
+//
+var path = UnityEditor.EditorUtility.OpenFilePanel("open gltf", "", "gltf,glb,zip");
+if (string.IsNullOrEmpty(path))
+{
+    return;
+}
+Debug.LogFormat("open: {0}", path);
 
-var context = gltfImporter.Load(path);
+var context = new ImporterContext();
+context.Parse(path, bytes);
+context.Load();
 context.ShowMeshes();
-
-GameObject root = context.Root;
+context.EnableUpdateWhenOffscreen();
+context.Root.name = Path.GetFileNameWithoutExtension(path);
 ```
 
 ## Export from scene
