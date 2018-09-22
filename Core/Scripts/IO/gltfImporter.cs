@@ -10,8 +10,7 @@ namespace UniGLTF
         public static ImporterContext Load(string path)
         {
             var context = new ImporterContext();
-            context.Parse(path, File.ReadAllBytes(path));
-            context.Load();
+            context.Load(path);
             context.ShowMeshes();
             context.EnableUpdateWhenOffscreen();
             return context;
@@ -21,8 +20,7 @@ namespace UniGLTF
         public static ImporterContext Parse(string path, Byte[] bytes)
         {
             var context = new ImporterContext();
-            context.Parse(path, bytes);
-            context.Load();
+            context.Load(path);
             context.ShowMeshes();
             context.EnableUpdateWhenOffscreen();
             return context;

@@ -64,8 +64,7 @@ if (string.IsNullOrEmpty(path))
 Debug.LogFormat("open: {0}", path);
 
 var context = new ImporterContext();
-context.Parse(path, bytes);
-context.Load();
+context.Load(path);
 context.ShowMeshes();
 context.EnableUpdateWhenOffscreen();
 context.Root.name = Path.GetFileNameWithoutExtension(path);
