@@ -79,14 +79,19 @@ namespace UniGLTF
         {
             get; private set;
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="gltfPath">target gltf or glb path</param>
-        public ImporterContext(UnityPath gltfPath = default(UnityPath))
+        void SetGltfPath(UnityPath gltfPath)
         {
             TextureBaseDir = gltfPath.Parent;
+        }
+
+        [Obsolete("Use Parse(path, bytes) or Load(path, bytes)")]
+        public ImporterContext(UnityPath gltfPath)
+        {
+            SetGltfPath(gltfPath);
+        }
+
+        public ImporterContext()
+        {
         }
 
         #region Source
@@ -150,15 +155,20 @@ namespace UniGLTF
         #endregion
 
         #region Parse
-        public static ImporterContext Parse(string path, Byte[] bytes)
+        /// <summary>
+        /// Parse gltf json or Parse json chunk of glb
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="bytes"></param>
+        public void Parse(string path, Byte[] bytes)
         {
             var ext = Path.GetExtension(path).ToLower();
-            var context = new ImporterContext(UnityPath.FromFullpath(path));
+            SetGltfPath(UnityPath.FromFullpath(path));
 
             switch (ext)
             {
                 case ".gltf":
-                    context.ParseJson(Encoding.UTF8.GetString(bytes), new FileSystemStorage(Path.GetDirectoryName(path)));
+                    ParseJson(Encoding.UTF8.GetString(bytes), new FileSystemStorage(Path.GetDirectoryName(path)));
                     break;
 
                 case ".zip":
@@ -171,18 +181,17 @@ namespace UniGLTF
                         }
                         var jsonBytes = zipArchive.Extract(gltf);
                         var json = Encoding.UTF8.GetString(jsonBytes);
-                        context.ParseJson(json, zipArchive);
+                        ParseJson(json, zipArchive);
                     }
                     break;
 
                 case ".glb":
-                    context.ParseGlb(bytes);
+                    ParseGlb(bytes);
                     break;
 
                 default:
                     throw new NotImplementedException();
             }
-            return context;
         }
 
         /// <summary>
@@ -298,13 +307,26 @@ namespace UniGLTF
         #endregion
 
         #region Load. Build unity objects
-        public static ImporterContext Load(string path)
+        /// <summary>
+        /// ReadAllBytes, Parse, Create GameObject
+        /// </summary>
+        /// <param name="path">allbytes</param>
+        public void Load(string path)
         {
             var bytes = File.ReadAllBytes(path);
-            var context = Parse(path, bytes);
-            context.Load();
-            context.Root.name = Path.GetFileNameWithoutExtension(path);
-            return context;
+            Load(path, bytes);
+        }
+
+        /// <summary>
+        /// Parse, Create GameObject
+        /// </summary>
+        /// <param name="path">gltf or glb path</param>
+        /// <param name="bytes">allbytes</param>
+        public void Load(string path, byte[] bytes)
+        {
+            Parse(path, bytes);
+            Load();
+            Root.name = Path.GetFileNameWithoutExtension(path);
         }
 
         /// <summary>

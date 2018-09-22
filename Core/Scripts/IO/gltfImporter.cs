@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 
 namespace UniGLTF
@@ -8,19 +9,31 @@ namespace UniGLTF
         [Obsolete("Use ImporterContext.Load(path)")]
         public static ImporterContext Load(string path)
         {
-            return ImporterContext.Load(path);
+            var context = new ImporterContext();
+            context.Parse(path, File.ReadAllBytes(path));
+            context.Load();
+            context.ShowMeshes();
+            context.EnableUpdateWhenOffscreen();
+            return context;
         }
 
         [Obsolete("Use ImporterContext.Parse(path, bytes)")]
         public static ImporterContext Parse(string path, Byte[] bytes)
         {
-            return ImporterContext.Parse(path, bytes);
+            var context = new ImporterContext();
+            context.Parse(path, bytes);
+            context.Load();
+            context.ShowMeshes();
+            context.EnableUpdateWhenOffscreen();
+            return context;
         }
 
         [Obsolete("use ImporterContext.Load()")]
-        public static void Load(ImporterContext ctx)
+        public static void Load(ImporterContext context)
         {
-            ctx.Load();
+            context.Load();
+            context.ShowMeshes();
+            context.EnableUpdateWhenOffscreen();
         }
     }
 }
