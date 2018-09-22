@@ -412,21 +412,21 @@ namespace UniGLTF
                 onError = Debug.LogError;
             }
 
-            LoadAsync()
+            LoadAsync(show)
                 .Subscribe(Scheduler.MainThread,
-                go =>
-                {
-                    if (show)
-                    {
-                        ShowMeshes();
-                    }
-                    onLoaded(go);
-                },
+                onLoaded ,
                 onError
                 );
         }
 
-        protected virtual Schedulable<GameObject> LoadAsync()
+#if (NET_4_6 && UNITY_2017_1_OR_NEWER)
+        public Task<GameObject> LoadAsyncTask(bool show = true)
+        {
+            return LoadAsync(show).ToTask();
+        }
+#endif
+
+        protected virtual Schedulable<GameObject> LoadAsync(bool show = true)
         {
             return Schedulable.Create()
                 .OnExecute(Scheduler.ThreadPool, parent =>
@@ -494,6 +494,12 @@ namespace UniGLTF
                     {
                         Root.name = "GLTF";
                         Debug.Log(GetSpeedLog());
+
+                        if (show)
+                        {
+                            ShowMeshes();
+                        }
+
                         return Root;
                     });
         }
@@ -579,30 +585,6 @@ namespace UniGLTF
 
             yield return null;
         }
-
-#if (NET_4_6 && UNITY_2017_1_OR_NEWER)
-
-        public static Task<GameObject> LoadVrmAsync(string path, bool show=true)
-        {
-            var context = new VRMImporterContext(UnityPath.FromFullpath(path));
-            context.ParseGlb(File.ReadAllBytes(path));
-            return LoadVrmAsyncInternal(context, show).ToTask();
-        }
-
-
-        public static Task<GameObject> LoadVrmAsync(Byte[] bytes, bool show=true)
-        {
-            var context = new VRMImporterContext();
-            context.ParseGlb(bytes);
-            return LoadVrmAsync(context, show);
-        }
-
-
-        public static Task<GameObject> LoadVrmAsync(VRMImporterContext ctx, bool show=true)
-        {
-            return LoadVrmAsyncInternal(ctx, show).ToTask();
-        }
-#endif
         #endregion
 
         public IMaterialImporter MaterialImporter;
