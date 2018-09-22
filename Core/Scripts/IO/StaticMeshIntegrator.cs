@@ -18,10 +18,12 @@ namespace UniGLTF
             List<Vector3> m_positions = new List<Vector3>();
             List<Vector3> m_normals = new List<Vector3>();
             List<Vector2> m_uv = new List<Vector2>();
+            /*
             List<Vector2> m_uv2 = new List<Vector2>(); // ToDo
             List<Vector2> m_uv3 = new List<Vector2>(); // ToDo
             List<Vector2> m_uv4 = new List<Vector2>(); // ToDo
             List<Color> m_colors = new List<Color>(); // ToDo
+            */
 
             List<int[]> m_subMeshes = new List<int[]>();
 

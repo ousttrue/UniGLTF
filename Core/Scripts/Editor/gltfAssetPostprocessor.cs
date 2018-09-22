@@ -33,35 +33,35 @@ namespace UniGLTF
                 throw new Exception();
             }
 
-            ImporterContext context = new ImporterContext(gltfPath);
+            var context = new ImporterContext();
             var ext = gltfPath.Extension.ToLower();
             try
             {
                 var prefabPath = gltfPath.Parent.Child(gltfPath.FileNameWithoutExtension + ".prefab");
+                context.Parse(gltfPath.FullPath);
                 if (ext == ".gltf")
                 {
-                    context.ParseJson(File.ReadAllText(gltfPath.FullPath, System.Text.Encoding.UTF8),
-                        new FileSystemStorage(gltfPath.Parent.FullPath));
-                    gltfImporter.Load(context);
-                    context.SaveAsAsset(prefabPath);
-                    context.Destroy(false);
+                    context.SetTextureBaseDir(gltfPath.Parent);
                 }
                 else if (ext == ".glb")
                 {
-                    context.ParseGlb(File.ReadAllBytes(gltfPath.FullPath));
+                    // save texture assets !
                     context.SaveTexturesAsPng(prefabPath);
-                    EditorApplication.delayCall += () =>
-                    {
-                        // delay and can import png texture
-                        gltfImporter.Load(context);
-                        context.SaveAsAsset(prefabPath);
-                        context.Destroy(false);
-                    };
                 }
                 else
                 {
                     return;
                 }
+
+                EditorApplication.delayCall += () =>
+                    {
+                        //
+                        // after textures imported
+                        //
+                        context.Load();
+                        context.SaveAsAsset(prefabPath);
+                        context.Destroy(false);
+                    };
             }
             catch (UniGLTFNotSupportedException ex)
             {

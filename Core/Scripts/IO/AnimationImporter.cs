@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -152,5 +153,135 @@ namespace UniGLTF
                 targetClip.SetCurve(relativePath, typeof(Transform), propertyNames[i], curves[i]);
             }
         }
+
+        public static void ImportAnimation(ImporterContext ctx, AnimationClip clip)
+        {
+            for (int i = 0; i < ctx.GLTF.animations.Count; ++i)
+            {
+                var animation = ctx.GLTF.animations[i];
+                if (string.IsNullOrEmpty(animation.name))
+                {
+                    animation.name = string.Format("animation:{0}", i);
+                }
+
+                foreach (var channel in animation.channels)
+                {
+                    var targetTransform = ctx.Nodes[channel.target.node];
+                    var relativePath = targetTransform.RelativePathFrom(ctx.Root.transform);
+                    switch (channel.target.path)
+                    {
+                        case glTFAnimationTarget.PATH_TRANSLATION:
+                            {
+                                var sampler = animation.samplers[channel.sampler];
+                                var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
+                                var output = ctx.GLTF.GetArrayFromAccessorAsFloat(sampler.output);
+
+                                AnimationImporter.SetAnimationCurve(
+                                    clip,
+                                    relativePath,
+                                    new string[] { "localPosition.x", "localPosition.y", "localPosition.z" },
+                                    input,
+                                    output,
+                                    sampler.interpolation,
+                                    (values, last) =>
+                                    {
+                                        Vector3 temp = new Vector3(values[0], values[1], values[2]);
+                                        return temp.ReverseZ().ToArray();
+                                    }
+                                    );
+                            }
+                            break;
+
+                        case glTFAnimationTarget.PATH_ROTATION:
+                            {
+                                var sampler = animation.samplers[channel.sampler];
+                                var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
+                                var output = ctx.GLTF.GetArrayFromAccessorAsFloat(sampler.output);
+
+                                AnimationImporter.SetAnimationCurve(
+                                    clip,
+                                    relativePath,
+                                    new string[] { "localRotation.x", "localRotation.y", "localRotation.z", "localRotation.w" },
+                                    input,
+                                    output,
+                                    sampler.interpolation,
+                                    (values, last) =>
+                                    {
+                                        Quaternion currentQuaternion = new Quaternion(values[0], values[1], values[2], values[3]);
+                                        Quaternion lastQuaternion = new Quaternion(last[0], last[1], last[2], last[3]);
+                                        return AnimationImporter.GetShortest(lastQuaternion, currentQuaternion.ReverseZ()).ToArray();
+                                    }
+                                );
+
+                                clip.EnsureQuaternionContinuity();
+                            }
+                            break;
+
+                        case glTFAnimationTarget.PATH_SCALE:
+                            {
+                                var sampler = animation.samplers[channel.sampler];
+                                var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
+                                var output = ctx.GLTF.GetArrayFromAccessorAsFloat(sampler.output);
+
+                                AnimationImporter.SetAnimationCurve(
+                                    clip,
+                                    relativePath,
+                                    new string[] { "localScale.x", "localScale.y", "localScale.z" },
+                                    input,
+                                    output,
+                                    sampler.interpolation,
+                                    (values, last) => values);
+                            }
+                            break;
+
+                        case glTFAnimationTarget.PATH_WEIGHT:
+                            {
+                                var node = ctx.GLTF.nodes[channel.target.node];
+                                var mesh = ctx.GLTF.meshes[node.mesh];
+                                for (int k = 0; k < mesh.weights.Length; ++k)
+                                {
+                                    //var weight = mesh.weights[k];
+                                    var curve = new AnimationCurve();
+                                    var sampler = animation.samplers[channel.sampler];
+                                    var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
+                                    var output = ctx.GLTF.GetArrayFromAccessor<float>(sampler.output);
+                                    for (int j = 0, l = k; j < input.Length; ++j, l += mesh.weights.Length)
+                                    {
+                                        curve.AddKey(input[j], output[l] * 100);
+                                    }
+
+                                    clip.SetCurve(relativePath, typeof(SkinnedMeshRenderer), "blendShape." + k, curve);
+                                }
+                            }
+                            break;
+
+                        default:
+                            Debug.LogWarningFormat("unknown path: {0}", channel.target.path);
+                            break;
+                    }
+                }
+            }
+        }
+
+        public static void ImportAnimation(ImporterContext ctx)
+        {
+            // animation
+            if (ctx.GLTF.animations != null && ctx.GLTF.animations.Any())
+            {
+                ctx.Animation = new AnimationClip();
+                //ctx.Animation.name = ANIMATION_NAME;
+                ctx.Animation.name = "legacy";
+                ctx.Animation.ClearCurves();
+                ctx.Animation.legacy = true;
+
+                ImportAnimation(ctx, ctx.Animation);
+
+                ctx.Animation.wrapMode = WrapMode.Loop;
+                var animation = ctx.Root.AddComponent<Animation>();
+                animation.AddClip(ctx.Animation, ctx.Animation.name);
+                animation.clip = ctx.Animation;
+            }
+        }
+
     }
 }

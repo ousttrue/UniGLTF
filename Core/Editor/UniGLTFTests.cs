@@ -59,7 +59,7 @@ namespace UniGLTF
                     // import
                     context.ParseJson(gltf.ToJson(), new SimpleStorage(new ArraySegment<byte>()));
                     //Debug.LogFormat("{0}", context.Json);
-                    gltfImporter.Load(context);
+                    context.Load();
 
                     AssertAreEqual(go.transform, context.Root.transform);
                 }

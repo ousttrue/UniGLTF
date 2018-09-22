@@ -9,6 +9,9 @@ namespace UniGLTF
 {
     public class MeshImporter
     {
+        const float FRAME_WEIGHT = 100.0f;
+
+
         // multiple submMesh is not sharing a VertexBuffer.
         // each subMesh use a independent VertexBuffer.
         private static MeshContext _ImportMeshIndependentVertexBuffer(ImporterContext ctx, glTFMesh gltfMesh)
@@ -57,8 +60,10 @@ namespace UniGLTF
                 {
                     if (ctx.IsGeneratedUniGLTFAndOlder(1, 16))
                     {
+#pragma warning disable 0612
                         // backward compatibility
                         uv.AddRange(ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).Select(x => x.ReverseY()));
+#pragma warning restore 0612
                     }
                     else
                     {
@@ -184,8 +189,10 @@ namespace UniGLTF
                 {
                     if (ctx.IsGeneratedUniGLTFAndOlder(1, 16))
                     {
+#pragma warning disable 0612
                         // backward compatibility
                         context.uv = ctx.GLTF.GetArrayFromAccessor<Vector2>(prim.attributes.TEXCOORD_0).SelectInplace(x => x.ReverseY());
+#pragma warning restore 0612
                     }
                     else
                     {
@@ -351,5 +358,126 @@ namespace UniGLTF
 
             return meshContext;
         }
+
+
+        public static MeshWithMaterials BuildMesh(ImporterContext ctx, MeshImporter.MeshContext meshContext)
+        {
+            if (!meshContext.materialIndices.Any())
+            {
+                meshContext.materialIndices.Add(0);
+            }
+
+            //Debug.Log(prims.ToJson());
+            var mesh = new Mesh();
+            mesh.name = meshContext.name;
+
+            if (meshContext.positions.Length > UInt16.MaxValue)
+            {
+#if UNITY_2017_3_OR_NEWER
+                mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+#else
+                Debug.LogWarningFormat("vertices {0} exceed 65535. not implemented. Unity2017.3 supports large mesh",
+                    meshContext.positions.Length);
+#endif
+            }
+
+            mesh.vertices = meshContext.positions;
+            bool recalculateNormals = false;
+            if (meshContext.normals != null && meshContext.normals.Length > 0)
+            {
+                mesh.normals = meshContext.normals;
+            }
+            else
+            {
+                recalculateNormals = true;
+            }
+
+            if (meshContext.uv != null && meshContext.uv.Length > 0)
+            {
+                mesh.uv = meshContext.uv;
+            }
+
+            bool recalculateTangents = true;
+#if UNIGLTF_IMPORT_TANGENTS
+            if (meshContext.tangents != null && meshContext.tangents.Length > 0)
+            {
+                mesh.tangents = meshContext.tangents;
+                recalculateTangents = false;
+            }
+#endif
+
+            if (meshContext.colors != null && meshContext.colors.Length > 0)
+            {
+                mesh.colors = meshContext.colors;
+            }
+            if (meshContext.boneWeights != null && meshContext.boneWeights.Count > 0)
+            {
+                mesh.boneWeights = meshContext.boneWeights.ToArray();
+            }
+            mesh.subMeshCount = meshContext.subMeshes.Count;
+            for (int i = 0; i < meshContext.subMeshes.Count; ++i)
+            {
+                mesh.SetTriangles(meshContext.subMeshes[i], i);
+            }
+
+            if (recalculateNormals)
+            {
+                mesh.RecalculateNormals();
+            }
+            if (recalculateTangents)
+            {
+#if UNITY_5_6_OR_NEWER
+                mesh.RecalculateTangents();
+#else
+                Debug.LogWarning("recalculateTangents");
+#endif
+            }
+
+            var result = new MeshWithMaterials
+            {
+                Mesh = mesh,
+                Materials = meshContext.materialIndices.Select(x => ctx.GetMaterial(x)).ToArray()
+            };
+
+            if (meshContext.blendShapes != null)
+            {
+                Vector3[] emptyVertices = null;
+                foreach (var blendShape in meshContext.blendShapes)
+                {
+                    if (blendShape.Positions.Count > 0)
+                    {
+                        if (blendShape.Positions.Count == mesh.vertexCount)
+                        {
+                            mesh.AddBlendShapeFrame(blendShape.Name, FRAME_WEIGHT,
+                                blendShape.Positions.ToArray(),
+                                (meshContext.normals != null && meshContext.normals.Length == mesh.vertexCount) ? blendShape.Normals.ToArray() : null,
+                                null
+                                );
+                        }
+                        else
+                        {
+                            Debug.LogWarningFormat("May be partial primitive has blendShape. Rquire separete mesh or extend blend shape, but not implemented: {0}", blendShape.Name);
+                        }
+                    }
+                    else
+                    {
+                        if (emptyVertices == null)
+                        {
+                            emptyVertices = new Vector3[mesh.vertexCount];
+                        }
+                        Debug.LogFormat("empty blendshape: {0}.{1}", mesh.name, blendShape.Name);
+                        // add empty blend shape for keep blend shape index
+                        mesh.AddBlendShapeFrame(blendShape.Name, FRAME_WEIGHT,
+                            emptyVertices,
+                            null,
+                            null
+                            );
+                    }
+                }
+            }
+
+            return result;
+        }
+
     }
 }

@@ -181,7 +181,7 @@ namespace UniGLTF
             }
 
             // custom shader for vertex color
-            if (m_context != null && m_context.MaterialHasVertexColor(material))
+            if (m_context != null && m_context.GLTF.MaterialHasVertexColor(material))
             {
                 return VColor;
             }
