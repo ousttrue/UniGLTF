@@ -57,7 +57,9 @@ namespace UniGLTF
 
             EditorApplication.delayCall += () =>
             {
-                // delay and can import png texture
+                //
+                // after textures imported
+                //
                 context.Load();
                 context.SaveAsAsset(prefabPath);
                 context.Destroy(false);

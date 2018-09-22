@@ -74,21 +74,17 @@ namespace UniGLTF
         }
         #endregion
 
-
+#if UNITY_EDITOR
+        UnityPath m_textureBaseDir;
         public UnityPath TextureBaseDir
         {
-            get; private set;
+            get { return m_textureBaseDir; }
         }
-        void SetGltfPath(UnityPath gltfPath)
+        public void SetTextureBaseDir(UnityPath dir)
         {
-            TextureBaseDir = gltfPath.Parent;
+            m_textureBaseDir = dir;
         }
-
-        [Obsolete("Use Parse(path, bytes) or Load(path, bytes)")]
-        public ImporterContext(UnityPath gltfPath)
-        {
-            SetGltfPath(gltfPath);
-        }
+#endif
 
         public ImporterContext()
         {
@@ -155,16 +151,19 @@ namespace UniGLTF
         #endregion
 
         #region Parse
+        public void Parse(string path)
+        {
+            Parse(path, File.ReadAllBytes(path));
+        }
+
         /// <summary>
         /// Parse gltf json or Parse json chunk of glb
         /// </summary>
         /// <param name="path"></param>
         /// <param name="bytes"></param>
-        public void Parse(string path, Byte[] bytes)
+        public virtual void Parse(string path, Byte[] bytes)
         {
             var ext = Path.GetExtension(path).ToLower();
-            SetGltfPath(UnityPath.FromFullpath(path));
-
             switch (ext)
             {
                 case ".gltf":
@@ -339,7 +338,23 @@ namespace UniGLTF
             {
                 for (int i = 0; i < GLTF.textures.Count; ++i)
                 {
-                    var item = new TextureItem(GLTF, i, TextureBaseDir);
+                    var item = new TextureItem(i);
+
+#if UNITY_EDITOR
+                    var image = GLTF.GetImageFromTextureIndex(i);
+                    if (!string.IsNullOrEmpty(image.uri)
+                        && !image.uri.StartsWith("data:")
+                        && TextureBaseDir.IsUnderAssetsFolder)
+                    {
+                        ///
+                        /// required SaveTexturesAsPng or SetTextureBaseDir
+                        ///
+                        var assetPath = TextureBaseDir.Child(image.uri);
+                        var textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
+                        item.SetAssetInfo(assetPath, textureName);
+                    }
+#endif
+
                     AddTexture(item);
                 }
             }
@@ -462,7 +477,7 @@ namespace UniGLTF
                                 {
                                     using (MeasureTime("texture.Process"))
                                     {
-                                        var texture = new TextureItem(GLTF, index);
+                                        var texture = new TextureItem(index);
                                         texture.Process(GLTF, Storage);
                                         return texture;
                                     }
@@ -530,7 +545,7 @@ namespace UniGLTF
         {
             for (int i = 0; i < GLTF.textures.Count; ++i)
             {
-                var x = new TextureItem(GLTF, i);
+                var x = new TextureItem(i);
                 x.Process(GLTF, storage);
                 AddTexture(x);
                 yield return null;
@@ -784,7 +799,7 @@ namespace UniGLTF
 
         public void SaveTexturesAsPng(UnityPath prefabPath)
         {
-            TextureBaseDir = prefabPath.Parent;
+            SetTextureBaseDir(prefabPath.Parent);
             TextureBaseDir.ImportAsset();
 
             //

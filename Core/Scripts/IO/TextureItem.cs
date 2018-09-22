@@ -16,20 +16,26 @@ namespace UniGLTF
         private string m_textureName;
 
         private Texture2D m_texture;
-        private Texture2D m_converted;
-
         public Texture2D Texture
         {
             get { return m_texture; }
         }
 
+        private Texture2D m_converted;
         public Texture2D Converted
         {
             get { return m_converted; }
             set { m_converted = value; }
         }
 
+#if UNITY_EDITOR
         UnityPath m_assetPath;
+        public void SetAssetInfo(UnityPath assetPath, string textureName)
+        {
+            m_assetPath = assetPath;
+            m_textureName = textureName;
+        }
+
         public bool IsAsset
         {
             get
@@ -37,6 +43,15 @@ namespace UniGLTF
                 return m_assetPath.IsUnderAssetsFolder;
             }
         }
+#else
+        public bool IsAsset
+        {
+            get
+            {
+                return false;
+            }
+        }
+#endif
 
         public IEnumerable<Texture2D> GetTexturesForSaveAssets()
         {
@@ -61,20 +76,9 @@ namespace UniGLTF
             }
         }
 
-        public TextureItem(glTF gltf, int index, UnityPath textureBase = default(UnityPath))
+        public TextureItem(int index)
         {
             m_textureIndex = index;
-
-            var image = gltf.GetImageFromTextureIndex(m_textureIndex);
-#if UNITY_EDITOR
-            if (!string.IsNullOrEmpty(image.uri)
-                && !image.uri.StartsWith("data:")
-                && textureBase.IsUnderAssetsFolder)
-            {
-                m_assetPath = textureBase.Child(image.uri);
-                m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
-            }
-#endif
         }
 
         public void Process(glTF gltf, IStorage storage)
