@@ -35,50 +35,56 @@ namespace UniGLTF
 
             var context = new ImporterContext();
             var ext = gltfPath.Extension.ToLower();
-            try
-            {
-                var prefabPath = gltfPath.Parent.Child(gltfPath.FileNameWithoutExtension + ".prefab");
-                context.Parse(gltfPath.FullPath);
-                if (ext == ".gltf")
-                {
-                    context.SetTextureBaseDir(gltfPath.Parent);
-                }
-                else if (ext == ".glb")
-                {
-                    // save texture assets !
-                    context.SaveTexturesAsPng(prefabPath);
-                }
-                else
-                {
-                    return;
-                }
 
-                EditorApplication.delayCall += () =>
+            var prefabPath = gltfPath.Parent.Child(gltfPath.FileNameWithoutExtension + ".prefab");
+            context.Parse(gltfPath.FullPath);
+            if (ext == ".gltf")
+            {
+                var textureBaseDir = gltfPath.Parent;
+                context.SetTextureBaseDir(textureBaseDir);
+                textureBaseDir.ImportAsset();
+            }
+            else if (ext == ".glb")
+            {
+                // save texture assets !
+                context.SaveTexturesAsPng(prefabPath);
+            }
+            else
+            {
+                return;
+            }
+
+            ImportDelayed(context, prefabPath, gltfPath);
+        }
+
+        static void ImportDelayed(ImporterContext context, UnityPath prefabPath, UnityPath gltfPath)
+        {
+            EditorApplication.delayCall += () =>
+                {
+                    //
+                    // after textures imported
+                    //
+                    try
                     {
-                        //
-                        // after textures imported
-                        //
                         context.Load();
                         context.SaveAsAsset(prefabPath);
                         context.Destroy(false);
-                    };
-            }
-            catch (UniGLTFNotSupportedException ex)
-            {
-                Debug.LogWarningFormat("{0}: {1}",
-                    gltfPath,
-                    ex.Message
-                    );
-            }
-            catch (Exception ex)
-            {
-                Debug.LogErrorFormat("import error: {0}", gltfPath);
-                Debug.LogErrorFormat("{0}", ex);
-                if (context != null)
-                {
-                    context.Destroy(true);
-                }
-            }
+                    }
+                    catch (UniGLTFNotSupportedException ex)
+                    {
+                        Debug.LogWarningFormat("{0}: {1}",
+                            gltfPath,
+                            ex.Message
+                            );
+                        context.Destroy(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogErrorFormat("import error: {0}", gltfPath);
+                        Debug.LogErrorFormat("{0}", ex);
+                        context.Destroy(true);
+                    }
+                };
         }
     }
 }
