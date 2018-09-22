@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-
+using UnityEngine;
 
 namespace UniGLTF
 {
@@ -32,6 +32,13 @@ namespace UniGLTF
             context.Load();
             context.ShowMeshes();
             context.EnableUpdateWhenOffscreen();
+        }
+
+        public static void LoadVrmAsync(string path, Byte[] bytes, Action<GameObject> onLoaded, Action<Exception> onError = null, bool show = true)
+        {
+            var context = new ImporterContext();
+            context.Parse(path, bytes);
+            context.LoadAsync(onLoaded, onError, show);
         }
     }
 }
