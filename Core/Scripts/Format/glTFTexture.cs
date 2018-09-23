@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using UniJSON;
 
 namespace UniGLTF
@@ -53,6 +54,32 @@ namespace UniGLTF
 
         [JsonSchema(EnumValues = new object[] { "image/jpeg", "image/png" })]
         public string mimeType;
+
+        public string GetExt()
+        {
+            switch (mimeType)
+            {
+                case "image/png":
+                    return ".png";
+
+                case "image/jpeg":
+                    return ".jpg";
+
+                default:
+                    if (uri.StartsWith("data:image/jpeg;"))
+                    {
+                        return ".jpg";
+                    }
+                    else if (uri.StartsWith("data:image/png;"))
+                    {
+                        return ".png";
+                    }
+                    else
+                    {
+                        return Path.GetExtension(uri).ToLower();
+                    }
+            }
+        }
 
         // empty schemas
         public object extensions;

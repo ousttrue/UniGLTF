@@ -7,6 +7,13 @@ namespace UniGLTF
     public interface IStorage
     {
         ArraySegment<Byte> Get(string url);
+
+        /// <summary>
+        /// Get original filepath if exists
+        /// </summary>
+        /// <param name="url"></param>
+        /// <returns></returns>
+        string GetPath(string url);
     }
 
     public class SimpleStorage : IStorage
@@ -25,6 +32,11 @@ namespace UniGLTF
         public ArraySegment<byte> Get(string url)
         {
             return m_bytes;
+        }
+
+        public string GetPath(string url)
+        {
+            return null;
         }
     }
 
@@ -45,6 +57,18 @@ namespace UniGLTF
                 : File.ReadAllBytes(Path.Combine(m_root, url))
                 ;
             return new ArraySegment<byte>(bytes);
+        }
+
+        public string GetPath(string url)
+        {
+            if (url.StartsWith("data:"))
+            {
+                return null;
+            }
+            else
+            {
+                return Path.Combine(m_root, url).Replace("\\", "/");
+            }
         }
     }
 }

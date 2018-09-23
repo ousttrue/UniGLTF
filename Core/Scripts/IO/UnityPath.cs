@@ -245,6 +245,10 @@ namespace UniGLTF
         /// <returns></returns>
         public static UnityPath FromFullpath(string fullPath)
         {
+            if(fullPath == null)
+            {
+                fullPath = "";
+            }
             fullPath = fullPath.Replace("\\", "/");
 
             if (fullPath == BaseFullPath) {

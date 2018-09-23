@@ -107,28 +107,8 @@ namespace UniGLTF
         {
             if (IsAsset) return;
 
-            var image = gltf.GetImageFromTextureIndex(m_textureIndex);
-            if (string.IsNullOrEmpty(image.uri))
-            {
-                //
-                // use buffer view (GLB)
-                //
-                var byteSegment = gltf.GetViewBytes(image.bufferView);
-                m_imageBytes = ToArray(byteSegment);
-                m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", m_textureIndex);
-            }
-            else
-            {
-                m_imageBytes = ToArray(storage.Get(image.uri));
-                if (image.uri.StartsWith("data:"))
-                {
-                    m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#Base64Embeded", m_textureIndex);
-                }
-                else
-                {
-                    m_textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
-                }
-            }
+            var imageIndex = gltf.GetImageIndexFromTextureIndex(m_textureIndex);
+            m_imageBytes = ToArray(gltf.GetImageBytes(storage, imageIndex, out m_textureName));
         }
 
         public void GetOrCreateTexture(bool isLinear)
@@ -141,9 +121,18 @@ namespace UniGLTF
                 //
                 m_assetPath.ImportAsset();
                 TextureImporter importer = m_assetPath.GetImporter<TextureImporter>();
+                if (importer == null)
+                {
+                    Debug.LogWarningFormat("fail to get TextureImporter: {0}", m_assetPath);
+                }
                 importer.sRGBTexture = !isLinear;
                 importer.SaveAndReimport();
+
                 m_texture = m_assetPath.LoadAsset<Texture2D>();
+                if (m_texture == null)
+                {
+                    Debug.LogWarningFormat("fail to Load Texture2D: {0}", m_assetPath);
+                }
             }
             else
 #endif

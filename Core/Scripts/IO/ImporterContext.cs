@@ -330,10 +330,6 @@ namespace UniGLTF
 #if UNITY_EDITOR
                 if (imageBaseDir.IsUnderAssetsFolder)
                 {
-                    // avoid UnityEngine.MissingReferenceException: The object of type 'Material' has been destroyed but you are still trying to access it.
-                    // ?
-                    imageBaseDir.ImportAsset();
-
                     var image = GLTF.GetImageFromTextureIndex(i);
                     if (!string.IsNullOrEmpty(image.uri)
                         && !image.uri.StartsWith("data:")
@@ -803,86 +799,53 @@ namespace UniGLTF
             }
         }
 
-        public void ExtranctImagesFromGlb(UnityPath prefabPath)
+        /// <summary>
+        /// Extract images from glb or gltf out of Assets folder.
+        /// </summary>
+        /// <param name="prefabPath"></param>
+        public void ExtranctImages(UnityPath prefabPath)
         {
             var prefabParentDir = prefabPath.Parent;
+
+            // glb buffer
+            var folder = prefabPath.GetAssetFolder(".Textures");
 
             //
             // https://answers.unity.com/questions/647615/how-to-update-import-settings-for-newly-created-as.html
             //
-            for (int i = 0; i < GLTF.textures.Count; ++i)
+            int created = 0;
+            //for (int i = 0; i < GLTF.textures.Count; ++i)
+            for (int i = 0; i < GLTF.images.Count; ++i)
             {
-                var x = GLTF.textures[i];
-                var image = GLTF.images[x.source];
-                if (string.IsNullOrEmpty(image.uri))
+                folder.EnsureFolder();
+
+                //var x = GLTF.textures[i];
+                var image = GLTF.images[i];
+                var src = Storage.GetPath(image.uri);
+                if (UnityPath.FromFullpath(src).IsUnderAssetsFolder)
                 {
-                    // glb buffer
-                    var folder = prefabPath.GetAssetFolder(".Textures");
-                    folder.EnsureFolder();
-
-                    // name & bytes
-                    var textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", i);
-                    var byteSegment = GLTF.GetViewBytes(image.bufferView);
-
-                    // path
-                    var png = folder.Child(textureName + ".png");
-                    File.WriteAllBytes(png.FullPath, byteSegment.ToArray());
-                    png.ImportAsset();
-
-                    // make relative path from PrefabParentDir
-                    image.uri = png.Value.Substring(prefabParentDir.Value.Length + 1);
-                    //Debug.LogFormat("image.uri: {0}", image.uri);
+                    // asset is exists.
                 }
                 else
                 {
-                    Debug.LogWarningFormat("image.uri: {0}", image.uri);
+                    string textureName;
+                    var byteSegment = GLTF.GetImageBytes(Storage, i, out textureName);
+
+                    // path
+                    var dst = folder.Child(textureName + image.GetExt());
+                    File.WriteAllBytes(dst.FullPath, byteSegment.ToArray());
+                    dst.ImportAsset();
+
+                    // make relative path from PrefabParentDir
+                    image.uri = dst.Value.Substring(prefabParentDir.Value.Length + 1);
+                    ++created;
                 }
             }
-            AssetDatabase.Refresh();
 
-            CreateTextureItems(prefabParentDir);
-        }
-
-        public void CopyExternalImages(UnityPath prefabPath, string baseDir)
-        {
-            var prefabParentDir = prefabPath.Parent;
-
-            //
-            // https://answers.unity.com/questions/647615/how-to-update-import-settings-for-newly-created-as.html
-            //
-            for (int i = 0; i < GLTF.textures.Count; ++i)
+            if (created > 0)
             {
-                var x = GLTF.textures[i];
-                var image = GLTF.images[x.source];
-                if (string.IsNullOrEmpty(image.uri))
-                {
-                    Debug.LogWarningFormat("empty image.uri: {0}", i);
-                }
-                else {
-                    //
-                    // copy
-                    //
-                    var folder = prefabPath.GetAssetFolder(".Textures");
-                    folder.EnsureFolder();
-
-                    var src = Path.Combine(baseDir, image.uri).Replace("\\", "/");
-                    if (File.Exists(src))
-                    {
-                        //Debug.LogFormat("image: {0}", src);
-                        var dst = folder.Child(Path.GetFileName(src));
-                        File.Copy(src, dst.FullPath);
-                        dst.ImportAsset();
-
-                        // make relative path from PrefabParentDir
-                        image.uri = dst.Value.Substring(prefabParentDir.Value.Length + 1);
-                    }
-                    else
-                    {
-                        Debug.LogWarningFormat("image not exists: {0}", src);
-                    }
-                }
+                AssetDatabase.Refresh();
             }
-            AssetDatabase.Refresh();
 
             CreateTextureItems(prefabParentDir);
         }

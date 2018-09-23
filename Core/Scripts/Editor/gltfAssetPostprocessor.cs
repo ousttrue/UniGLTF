@@ -23,7 +23,7 @@ namespace UniGLTF
                         {
                             var gltfPath = UnityPath.FromUnityPath(path);
                             var prefabPath = gltfPath.Parent.Child(gltfPath.FileNameWithoutExtension + ".prefab");
-                            ImportAsset(path, ext, prefabPath);
+                            ImportAsset(UnityPath.FromUnityPath(path).FullPath, ext, prefabPath);
                             break;
                         }
                 }
@@ -39,55 +39,20 @@ namespace UniGLTF
             }
 
             var context = new ImporterContext();
-            var srcPath = UnityPath.FromFullpath(src);
-
             context.Parse(src);
-            if (ext == ".gltf")
-            {
-                if (srcPath.IsUnderAssetsFolder)
-                {
-                    //
-                    // Import from asset folder, use texture assets
-                    //
-                    context.CreateTextureItems(srcPath.Parent);
-                }
-                else
-                {
-                    //
-                    // Import from external folder, save texture assets
-                    //
-                    context.CopyExternalImages(prefabPath, Path.GetDirectoryName(src));
-                }
-            }
-            else if (ext == ".glb")
-            {
-                //
-                // Extract textures from glb
-                //
-                context.ExtranctImagesFromGlb(prefabPath);
-            }
-            else if(ext == ".zip")
-            {
-                //
-                // Extract textures from zip
-                //
-                context.ExtranctImagesFromGlb(prefabPath);
-            }
-            else
-            {
-                Debug.LogWarningFormat("unknown ext: {0}", src);
-                return;
-            }
 
-            ImportDelayed(context, prefabPath, src);
+            // Extract textures to assets folder
+            context.ExtranctImages(prefabPath);
+
+            ImportDelayed(src, prefabPath, context);
         }
 
-        static void ImportDelayed(ImporterContext context, UnityPath prefabPath, string src)
+        static void ImportDelayed(string src, UnityPath prefabPath, ImporterContext context)
         {
             EditorApplication.delayCall += () =>
                 {
                     //
-                    // after textures imported
+                    // After textures imported(To ensure TextureImporter be accessible).
                     //
                     try
                     {

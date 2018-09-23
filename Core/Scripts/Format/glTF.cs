@@ -240,15 +240,46 @@ namespace UniGLTF
         [JsonSchema(MinItems = 1)]
         public List<glTFImage> images = new List<glTFImage>();
 
+        public int GetImageIndexFromTextureIndex(int textureIndex)
+        {
+            return textures[textureIndex].source;
+        }
+
         public glTFImage GetImageFromTextureIndex(int textureIndex)
         {
-            return images[textures[textureIndex].source];
+            return images[GetImageIndexFromTextureIndex(textureIndex)];
         }
 
         public glTFTextureSampler GetSamplerFromTextureIndex(int textureIndex)
         {
             var samplerIndex = textures[textureIndex].sampler;
             return GetSampler(samplerIndex);
+        }
+
+        public ArraySegment<Byte> GetImageBytes(IStorage storage, int imageIndex, out string textureName)
+        {
+            var image = images[imageIndex];
+            if (string.IsNullOrEmpty(image.uri))
+            {
+                //
+                // use buffer view (GLB)
+                //
+                //m_imageBytes = ToArray(byteSegment);
+                textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#GLB", imageIndex);
+                return GetViewBytes(image.bufferView);
+            }
+            else
+            {
+                if (image.uri.StartsWith("data:"))
+                {
+                    textureName = !string.IsNullOrEmpty(image.name) ? image.name : string.Format("{0:00}#Base64Embeded", imageIndex);
+                }
+                else
+                {
+                    textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
+                }
+                return storage.Get(image.uri);
+            }
         }
 
         [JsonSchema(MinItems = 1)]
