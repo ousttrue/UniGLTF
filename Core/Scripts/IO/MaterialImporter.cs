@@ -68,6 +68,11 @@ namespace UniGLTF
             var shader = m_shaderStore.GetShader(x);
             //Debug.LogFormat("[{0}]{1}", i, shader.name);
             var material = new Material(shader);
+#if UNITY_EDITOR
+            // textureImporter.SaveAndReimport(); may destory this material
+            material.hideFlags = HideFlags.DontUnloadUnusedAsset;
+#endif
+
             material.name = (x == null || string.IsNullOrEmpty(x.name))
                 ? string.Format("material_{0:00}", i)
                 : x.name
@@ -124,15 +129,7 @@ namespace UniGLTF
                             var textureAssetPath = AssetDatabase.GetAssetPath(texture.Texture);
                             if (!string.IsNullOrEmpty(textureAssetPath))
                             {
-                                // textureImporter.SaveAndReimport(); may destory this material
-                                var flags = material.hideFlags;
-                                material.hideFlags = HideFlags.DontUnloadUnusedAsset;
-                                {
-                                    TextureIO.MarkTextureAssetAsNormalMap(textureAssetPath);
-
-                                    // restore
-                                    material.hideFlags = flags;
-                                }
+                                TextureIO.MarkTextureAssetAsNormalMap(textureAssetPath);
                             }
                             else
                             {
