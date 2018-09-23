@@ -803,7 +803,7 @@ namespace UniGLTF
             }
         }
 
-        public void SaveTexturesAsPng(UnityPath prefabPath)
+        public void ExtranctImagesFromGlb(UnityPath prefabPath)
         {
             var prefabParentDir = prefabPath.Parent;
 
@@ -833,8 +833,56 @@ namespace UniGLTF
                     image.uri = png.Value.Substring(prefabParentDir.Value.Length + 1);
                     //Debug.LogFormat("image.uri: {0}", image.uri);
                 }
+                else
+                {
+                    Debug.LogWarningFormat("image.uri: {0}", image.uri);
+                }
             }
-            UnityEditor.AssetDatabase.Refresh();
+            AssetDatabase.Refresh();
+
+            CreateTextureItems(prefabParentDir);
+        }
+
+        public void CopyExternalImages(UnityPath prefabPath, string baseDir)
+        {
+            var prefabParentDir = prefabPath.Parent;
+
+            //
+            // https://answers.unity.com/questions/647615/how-to-update-import-settings-for-newly-created-as.html
+            //
+            for (int i = 0; i < GLTF.textures.Count; ++i)
+            {
+                var x = GLTF.textures[i];
+                var image = GLTF.images[x.source];
+                if (string.IsNullOrEmpty(image.uri))
+                {
+                    Debug.LogWarningFormat("empty image.uri: {0}", i);
+                }
+                else {
+                    //
+                    // copy
+                    //
+                    var folder = prefabPath.GetAssetFolder(".Textures");
+                    folder.EnsureFolder();
+
+                    var src = Path.Combine(baseDir, image.uri).Replace("\\", "/");
+                    if (File.Exists(src))
+                    {
+                        //Debug.LogFormat("image: {0}", src);
+                        var dst = folder.Child(Path.GetFileName(src));
+                        File.Copy(src, dst.FullPath);
+                        dst.ImportAsset();
+
+                        // make relative path from PrefabParentDir
+                        image.uri = dst.Value.Substring(prefabParentDir.Value.Length + 1);
+                    }
+                    else
+                    {
+                        Debug.LogWarningFormat("image not exists: {0}", src);
+                    }
+                }
+            }
+            AssetDatabase.Refresh();
 
             CreateTextureItems(prefabParentDir);
         }

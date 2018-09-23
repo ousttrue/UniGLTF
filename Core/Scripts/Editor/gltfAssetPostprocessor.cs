@@ -56,7 +56,7 @@ namespace UniGLTF
                     //
                     // Import from external folder, save texture assets
                     //
-                    context.SaveTexturesAsPng(prefabPath);
+                    context.CopyExternalImages(prefabPath, Path.GetDirectoryName(src));
                 }
             }
             else if (ext == ".glb")
@@ -64,14 +64,14 @@ namespace UniGLTF
                 //
                 // Extract textures from glb
                 //
-                context.SaveTexturesAsPng(prefabPath);
+                context.ExtranctImagesFromGlb(prefabPath);
             }
             else if(ext == ".zip")
             {
                 //
                 // Extract textures from zip
                 //
-                context.SaveTexturesAsPng(prefabPath);
+                context.ExtranctImagesFromGlb(prefabPath);
             }
             else
             {
