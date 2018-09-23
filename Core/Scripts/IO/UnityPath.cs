@@ -176,6 +176,11 @@ namespace UniGLTF
             Value = value.Replace("\\", "/");
         }
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="unityPath">Relative from unity current path. GetParent(Application.dataPath)</param>
+        /// <returns></returns>
         public static UnityPath FromUnityPath(string unityPath)
         {
             if (String.IsNullOrEmpty(unityPath))
@@ -233,6 +238,11 @@ namespace UniGLTF
             get { return Directory.Exists(FullPath); }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="fullPath">C:/path/to/file</param>
+        /// <returns></returns>
         public static UnityPath FromFullpath(string fullPath)
         {
             fullPath = fullPath.Replace("\\", "/");

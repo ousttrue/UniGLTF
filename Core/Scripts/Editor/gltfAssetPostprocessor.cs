@@ -20,44 +20,69 @@ namespace UniGLTF
                 {
                     case ".gltf":
                     case ".glb":
-                        Import(UnityPath.FromUnityPath(path));
-                        break;
+                        {
+                            var gltfPath = UnityPath.FromUnityPath(path);
+                            var prefabPath = gltfPath.Parent.Child(gltfPath.FileNameWithoutExtension + ".prefab");
+                            ImportAsset(path, ext, prefabPath);
+                            break;
+                        }
                 }
             }
         }
 
-        public static void Import(UnityPath gltfPath)
+        public static void ImportAsset(string src, string ext, UnityPath prefabPath)
         {
-            if (!gltfPath.IsUnderAssetsFolder)
+            if (!prefabPath.IsUnderAssetsFolder)
             {
-                throw new Exception();
+                Debug.LogWarningFormat("out of asset path: {0}", prefabPath);
+                return;
             }
 
             var context = new ImporterContext();
-            var ext = gltfPath.Extension.ToLower();
+            var srcPath = UnityPath.FromFullpath(src);
 
-            var prefabPath = gltfPath.Parent.Child(gltfPath.FileNameWithoutExtension + ".prefab");
-            context.Parse(gltfPath.FullPath);
+            context.Parse(src);
             if (ext == ".gltf")
             {
-                var textureBaseDir = gltfPath.Parent;
-                context.SetTextureBaseDir(textureBaseDir);
-                textureBaseDir.ImportAsset();
+                if (srcPath.IsUnderAssetsFolder)
+                {
+                    //
+                    // Import from asset folder, use texture assets
+                    //
+                    context.CreateTextureItems(srcPath.Parent);
+                }
+                else
+                {
+                    //
+                    // Import from external folder, save texture assets
+                    //
+                    context.SaveTexturesAsPng(prefabPath);
+                }
             }
             else if (ext == ".glb")
             {
-                // save texture assets !
+                //
+                // Extract textures from glb
+                //
+                context.SaveTexturesAsPng(prefabPath);
+            }
+            else if(ext == ".zip")
+            {
+                //
+                // Extract textures from zip
+                //
                 context.SaveTexturesAsPng(prefabPath);
             }
             else
             {
+                Debug.LogWarningFormat("unknown ext: {0}", src);
                 return;
             }
 
-            ImportDelayed(context, prefabPath, gltfPath);
+            ImportDelayed(context, prefabPath, src);
         }
 
-        static void ImportDelayed(ImporterContext context, UnityPath prefabPath, UnityPath gltfPath)
+        static void ImportDelayed(ImporterContext context, UnityPath prefabPath, string src)
         {
             EditorApplication.delayCall += () =>
                 {
@@ -73,14 +98,14 @@ namespace UniGLTF
                     catch (UniGLTFNotSupportedException ex)
                     {
                         Debug.LogWarningFormat("{0}: {1}",
-                            gltfPath,
+                            src,
                             ex.Message
                             );
                         context.Destroy(true);
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogErrorFormat("import error: {0}", gltfPath);
+                        Debug.LogErrorFormat("import error: {0}", src);
                         Debug.LogErrorFormat("{0}", ex);
                         context.Destroy(true);
                     }

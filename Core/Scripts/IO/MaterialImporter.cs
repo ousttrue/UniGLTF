@@ -124,7 +124,15 @@ namespace UniGLTF
                             var textureAssetPath = AssetDatabase.GetAssetPath(texture.Texture);
                             if (!string.IsNullOrEmpty(textureAssetPath))
                             {
-                                TextureIO.MarkTextureAssetAsNormalMap(textureAssetPath);
+                                // textureImporter.SaveAndReimport(); may destory this material
+                                var flags = material.hideFlags;
+                                material.hideFlags = HideFlags.DontUnloadUnusedAsset;
+                                {
+                                    TextureIO.MarkTextureAssetAsNormalMap(textureAssetPath);
+
+                                    // restore
+                                    material.hideFlags = flags;
+                                }
                             }
                             else
                             {

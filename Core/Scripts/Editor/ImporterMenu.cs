@@ -10,7 +10,7 @@ namespace UniGLTF
         [MenuItem(UniGLTFVersion.UNIGLTF_VERSION + "/Import", priority = 1)]
         public static void ImportMenu()
         {
-            var path = UnityEditor.EditorUtility.OpenFilePanel("open gltf", "", "gltf,glb,zip");
+            var path = EditorUtility.OpenFilePanel("open gltf", "", "gltf,glb,zip");
             if (string.IsNullOrEmpty(path))
             {
                 return;
@@ -18,7 +18,9 @@ namespace UniGLTF
 
             if (Application.isPlaying)
             {
+                //
                 // load into scene
+                //
                 var context = new ImporterContext();
                 context.Load(path);
                 context.ShowMeshes();
@@ -26,45 +28,24 @@ namespace UniGLTF
             }
             else
             {
+                //
+                // save as asset
+                //
                 if (path.StartsWithUnityAssetPath())
                 {
                     Debug.LogWarningFormat("disallow import from folder under the Assets");
                     return;
                 }
 
-                var assetPath = UnityEditor.EditorUtility.SaveFilePanel("save prefab", "Assets", Path.GetFileNameWithoutExtension(path), "prefab");
+                var assetPath = EditorUtility.SaveFilePanel("save prefab", "Assets", Path.GetFileNameWithoutExtension(path), "prefab");
                 if (string.IsNullOrEmpty(path))
                 {
                     return;
                 }
 
-                if (!assetPath.StartsWithUnityAssetPath())
-                {
-                    Debug.LogWarningFormat("out of asset path: {0}", assetPath);
-                    return;
-                }
-
                 // import as asset
-                Import(path, UnityPath.FromUnityPath(assetPath));
+                gltfAssetPostprocessor.ImportAsset(path, Path.GetExtension(path).ToLower(), UnityPath.FromFullpath(assetPath));
             }
-        }
-
-        static void Import(string readPath, UnityPath prefabPath)
-        {
-            var context = new ImporterContext();
-            context.Parse(readPath, File.ReadAllBytes(readPath));
-            context.SaveTexturesAsPng(prefabPath);
-
-            EditorApplication.delayCall += () =>
-            {
-                //
-                // after textures imported
-                //
-                context.Load();
-                context.SaveAsAsset(prefabPath);
-                context.Destroy(false);
-            };
-
         }
     }
 }

@@ -74,18 +74,6 @@ namespace UniGLTF
         }
         #endregion
 
-#if UNITY_EDITOR
-        UnityPath m_textureBaseDir;
-        public UnityPath TextureBaseDir
-        {
-            get { return m_textureBaseDir; }
-        }
-        public void SetTextureBaseDir(UnityPath dir)
-        {
-            m_textureBaseDir = dir;
-        }
-#endif
-
         public ImporterContext()
         {
         }
@@ -328,6 +316,43 @@ namespace UniGLTF
             Root.name = Path.GetFileNameWithoutExtension(path);
         }
 
+        public void CreateTextureItems(UnityPath imageBaseDir=default(UnityPath))
+        {
+            if (m_textures.Any())
+            {
+                return;
+            }
+
+            for (int i = 0; i < GLTF.textures.Count; ++i)
+            {
+                var item = new TextureItem(i);
+
+#if UNITY_EDITOR
+                if (imageBaseDir.IsUnderAssetsFolder)
+                {
+                    // avoid UnityEngine.MissingReferenceException: The object of type 'Material' has been destroyed but you are still trying to access it.
+                    // ?
+                    imageBaseDir.ImportAsset();
+
+                    var image = GLTF.GetImageFromTextureIndex(i);
+                    if (!string.IsNullOrEmpty(image.uri)
+                        && !image.uri.StartsWith("data:")
+                        && imageBaseDir.IsUnderAssetsFolder)
+                    {
+                        ///
+                        /// required SaveTexturesAsPng or SetTextureBaseDir
+                        ///
+                        var assetPath = imageBaseDir.Child(image.uri);
+                        var textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
+                        item.SetAssetInfo(assetPath, textureName);
+                    }
+                }
+#endif
+
+                AddTexture(item);
+            }
+        }
+
         /// <summary>
         /// Build unity objects from parsed gltf
         /// </summary>
@@ -336,28 +361,9 @@ namespace UniGLTF
             // textures
             if (GLTF.textures != null)
             {
-                for (int i = 0; i < GLTF.textures.Count; ++i)
-                {
-                    var item = new TextureItem(i);
-
-#if UNITY_EDITOR
-                    var image = GLTF.GetImageFromTextureIndex(i);
-                    if (!string.IsNullOrEmpty(image.uri)
-                        && !image.uri.StartsWith("data:")
-                        && TextureBaseDir.IsUnderAssetsFolder)
-                    {
-                        ///
-                        /// required SaveTexturesAsPng or SetTextureBaseDir
-                        ///
-                        var assetPath = TextureBaseDir.Child(image.uri);
-                        var textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
-                        item.SetAssetInfo(assetPath, textureName);
-                    }
-#endif
-
-                    AddTexture(item);
-                }
+                CreateTextureItems();
             }
+
             foreach (var x in GetTextures())
             {
                 x.Process(GLTF, Storage);
@@ -799,8 +805,7 @@ namespace UniGLTF
 
         public void SaveTexturesAsPng(UnityPath prefabPath)
         {
-            SetTextureBaseDir(prefabPath.Parent);
-            TextureBaseDir.ImportAsset();
+            var prefabParentDir = prefabPath.Parent;
 
             //
             // https://answers.unity.com/questions/647615/how-to-update-import-settings-for-newly-created-as.html
@@ -824,11 +829,14 @@ namespace UniGLTF
                     File.WriteAllBytes(png.FullPath, byteSegment.ToArray());
                     png.ImportAsset();
 
-                    image.uri = png.Value.Substring(TextureBaseDir.Value.Length + 1);
+                    // make relative path from PrefabParentDir
+                    image.uri = png.Value.Substring(prefabParentDir.Value.Length + 1);
                     //Debug.LogFormat("image.uri: {0}", image.uri);
                 }
             }
             UnityEditor.AssetDatabase.Refresh();
+
+            CreateTextureItems(prefabParentDir);
         }
         #endregion
 #endif
