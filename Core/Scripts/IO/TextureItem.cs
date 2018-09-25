@@ -28,6 +28,48 @@ namespace UniGLTF
             set { m_converted = value; }
         }
 
+        public bool UseConverted(bool isPlaying, string shader, string prop)
+        {
+            if (prop == "_BumpMap")
+            {
+                if (isPlaying)
+                {
+                    Converted = (new NormalConverter()).GetImportTexture(Texture);
+                    return true;
+                }
+                else
+                {
+#if UNITY_EDITOR
+                    var textureAssetPath = AssetDatabase.GetAssetPath(Texture);
+                    if (!string.IsNullOrEmpty(textureAssetPath))
+                    {
+                        TextureIO.MarkTextureAssetAsNormalMap(textureAssetPath);
+                    }
+                    else
+                    {
+                        Debug.LogWarningFormat("no asset for {0}", Texture);
+                    }
+#endif
+                    return false;
+                }
+            }
+
+            if (prop == "_MetallicGlossMap")
+            {
+                Converted = (new MetallicRoughnessConverter()).GetImportTexture(Texture);
+                return true;
+            }
+
+            if (prop == "_OcclusionMap")
+            {
+                Converted = (new OcclusionConverter()).GetImportTexture(Texture);
+                return true;
+            }
+
+            return false;
+        }
+
+
 #if UNITY_EDITOR
         UnityPath m_assetPath;
         public void SetAssetInfo(UnityPath assetPath, string textureName)

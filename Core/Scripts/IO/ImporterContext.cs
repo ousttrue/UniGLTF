@@ -800,6 +800,8 @@ namespace UniGLTF
             };
             foreach (var o in ObjectsForSubAsset())
             {
+                if (o == null) continue;
+
                 var assetPath = GetAssetPath(prefabPath, o);
                 if (!assetPath.IsNull)
                 {
