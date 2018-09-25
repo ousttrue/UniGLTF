@@ -74,6 +74,42 @@ namespace UniGLTF
         }
         #endregion
 
+        IShaderStore m_shaderStore;
+        public IShaderStore ShaderStore
+        {
+            get
+            {
+                if (m_shaderStore == null)
+                {
+                    m_shaderStore = new ShaderStore(this);
+                }
+                return m_shaderStore;
+            }
+        }
+
+        IMaterialImporter m_materialImporter;
+        public IMaterialImporter MaterialImporter
+        {
+            get
+            {
+                if (m_materialImporter == null)
+                {
+                    m_materialImporter = new MaterialImporter(ShaderStore, this);
+                }
+                return m_materialImporter;
+            }
+        }
+
+        public ImporterContext(IShaderStore shaderStore)
+        {
+            m_shaderStore = shaderStore;
+        }
+
+        public ImporterContext(IMaterialImporter materialImporter)
+        {
+            m_materialImporter = materialImporter;
+        }
+
         public ImporterContext()
         {
         }
@@ -316,7 +352,7 @@ namespace UniGLTF
             Root.name = Path.GetFileNameWithoutExtension(path);
         }
 
-        public void CreateTextureItems(UnityPath imageBaseDir=default(UnityPath))
+        public void CreateTextureItems(UnityPath imageBaseDir = default(UnityPath))
         {
             if (m_textures.Any())
             {
@@ -366,11 +402,6 @@ namespace UniGLTF
             }
 
             // materials
-            if (MaterialImporter == null)
-            {
-                MaterialImporter = new MaterialImporter(new ShaderStore(this), this);
-            }
-
             if (GLTF.materials == null || !GLTF.materials.Any())
             {
                 // no material
@@ -453,7 +484,7 @@ namespace UniGLTF
 
             LoadAsync(show)
                 .Subscribe(Scheduler.MainThread,
-                onLoaded ,
+                onLoaded,
                 onError
                 );
         }
@@ -625,8 +656,6 @@ namespace UniGLTF
             yield return null;
         }
         #endregion
-
-        public IMaterialImporter MaterialImporter;
 
         #region Imported
         public GameObject Root;
