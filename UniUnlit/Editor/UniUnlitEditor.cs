@@ -8,43 +8,8 @@ using UnityEngine.Rendering;
 
 namespace UniGLTF.UniUnlit
 {
-    public enum UniUnlitRenderMode
-    {
-        Opaque,
-        Cutout,
-        Transparent,
-        TransparentWithZWrite
-    }
-
-    public enum UniUnlitVertexColorBlendOp
-    {
-        None,
-        Multiply,
-    }
-        
     public class UniUnlitEditor : ShaderGUI
     {
-        private const string PropNameMainTex = "_MainTex";
-        private const string PropNameColor = "_Color";
-        private const string PropNameCutoff = "_Cutoff";
-        private const string PropNameBlendMode = "_BlendMode";
-        private const string PropNameCullMode = "_CullMode";
-        private const string PropeNameVColBlendMode = "_VColBlendMode";
-        private const string PropNameSrcBlend = "_SrcBlend";
-        private const string PropNameDstBlend = "_DstBlend";
-        private const string PropNameZWrite = "_ZWrite";
-
-        private const string PropNameStandardShadersRenderMode = "_Mode";
-
-        private const string KeywordAlphaTestOn = "_ALPHATEST_ON";
-        private const string KeywordAlphaBlendOn = "_ALPHABLEND_ON";
-        private const string KeywordVertexColMul = "_VERTEXCOL_MUL";
-
-        private const string TagRenderTypeKey = "RenderType";
-        private const string TagRenderTypeValueOpaque = "Opaque";
-        private const string TagRenderTypeValueTransparentCutout = "TransparentCutout";
-        private const string TagRenderTypeValueTransparent = "Transparent";
-        
         private MaterialProperty _mainTex;
         private MaterialProperty _color;
         private MaterialProperty _cutoff;
@@ -57,12 +22,12 @@ namespace UniGLTF.UniUnlit
         
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
         {
-            _mainTex = FindProperty(PropNameMainTex, properties);
-            _color = FindProperty(PropNameColor, properties);
-            _cutoff = FindProperty(PropNameCutoff, properties);
-            _blendMode = FindProperty(PropNameBlendMode, properties);
-            _cullMode = FindProperty(PropNameCullMode, properties);
-            _vColBlendMode = FindProperty(PropeNameVColBlendMode, properties);
+            _mainTex = FindProperty(Utils.PropNameMainTex, properties);
+            _color = FindProperty(Utils.PropNameColor, properties);
+            _cutoff = FindProperty(Utils.PropNameCutoff, properties);
+            _blendMode = FindProperty(Utils.PropNameBlendMode, properties);
+            _cullMode = FindProperty(Utils.PropNameCullMode, properties);
+            _vColBlendMode = FindProperty(Utils.PropeNameVColBlendMode, properties);
 //            _srcBlend = FindProperty(PropNameSrcBlend, properties);
 //            _dstBlend = FindProperty(PropNameDstBlend, properties);
 //            _zWrite = FindProperty(PropNameZWrite, properties);
@@ -81,18 +46,18 @@ namespace UniGLTF.UniUnlit
         public override void AssignNewShaderToMaterial(Material material, Shader oldShader, Shader newShader)
         {
             var blendMode = UniUnlitRenderMode.Opaque;
-            if (material.HasProperty(PropNameStandardShadersRenderMode)) // from Standard shader
+            if (material.HasProperty(Utils.PropNameStandardShadersRenderMode)) // from Standard shader
             {
-                blendMode = (UniUnlitRenderMode) Math.Min(2f, material.GetFloat(PropNameStandardShadersRenderMode));
+                blendMode = (UniUnlitRenderMode) Math.Min(2f, material.GetFloat(Utils.PropNameStandardShadersRenderMode));
             }
 
             // assigns UniUnlit's properties...
             base.AssignNewShaderToMaterial(material, oldShader, newShader);
 
             // take over old value
-            material.SetFloat(PropNameBlendMode, (float) blendMode);
-            
-            ModeChanged(material, isRenderModeChangedByUser: true);
+            material.SetFloat(Utils.PropNameBlendMode, (float) blendMode);
+
+            Utils.ValidateProperties(material, isRenderModeChangedByUser: true);
         }
 
         private void DrawRenderingBox(MaterialEditor materialEditor, Material[] materials)
@@ -177,79 +142,8 @@ namespace UniGLTF.UniUnlit
         {
             foreach (var material in materials)
             {
-                ModeChanged(material, isRenderModeChangedByUser);
+                Utils.ValidateProperties(material, isRenderModeChangedByUser);
             }
-        }
-        private static void ModeChanged(Material material, bool isRenderModeChangedByUser = false)
-        {
-            SetupBlendMode(material, (UniUnlitRenderMode) material.GetFloat(PropNameBlendMode),
-                isRenderModeChangedByUser);
-            SetupVertexColorBlendOp(material, (UniUnlitVertexColorBlendOp) material.GetFloat(PropeNameVColBlendMode));
-        }
-        
-        private static void SetupBlendMode(Material material, UniUnlitRenderMode renderMode,
-            bool isRenderModeChangedByUser = false)
-        {
-            switch (renderMode)
-            {
-                case UniUnlitRenderMode.Opaque:
-                    material.SetOverrideTag(TagRenderTypeKey, TagRenderTypeValueOpaque);
-                    material.SetInt(PropNameSrcBlend, (int) BlendMode.One);
-                    material.SetInt(PropNameDstBlend, (int) BlendMode.Zero);
-                    material.SetInt(PropNameZWrite, 1);
-                    SetKeyword(material, KeywordAlphaTestOn, false);
-                    SetKeyword(material, KeywordAlphaBlendOn, false);
-                    if (isRenderModeChangedByUser) material.renderQueue = -1;
-                    break;
-                case UniUnlitRenderMode.Cutout:
-                    material.SetOverrideTag(TagRenderTypeKey, TagRenderTypeValueTransparentCutout);
-                    material.SetInt(PropNameSrcBlend, (int) BlendMode.One);
-                    material.SetInt(PropNameDstBlend, (int) BlendMode.Zero);
-                    material.SetInt(PropNameZWrite, 1);
-                    SetKeyword(material, KeywordAlphaTestOn, true);
-                    SetKeyword(material, KeywordAlphaBlendOn, false);
-                    if (isRenderModeChangedByUser) material.renderQueue = (int) RenderQueue.AlphaTest;
-                    break;
-                case UniUnlitRenderMode.Transparent:
-                    material.SetOverrideTag(TagRenderTypeKey, TagRenderTypeValueTransparent);
-                    material.SetInt(PropNameSrcBlend, (int) BlendMode.SrcAlpha);
-                    material.SetInt(PropNameDstBlend, (int) BlendMode.OneMinusSrcAlpha);
-                    material.SetInt(PropNameZWrite, 0);
-                    SetKeyword(material, KeywordAlphaTestOn, false);
-                    SetKeyword(material, KeywordAlphaBlendOn, true);
-                    if (isRenderModeChangedByUser) material.renderQueue = (int) RenderQueue.Transparent;
-                    break;
-                case UniUnlitRenderMode.TransparentWithZWrite:
-                    material.SetOverrideTag(TagRenderTypeKey, TagRenderTypeValueTransparent);
-                    material.SetInt(PropNameSrcBlend, (int) BlendMode.SrcAlpha);
-                    material.SetInt(PropNameDstBlend, (int) BlendMode.OneMinusSrcAlpha);
-                    material.SetInt(PropNameZWrite, 1);
-                    SetKeyword(material, KeywordAlphaTestOn, false);
-                    SetKeyword(material, KeywordAlphaBlendOn, true);
-                    if (isRenderModeChangedByUser) material.renderQueue = (int) RenderQueue.AlphaTest + 150;
-                    break;
-            }
-        }
-        
-        private static void SetupVertexColorBlendOp(Material material, UniUnlitVertexColorBlendOp vColBlendOp)
-        {
-            switch (vColBlendOp)
-            {
-                case UniUnlitVertexColorBlendOp.None:
-                    SetKeyword(material, KeywordVertexColMul, false);
-                    break;
-                case UniUnlitVertexColorBlendOp.Multiply:
-                    SetKeyword(material, KeywordVertexColMul, true);
-                    break;
-            }
-        }
-        
-        private static void SetKeyword(Material mat, string keyword, bool required)
-        {
-            if (required)
-                mat.EnableKeyword(keyword);
-            else
-                mat.DisableKeyword(keyword);
         }
     }
 }

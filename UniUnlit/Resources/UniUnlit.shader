@@ -93,4 +93,5 @@
         }
     }
     CustomEditor "UniGLTF.UniUnlit.UniUnlitEditor"
+    Fallback "Unlit/Texture"
 }
