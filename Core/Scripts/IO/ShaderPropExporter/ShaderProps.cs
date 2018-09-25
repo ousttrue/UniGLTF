@@ -21,13 +21,11 @@ namespace UniGLTF.ShaderPropExporter
     {
         public string Key;
         public ShaderPropertyType ShaderPropertyType;
-        public bool IsNormalMap;
 
-        public ShaderProperty(string key, ShaderPropertyType propType, bool isNormalMap)
+        public ShaderProperty(string key, ShaderPropertyType propType)
         {
             Key = key;
             ShaderPropertyType = propType;
-            IsNormalMap = isNormalMap;
         }
     }
 
@@ -49,18 +47,14 @@ namespace UniGLTF.ShaderPropExporter
             }
         }
 
-        public static ShaderProps FromShader(Shader shader, string[] normamMapProps=null)
+        public static ShaderProps FromShader(Shader shader)
         {
             var properties = new List<ShaderProperty>();
             for (int i = 0; i < ShaderUtil.GetPropertyCount(shader); ++i)
             {
                 var name = ShaderUtil.GetPropertyName(shader, i);
                 var propType = ShaderUtil.GetPropertyType(shader, i);
-                var isNormalMap = normamMapProps != null
-                    ? Array.IndexOf(normamMapProps, name) != -1
-                    : false
-                    ;
-                properties.Add(new ShaderProperty(name, ConvType(propType), isNormalMap));
+                properties.Add(new ShaderProperty(name, ConvType(propType)));
             }
 
             return new ShaderProps
@@ -79,7 +73,7 @@ namespace UniGLTF.ShaderPropExporter
             var list = new List<string>();
             foreach (var prop in Properties)
             {
-                list.Add(string.Format("new ShaderProperty(\"{0}\", ShaderPropertyType.{1}, {2})\r\n", prop.Key, prop.ShaderPropertyType, prop.IsNormalMap.ToString().ToLower()));
+                list.Add(string.Format("new ShaderProperty(\"{0}\", ShaderPropertyType.{1})\r\n", prop.Key, prop.ShaderPropertyType));
             }
 
             return string.Format(@"using System.Collections.Generic;

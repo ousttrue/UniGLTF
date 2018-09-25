@@ -18,13 +18,11 @@ namespace UniGLTF.ShaderPropExporter
     {
         public string TargetFolder;
         public string ShaderName;
-        public string[] NormalMapProps;
 
-        public SupportedShader(string targetFolder, string shaderName, params string[] normalMapProps)
+        public SupportedShader(string targetFolder, string shaderName)
         {
             TargetFolder = targetFolder;
             ShaderName = shaderName;
-            NormalMapProps = normalMapProps;
         }
     }
 
@@ -36,11 +34,12 @@ namespace UniGLTF.ShaderPropExporter
         [PreExportShaders]
         static SupportedShader[] SupportedShaders = new SupportedShader[]
         {
-            new SupportedShader(TARGET_FOLDER, "Standard", "_BumpMap"),
+            new SupportedShader(TARGET_FOLDER, "Standard"),
             new SupportedShader(TARGET_FOLDER, "Unlit/Color"),
             new SupportedShader(TARGET_FOLDER, "Unlit/Texture"),
             new SupportedShader(TARGET_FOLDER, "Unlit/Transparent"),
             new SupportedShader(TARGET_FOLDER, "Unlit/Transparent Cutout"),
+            new SupportedShader(TARGET_FOLDER, "UniGLTF/UniUnlit"),
         };
 #pragma warning restore 414
 
@@ -90,7 +89,7 @@ namespace UniGLTF.ShaderPropExporter
             Debug.LogFormat("PreExport: {0}", path.FullPath);
 
             var shader = Shader.Find(supportedShader.ShaderName);
-            var props = ShaderProps.FromShader(shader, supportedShader.NormalMapProps);
+            var props = ShaderProps.FromShader(shader);
 
             File.WriteAllText(path.FullPath, props.ToString(shader.name));
         }

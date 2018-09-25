@@ -15,7 +15,7 @@ namespace UniGLTF.ShaderPropExporter
                     new ShaderProps
                     {
                         Properties = new ShaderProperty[]{
-new ShaderProperty("_Color", ShaderPropertyType.Color, false)
+new ShaderProperty("_Color", ShaderPropertyType.Color)
 
                         }
                     }
