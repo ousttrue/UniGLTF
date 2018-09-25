@@ -88,6 +88,10 @@ namespace UniGLTF
         }
 
         IMaterialImporter m_materialImporter;
+        protected void SetMaterialImporter(IMaterialImporter importer)
+        {
+            m_materialImporter = importer;
+        }
         public IMaterialImporter MaterialImporter
         {
             get
