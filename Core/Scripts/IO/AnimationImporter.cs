@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
@@ -82,7 +82,7 @@ namespace UniGLTF
 
             int elementNum = curveCount;
             int inputIndex = 0;
-            //Quaternion�p
+            //Quaternion用
             float[] last = new float[curveCount];
             if (last.Length == 4)
             {

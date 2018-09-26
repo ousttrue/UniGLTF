@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -37,7 +37,7 @@ namespace UniGLTF
         }
 
         /// <summary>
-        /// �L�[�t���[���̃f�[�^����͂���
+        /// キーフレームのデータを入力する
         /// </summary>
         /// <param name="time"></param>
         /// <param name="value"></param>
@@ -59,7 +59,7 @@ namespace UniGLTF
         }
 
         /// <summary>
-        /// �L�[��񂪂Ȃ������v�f�ɑ΂��Ē��O�̃L�[�̒l����͂���
+        /// キー情報がなかった要素に対して直前のキーの値を入力する
         /// </summary>
         public void RecountEmptyKeyframe()
         {
@@ -86,7 +86,7 @@ namespace UniGLTF
         }
 
         /// <summary>
-        /// �A�j���[�V�����v���p�e�B�ɑΉ������L�[�t���[����}������
+        /// アニメーションプロパティに対応したキーフレームを挿入する
         /// </summary>
         /// <param name="property"></param>
         /// <returns></returns>

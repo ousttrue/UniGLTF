@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -143,7 +143,7 @@ namespace UniGLTF
                 var nodeIndex = GetNodeIndex(root, nodes, binding.path);
                 var samplerIndex = animation.Animation.AddChannelAndGetSampler(nodeIndex, property);
 
-                // “¯ˆê‚ÌsamplerIndex‚ªŠ„‚è“–‚Ä‚ç‚ê‚Ä‚¢‚écurveData‚ª‚ ‚éê‡‚Í‚»‚ê‚ğg—p‚µA–³‚¯‚ê‚Îì‚é
+                // åŒä¸€ã®samplerIndexãŒå‰²ã‚Šå½“ã¦ã‚‰ã‚Œã¦ã„ã‚‹curveDataãŒã‚ã‚‹å ´åˆã¯ãã‚Œã‚’ä½¿ç”¨ã—ã€ç„¡ã‘ã‚Œã°ä½œã‚‹
                 var curveData = curveDatas.FirstOrDefault(x => x.SamplerIndex == samplerIndex);
                 if (curveData == null)
                 {
@@ -151,7 +151,7 @@ namespace UniGLTF
                     curveDatas.Add(curveData);
                 }
 
-                // ‘S‚Ä‚ÌƒL[ƒtƒŒ[ƒ€‚ğ‰ñû
+                // å…¨ã¦ã®ã‚­ãƒ¼ãƒ•ãƒ¬ãƒ¼ãƒ ã‚’å›å
                 var elementOffset = AnimationExporter.GetElementOffset(binding.propertyName);
                 for (int i = 0; i < curve.keys.Length; i++)
                 {
@@ -159,7 +159,7 @@ namespace UniGLTF
                 }
             }
 
-            //ƒL[‘}“ü
+            //ã‚­ãƒ¼æŒ¿å…¥
             foreach (var curve in curveDatas)
             {
                 if (curve.Keyframes.Count == 0)
