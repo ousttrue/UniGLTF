@@ -38,7 +38,15 @@ namespace UniGLTF
         {
             var context = new ImporterContext();
             context.Parse(path, bytes);
-            context.LoadAsync(onLoaded, onError, show);
+            context.LoadAsync(_ =>
+            {
+                if (show)
+                {
+                    context.ShowMeshes();
+                }
+                onLoaded(context.Root);
+            }, 
+            onError);
         }
     }
 }

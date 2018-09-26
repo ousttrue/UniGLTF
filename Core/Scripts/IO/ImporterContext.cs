@@ -479,14 +479,14 @@ namespace UniGLTF
         #endregion
 
         #region Load async
-        public void LoadAsync(Action<GameObject> onLoaded, Action<Exception> onError = null, bool show = true)
+        public void LoadAsync(Action<Unit> onLoaded, Action<Exception> onError = null)
         {
             if (onError == null)
             {
                 onError = Debug.LogError;
             }
 
-            LoadAsync(show)
+            LoadAsync()
                 .Subscribe(Scheduler.MainThread,
                 onLoaded,
                 onError
@@ -494,13 +494,13 @@ namespace UniGLTF
         }
 
 #if (NET_4_6 && UNITY_2017_1_OR_NEWER)
-        public Task<GameObject> LoadAsyncTask(bool show = true)
+        public Task<Unit> LoadAsyncTask()
         {
-            return LoadAsync(show).ToTask();
+            return LoadAsync().ToTask();
         }
 #endif
 
-        protected virtual Schedulable<GameObject> LoadAsync(bool show = true)
+        protected virtual Schedulable<Unit> LoadAsync()
         {
             return Schedulable.Create()
                 .OnExecute(Scheduler.ThreadPool, parent =>
@@ -568,13 +568,7 @@ namespace UniGLTF
                     {
                         Root.name = "GLTF";
                         Debug.Log(GetSpeedLog());
-
-                        if (show)
-                        {
-                            ShowMeshes();
-                        }
-
-                        return Root;
+                        return Unit.Default;
                     });
         }
 
