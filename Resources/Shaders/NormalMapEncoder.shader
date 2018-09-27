@@ -46,7 +46,7 @@
 				normal.xy = col.wy * 2 - 1;
 				normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
 
-				return normal;
+				return half4(normal, 1);
 			}
 			ENDCG
 		}
