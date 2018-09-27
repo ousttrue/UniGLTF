@@ -39,14 +39,14 @@
 
 			sampler2D _MainTex;
 
-			fixed3 frag(v2f i) : SV_Target
+			fixed4 frag(v2f i) : SV_Target
 			{
-				fixed4 col = tex2D(_MainTex, i.uv);
-			    fixed3 normal;
+				half4 col = tex2D(_MainTex, i.uv);
+				half3 normal;
 				normal.xy = col.wy * 2 - 1;
 				normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
 
-				return normal;
+				return half4(normal, 1);
 			}
 			ENDCG
 		}
