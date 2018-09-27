@@ -132,17 +132,32 @@ namespace UniGLTF
             var meshWithMaterials = Integrate(go.transform);
 
             // save as asset
-            var assetPath = string.Format("Assets/{0}{1}", go.name, ASSET_SUFFIX);
+            var assetPath = "";
             var prefab = PrefabUtility.GetPrefabParent(go);
             if (prefab != null)
             {
                 var prefabPath = AssetDatabase.GetAssetPath(prefab);
-                assetPath = string.Format("{0}/{1}{2}",
-                    Path.GetDirectoryName(prefabPath),
-                    Path.GetFileNameWithoutExtension(prefabPath),
-                    ASSET_SUFFIX
-                    );
+                assetPath = string.Format("{0}/{1}_{2}{3}",
+                     Path.GetDirectoryName(prefabPath),
+                     Path.GetFileNameWithoutExtension(prefabPath),
+                    go.name,
+                     ASSET_SUFFIX
+                     );
             }
+            else
+            {
+                var path = EditorUtility.SaveFilePanel(
+                        "Save mesh",
+                        "Assets",
+                        go.name+".asset",
+                        "asset");
+                if (string.IsNullOrEmpty(path))
+                {
+                    return;
+                }
+                assetPath = UnityPath.FromFullpath(path).Value;
+            }
+
             assetPath = AssetDatabase.GenerateUniqueAssetPath(assetPath);
             Debug.LogFormat("CreateAsset: {0}", assetPath);
             AssetDatabase.CreateAsset(meshWithMaterials.Mesh, assetPath);
