@@ -122,6 +122,7 @@ namespace UniGLTF
                 Animation = new glTFAnimation(),
             };
 
+#if UNITY_5_6_OR_NEWER
             List<AnimationCurveData> curveDatas = new List<AnimationCurveData>();
 
             foreach (var binding in AnimationUtility.GetCurveBindings(clip))
@@ -186,9 +187,10 @@ namespace UniGLTF
                     keyframeIndex++;
                 }
             }
+#endif
 
             return animation;
         }
 #endif
+        }
     }
-}
