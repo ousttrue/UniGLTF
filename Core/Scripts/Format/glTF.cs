@@ -446,9 +446,17 @@ namespace UniGLTF
                 ;
         }
 
-        public byte[] ToGlbBytes()
+        public byte[] ToGlbBytes(bool UseUniJSONSerializer=false)
         {
-            var json = ToJson();
+            string json;
+            if (UseUniJSONSerializer)
+            {
+                json = JsonSchema.FromType(GetType()).Serialize(this);
+            }
+            else
+            {
+                json = ToJson();
+            }
 
             var buffer = buffers[0];
             using (var s = new MemoryStream())
