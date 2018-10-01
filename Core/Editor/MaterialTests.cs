@@ -24,7 +24,7 @@ namespace UniGLTF
                         KHR_materials_unlit = new glTF_KHR_materials_unlit { }
                     }
                 });
-                Assert.AreEqual("Unlit/Color", shader.name);
+                Assert.AreEqual("UniGLTF/UniUnlit", shader.name);
             }
 
             {
@@ -41,7 +41,7 @@ namespace UniGLTF
                         KHR_materials_unlit = new glTF_KHR_materials_unlit { }
                     }
                 });
-                Assert.AreEqual("Unlit/Texture", shader.name);
+                Assert.AreEqual("UniGLTF/UniUnlit", shader.name);
             }
 
             {
@@ -59,7 +59,7 @@ namespace UniGLTF
                         KHR_materials_unlit = new glTF_KHR_materials_unlit { }
                     }
                 });
-                Assert.AreEqual("Unlit/Texture", shader.name);
+                Assert.AreEqual("UniGLTF/UniUnlit", shader.name);
             }
 
             {
@@ -76,7 +76,7 @@ namespace UniGLTF
                         KHR_materials_unlit = new glTF_KHR_materials_unlit { }
                     }
                 });
-                Assert.AreEqual("Unlit/Color", shader.name);
+                Assert.AreEqual("UniGLTF/UniUnlit", shader.name);
             }
 
             {
@@ -93,7 +93,7 @@ namespace UniGLTF
                         KHR_materials_unlit = new glTF_KHR_materials_unlit { }
                     }
                 });
-                Assert.AreEqual("Unlit/Transparent", shader.name);
+                Assert.AreEqual("UniGLTF/UniUnlit", shader.name);
             }
 
             {
@@ -111,7 +111,7 @@ namespace UniGLTF
                         KHR_materials_unlit = new glTF_KHR_materials_unlit { }
                     }
                 });
-                Assert.AreEqual("Unlit/Transparent", shader.name);
+                Assert.AreEqual("UniGLTF/UniUnlit", shader.name);
             }
 
             {
@@ -128,7 +128,7 @@ namespace UniGLTF
                         KHR_materials_unlit = new glTF_KHR_materials_unlit { }
                     }
                 });
-                Assert.AreEqual("Unlit/Transparent Cutout", shader.name);
+                Assert.AreEqual("UniGLTF/UniUnlit", shader.name);
             }
 
             {
@@ -146,7 +146,7 @@ namespace UniGLTF
                         KHR_materials_unlit = new glTF_KHR_materials_unlit { }
                     }
                 });
-                Assert.AreEqual("Unlit/Transparent Cutout", shader.name);
+                Assert.AreEqual("UniGLTF/UniUnlit", shader.name);
             }
 
             {
@@ -158,7 +158,7 @@ namespace UniGLTF
                         KHR_materials_unlit = new glTF_KHR_materials_unlit { }
                     }
                 });
-                Assert.AreEqual("Unlit/Color", shader.name);
+                Assert.AreEqual("UniGLTF/UniUnlit", shader.name);
             }
         }
 
