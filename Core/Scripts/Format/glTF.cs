@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using UniJSON;
 
 
@@ -25,33 +24,9 @@ namespace UniGLTF
         }
     }
 
-    public partial class glTFUsedExtensions
-    {
-        public static IEnumerable<string> GeetUsedExtensions()
-        {
-            foreach (var prop in typeof(glTFUsedExtensions).GetProperties(BindingFlags.Static |
-                BindingFlags.Public | BindingFlags.NonPublic))
-            {
-                if (prop.GetCustomAttributes(typeof(UsedExtensionAttribute), true).Any())
-                {
-                    var extension = (string)prop.GetValue(null, new object[] { });
-                    yield return extension;
-                }
-            }
-        }
-    }
-
     [Serializable]
     public class glTF : JsonSerializableBase, IEquatable<glTF>
     {
-        /*
-        public string baseDir
-        {
-            get;
-            set;
-        }
-        */
-
         [JsonSchema(Required = true)]
         public glTFAssets asset = new glTFAssets();
 
@@ -353,7 +328,10 @@ namespace UniGLTF
         public List<glTFCamera> cameras = new List<glTFCamera>();
 
         [JsonSchema(MinItems = 1)]
-        public List<string> extensionsUsed = glTFUsedExtensions.GeetUsedExtensions().ToList();
+        public List<string> extensionsUsed = new List<string>
+        {
+            glTF_KHR_materials_unlit.ExtensionName,
+        };
 
         [JsonSchema(MinItems = 1)]
         public List<string> extensionsRequired = new List<string>();

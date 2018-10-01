@@ -6,6 +6,14 @@ namespace UniGLTF
     [Serializable]
     public class glTF_KHR_materials_unlit : JsonSerializableBase
     {
+        public static string ExtensionName
+        {
+            get
+            {
+                return "KHR_materials_unlit";
+            }
+        }
+
         protected override void SerializeMembers(GLTFJsonFormatter f)
         {
             //throw new System.NotImplementedException();
@@ -41,18 +49,6 @@ namespace UniGLTF
             if (KHR_materials_unlit != null)
             {
                 f.KeyValue(() => KHR_materials_unlit);
-            }
-        }
-    }
-
-    public partial class glTFUsedExtensions
-    {
-        [UsedExtension]
-        static string KHR_materials_unlit_GetUsedExtension
-        {
-            get
-            {
-                return "KHR_materials_unlit";
             }
         }
     }

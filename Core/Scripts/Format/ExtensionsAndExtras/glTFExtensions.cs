@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UniJSON;
@@ -8,8 +7,6 @@ using UniJSON;
 namespace UniGLTF
 {
     #region Base
-    public class UsedExtensionAttribute : Attribute { }
-
     public class JsonSerializeMembersAttribute : Attribute { }
 
     public class PartialExtensionBase<T> : JsonSerializableBase
