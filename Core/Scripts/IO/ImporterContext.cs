@@ -392,7 +392,7 @@ namespace UniGLTF
         /// <summary>
         /// Build unity objects from parsed gltf
         /// </summary>
-        public virtual void Load()
+        public void Load()
         {
             var schedulable = LoadAsync();
             foreach(var x in schedulable.GetRoot().Traverse())
