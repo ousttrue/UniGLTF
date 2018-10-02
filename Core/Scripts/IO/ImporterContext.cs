@@ -400,76 +400,14 @@ namespace UniGLTF
                 while(true)
                 {
                     var status = x.Execute();
-                    //Debug.LogFormat("{0}", status);
                     if (status != ExecutionStatus.Continue)
                     {
                         break;
                     }
                 }
             }
-
-#if false
-
-
-            // meshes
-            if (GLTF.meshes
-                .SelectMany(x => x.primitives)
-                .Any(x => x.extensions.KHR_draco_mesh_compression != null))
-            {
-                throw new UniGLTFNotSupportedException("draco is not supported");
-            }
-
-            var meshImporter = new MeshImporter();
-            for (int i = 0; i < GLTF.meshes.Count; ++i)
-            {
-                var meshContext = meshImporter.ReadMesh(this, i);
-                var meshWithMaterials = MeshImporter.BuildMesh(this, meshContext);
-
-                var mesh = meshWithMaterials.Mesh;
-
-                // mesh name
-                if (string.IsNullOrEmpty(mesh.name))
-                {
-                    mesh.name = string.Format("UniGLTF import#{0}", i);
-                }
-                var originalName = mesh.name;
-                for (int j = 1; Meshes.Any(x => x.Mesh.name == mesh.name); ++j)
-                {
-                    mesh.name = string.Format("{0}({1})", originalName, j);
-                }
-
-                Meshes.Add(meshWithMaterials);
-            }
-
-            // nodes
-            Nodes.AddRange(GLTF.nodes.Select(x => NodeImporter.ImportNode(x).transform));
-
-            var nodes = Nodes.Select((x, i) => NodeImporter.BuildHierarchy(this, i)).ToList();
-
-            NodeImporter.FixCoordinate(this, nodes);
-
-            // skinning
-            for (int i = 0; i < nodes.Count; ++i)
-            {
-                NodeImporter.SetupSkinning(this, nodes, i);
-            }
-
-            // connect root
-            Root = new GameObject("_root_");
-            foreach (var x in GLTF.rootnodes)
-            {
-                var t = nodes[x].Transform;
-                t.SetParent(Root.transform, false);
-            }
-
-            AnimationImporter.ImportAnimation(this);
-
-            //Debug.LogFormat("Import {0}", Path);
-#endif
         }
-#endregion
 
-#region Load async
         public void LoadAsync(Action<Unit> onLoaded, Action<Exception> onError = null)
         {
             if (onError == null)
@@ -493,24 +431,6 @@ namespace UniGLTF
 
         protected virtual Schedulable<Unit> LoadAsync()
         {
-            /*
-            // materials
-            if (GLTF.materials == null || !GLTF.materials.Any())
-            {
-                // no material
-                AddMaterial(MaterialImporter.CreateMaterial(0, null));
-            }
-            else
-            {
-                for (int i = 0; i < GLTF.materials.Count; ++i)
-                {
-                    var index = i;
-                    var material = MaterialImporter.CreateMaterial(index, GLTF.materials[i]);
-                    AddMaterial(material);
-                }
-            }
-            */
-
             return
             Schedulable.Create()
                 .AddTask(Scheduler.ThreadPool, () =>
@@ -529,11 +449,36 @@ namespace UniGLTF
                         //
                     }
                 })
-                .ContinueWithCoroutine(Scheduler.ThreadPool, () => TexturesProcessOnAnyThread())
-                .ContinueWithCoroutine(Scheduler.MainThread, () => TexturesProcessOnMainThread())
-                .ContinueWithCoroutine(Scheduler.MainThread, () => LoadMaterials())
+                .ContinueWithCoroutine(Scheduler.ThreadPool, () =>
+                {
+                    using (MeasureTime("TexturesProcessOnAnyThread"))
+                    {
+                        return TexturesProcessOnAnyThread();
+                    }
+                })
+                .ContinueWithCoroutine(Scheduler.MainThread, () =>
+                {
+                    using (MeasureTime("TexturesProcessOnMainThread"))
+                    {
+                        return TexturesProcessOnMainThread();
+                    }
+                })
+                .ContinueWithCoroutine(Scheduler.MainThread, () =>
+                {
+                    using (MeasureTime("LoadMaterials"))
+                    {
+                        return LoadMaterials();
+                    }
+                })
                 .OnExecute(Scheduler.ThreadPool, parent =>
                 {
+                    if (GLTF.meshes
+                        .SelectMany(x => x.primitives)
+                        .Any(x => x.extensions.KHR_draco_mesh_compression != null))
+                    {
+                        throw new UniGLTFNotSupportedException("draco is not supported");
+                    }
+
                     // meshes
                     var meshImporter = new MeshImporter();
                     for (int i = 0; i < GLTF.meshes.Count; ++i)
@@ -551,7 +496,22 @@ namespace UniGLTF
                         {
                             using (MeasureTime("BuildMesh"))
                             {
-                                return MeshImporter.BuildMesh(this, x);
+                                var meshWithMaterials = MeshImporter.BuildMesh(this, x);
+
+                                var mesh = meshWithMaterials.Mesh;
+
+                                // mesh name
+                                if (string.IsNullOrEmpty(mesh.name))
+                                {
+                                    mesh.name = string.Format("UniGLTF import#{0}", i);
+                                }
+                                var originalName = mesh.name;
+                                for (int j = 1; Meshes.Any(y => y.Mesh.name == mesh.name); ++j)
+                                {
+                                    mesh.name = string.Format("{0}({1})", originalName, j);
+                                }
+
+                                return meshWithMaterials;
                             }
                         })
                         .ContinueWith(Scheduler.ThreadPool, x => Meshes.Add(x))
@@ -572,6 +532,10 @@ namespace UniGLTF
                         return BuildHierarchy();
                     }
                 })
+                .ContinueWith(Scheduler.MainThread, _ =>
+                {
+                    AnimationImporter.ImportAnimation(this);
+                })
                 .ContinueWith(Scheduler.CurrentThread,
                     _ =>
                     {
@@ -580,19 +544,6 @@ namespace UniGLTF
                         return Unit.Default;
                     });
         }
-
-        /*
-        protected IEnumerator LoadTextures(IStorage storage)
-        {
-            for (int i = 0; i < GLTF.textures.Count; ++i)
-            {
-                var x = new TextureItem(i);
-                x.Process(GLTF, storage);
-                AddTexture(x);
-                yield return null;
-            }
-        }
-        */
 
         IEnumerator TexturesProcessOnAnyThread()
         {
@@ -612,7 +563,7 @@ namespace UniGLTF
             }
         }
 
-        protected IEnumerator LoadMaterials()
+        IEnumerator LoadMaterials()
         {
             if (GLTF.materials == null || !GLTF.materials.Any())
             {
@@ -628,7 +579,7 @@ namespace UniGLTF
             }
         }
 
-        protected IEnumerator LoadMeshes()
+        IEnumerator LoadMeshes()
         {
             var meshImporter = new MeshImporter();
             for (int i = 0; i < GLTF.meshes.Count; ++i)
@@ -646,7 +597,7 @@ namespace UniGLTF
             }
         }
 
-        protected IEnumerator LoadNodes()
+        IEnumerator LoadNodes()
         {
             foreach (var x in GLTF.nodes)
             {
@@ -656,7 +607,7 @@ namespace UniGLTF
             yield return null;
         }
 
-        protected IEnumerator BuildHierarchy()
+        IEnumerator BuildHierarchy()
         {
             var nodes = new List<NodeImporter.TransformWithSkin>();
             for (int i = 0; i < Nodes.Count; ++i)
