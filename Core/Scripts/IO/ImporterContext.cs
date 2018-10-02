@@ -397,36 +397,19 @@ namespace UniGLTF
             var schedulable = LoadAsync();
             foreach(var x in schedulable.GetRoot().Traverse())
             {
-                x.Execute();
+                while(true)
+                {
+                    var status = x.Execute();
+                    //Debug.LogFormat("{0}", status);
+                    if (status != ExecutionStatus.Continue)
+                    {
+                        break;
+                    }
+                }
             }
 
 #if false
-            // textures
-            if (GLTF.textures != null)
-            {
-                CreateTextureItems();
-            }
 
-            foreach (var x in GetTextures())
-            {
-                x.Process(GLTF, Storage);
-            }
-
-            // materials
-            if (GLTF.materials == null || !GLTF.materials.Any())
-            {
-                // no material
-                AddMaterial(MaterialImporter.CreateMaterial(0, null));
-            }
-            else
-            {
-                for (int i = 0; i < GLTF.materials.Count; ++i)
-                {
-                    var index = i;
-                    var material = MaterialImporter.CreateMaterial(index, GLTF.materials[i]);
-                    AddMaterial(material);
-                }
-            }
 
             // meshes
             if (GLTF.meshes
@@ -510,44 +493,44 @@ namespace UniGLTF
 
         protected virtual Schedulable<Unit> LoadAsync()
         {
-            var schedulable = Schedulable.Create()
-                .AddTask(Scheduler.CurrentThread, () =>
-                {
-                    return Unit.Default;
-                })
-                ;
-
-            if (GLTF.textures.Count == 0) {
-                schedulable = schedulable.OnExecute(Scheduler.ThreadPool, parent =>
-                  {
-                      // textures
-                      for (int i = 0; i < GLTF.textures.Count; ++i)
-                      {
-                          var index = i;
-                          parent.AddTask(Scheduler.MainThread,
-                                  () =>
-                                  {
-                                      using (MeasureTime("texture.Process"))
-                                      {
-                                          var texture = new TextureItem(index);
-                                          texture.Process(GLTF, Storage);
-                                          return texture;
-                                      }
-                                  })
-                              .ContinueWith(Scheduler.ThreadPool, x => AddTexture(x));
-                      }
-                  });
+            /*
+            // materials
+            if (GLTF.materials == null || !GLTF.materials.Any())
+            {
+                // no material
+                AddMaterial(MaterialImporter.CreateMaterial(0, null));
             }
             else
             {
-                foreach (var x in GetTextures())
+                for (int i = 0; i < GLTF.materials.Count; ++i)
                 {
-                    x.Process(GLTF, Storage);
+                    var index = i;
+                    var material = MaterialImporter.CreateMaterial(index, GLTF.materials[i]);
+                    AddMaterial(material);
                 }
             }
+            */
 
             return
-            schedulable
+            Schedulable.Create()
+                .AddTask(Scheduler.ThreadPool, () =>
+                {
+                    if (GLTF.textures.Count == 0)
+                    {
+                        //
+                        // runtime
+                        //
+                        CreateTextureItems();
+                    }
+                    else
+                    {
+                        //
+                        // already CreateTextures(by assetPostProcessor or editor menu)
+                        //
+                    }
+                })
+                .ContinueWithCoroutine(Scheduler.ThreadPool, () => TexturesProcessOnAnyThread())
+                .ContinueWithCoroutine(Scheduler.MainThread, () => TexturesProcessOnMainThread())
                 .ContinueWithCoroutine(Scheduler.MainThread, () => LoadMaterials())
                 .OnExecute(Scheduler.ThreadPool, parent =>
                 {
@@ -598,6 +581,7 @@ namespace UniGLTF
                     });
         }
 
+        /*
         protected IEnumerator LoadTextures(IStorage storage)
         {
             for (int i = 0; i < GLTF.textures.Count; ++i)
@@ -605,6 +589,25 @@ namespace UniGLTF
                 var x = new TextureItem(i);
                 x.Process(GLTF, storage);
                 AddTexture(x);
+                yield return null;
+            }
+        }
+        */
+
+        IEnumerator TexturesProcessOnAnyThread()
+        {
+            foreach (var x in GetTextures())
+            {
+                x.ProcessOnAnyThread(GLTF, Storage);
+                yield return null;
+            }
+        }
+
+        IEnumerator TexturesProcessOnMainThread()
+        {
+            foreach (var x in GetTextures())
+            {
+                x.ProcessOnMainThread(GLTF);
                 yield return null;
             }
         }
