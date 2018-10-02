@@ -394,6 +394,13 @@ namespace UniGLTF
         /// </summary>
         public virtual void Load()
         {
+            var schedulable = LoadAsync();
+            foreach(var x in schedulable.GetRoot().Traverse())
+            {
+                x.Execute();
+            }
+
+#if false
             // textures
             if (GLTF.textures != null)
             {
@@ -475,10 +482,11 @@ namespace UniGLTF
             AnimationImporter.ImportAnimation(this);
 
             //Debug.LogFormat("Import {0}", Path);
+#endif
         }
-        #endregion
+#endregion
 
-        #region Load async
+#region Load async
         public void LoadAsync(Action<Unit> onLoaded, Action<Exception> onError = null)
         {
             if (onError == null)
@@ -502,26 +510,44 @@ namespace UniGLTF
 
         protected virtual Schedulable<Unit> LoadAsync()
         {
-            return Schedulable.Create()
-                .OnExecute(Scheduler.ThreadPool, parent =>
+            var schedulable = Schedulable.Create()
+                .AddTask(Scheduler.CurrentThread, () =>
                 {
-                    // textures
-                    for (int i = 0; i < GLTF.textures.Count; ++i)
-                    {
-                        var index = i;
-                        parent.AddTask(Scheduler.MainThread,
-                                () =>
-                                {
-                                    using (MeasureTime("texture.Process"))
-                                    {
-                                        var texture = new TextureItem(index);
-                                        texture.Process(GLTF, Storage);
-                                        return texture;
-                                    }
-                                })
-                            .ContinueWith(Scheduler.ThreadPool, x => AddTexture(x));
-                    }
+                    return Unit.Default;
                 })
+                ;
+
+            if (GLTF.textures.Count == 0) {
+                schedulable = schedulable.OnExecute(Scheduler.ThreadPool, parent =>
+                  {
+                      // textures
+                      for (int i = 0; i < GLTF.textures.Count; ++i)
+                      {
+                          var index = i;
+                          parent.AddTask(Scheduler.MainThread,
+                                  () =>
+                                  {
+                                      using (MeasureTime("texture.Process"))
+                                      {
+                                          var texture = new TextureItem(index);
+                                          texture.Process(GLTF, Storage);
+                                          return texture;
+                                      }
+                                  })
+                              .ContinueWith(Scheduler.ThreadPool, x => AddTexture(x));
+                      }
+                  });
+            }
+            else
+            {
+                foreach (var x in GetTextures())
+                {
+                    x.Process(GLTF, Storage);
+                }
+            }
+
+            return
+            schedulable
                 .ContinueWithCoroutine(Scheduler.MainThread, () => LoadMaterials())
                 .OnExecute(Scheduler.ThreadPool, parent =>
                 {
@@ -653,9 +679,9 @@ namespace UniGLTF
 
             yield return null;
         }
-        #endregion
+#endregion
 
-        #region Imported
+#region Imported
         public GameObject Root;
         public List<Transform> Nodes = new List<Transform>();
 
@@ -726,10 +752,10 @@ namespace UniGLTF
         }
 
         public AnimationClip Animation;
-        #endregion
+#endregion
 
 #if UNITY_EDITOR
-        #region Assets
+#region Assets
         protected virtual IEnumerable<UnityEngine.Object> ObjectsForSubAsset()
         {
             HashSet<Texture2D> textures = new HashSet<Texture2D>();
@@ -880,7 +906,7 @@ namespace UniGLTF
 
             CreateTextureItems(prefabParentDir);
         }
-        #endregion
+#endregion
 #endif
 
         public void Destroy(bool destroySubAssets)
