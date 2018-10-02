@@ -100,7 +100,9 @@ namespace UniGLTF
                     filter.sharedMesh = mesh.Mesh;
                     var renderer = go.AddComponent<MeshRenderer>();
                     renderer.sharedMaterials = mesh.Materials;
-                    mesh.Renderer = renderer;
+                    // invisible in loading
+                    renderer.enabled = false;
+                    mesh.Renderers.Add(renderer);
                 }
                 else
                 {
@@ -113,11 +115,10 @@ namespace UniGLTF
 
                     renderer.sharedMesh = mesh.Mesh;
                     renderer.sharedMaterials = mesh.Materials;
-                    mesh.Renderer = renderer;
+                    // invisible in loading
+                    renderer.enabled = false;
+                    mesh.Renderers.Add(renderer);
                 }
-
-                // invisible in loading
-                mesh.Renderer.enabled = false;
             }
 
             return nodeWithSkin;

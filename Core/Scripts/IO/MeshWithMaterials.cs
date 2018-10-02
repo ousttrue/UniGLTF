@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 
 namespace UniGLTF
@@ -7,6 +8,6 @@ namespace UniGLTF
     {
         public Mesh Mesh;
         public Material[] Materials;
-        public Renderer Renderer; // SkinnedMeshRenderer or MeshRenderer
+        public List<Renderer> Renderers=new List<Renderer>(); // SkinnedMeshRenderer or MeshRenderer
     }
 }

@@ -704,9 +704,9 @@ namespace UniGLTF
         {
             foreach (var x in Meshes)
             {
-                if (x.Renderer != null)
+                foreach(var y in x.Renderers)
                 {
-                    x.Renderer.enabled = true;
+                    y.enabled = true;
                 }
             }
         }
@@ -715,10 +715,12 @@ namespace UniGLTF
         {
             foreach (var x in Meshes)
             {
-                var skinnedMeshRenderer = x.Renderer as SkinnedMeshRenderer;
-                if (skinnedMeshRenderer != null)
+                foreach (SkinnedMeshRenderer skinnedMeshRenderer in x.Renderers)
                 {
-                    skinnedMeshRenderer.updateWhenOffscreen = true;
+                    if (skinnedMeshRenderer != null)
+                    {
+                        skinnedMeshRenderer.updateWhenOffscreen = true;
+                    }
                 }
             }
         }
