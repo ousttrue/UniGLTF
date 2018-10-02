@@ -249,7 +249,7 @@ namespace UniGLTF
                 new SimpleStorage(chunks[1].Bytes));
         }
 
-        public void ParseJson(string json, IStorage storage)
+        public virtual void ParseJson(string json, IStorage storage)
         {
             Json = json;
             Storage = storage;
@@ -435,7 +435,7 @@ namespace UniGLTF
             Schedulable.Create()
                 .AddTask(Scheduler.ThreadPool, () =>
                 {
-                    if (GLTF.textures.Count == 0)
+                    if (m_textures.Count == 0)
                     {
                         //
                         // runtime
@@ -539,10 +539,15 @@ namespace UniGLTF
                 .ContinueWith(Scheduler.CurrentThread,
                     _ =>
                     {
-                        Root.name = "GLTF";
-                        Debug.Log(GetSpeedLog());
+                        OnLoadModel();
                         return Unit.Default;
                     });
+        }
+
+        protected virtual void OnLoadModel()
+        {
+            Root.name = "GLTF";
+            Debug.Log(GetSpeedLog());
         }
 
         IEnumerator TexturesProcessOnAnyThread()
