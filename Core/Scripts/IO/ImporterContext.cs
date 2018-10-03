@@ -690,8 +690,9 @@ namespace UniGLTF
         {
             foreach (var x in Meshes)
             {
-                foreach (SkinnedMeshRenderer skinnedMeshRenderer in x.Renderers)
+                foreach (var r in x.Renderers)
                 {
+                    var skinnedMeshRenderer = r as SkinnedMeshRenderer;
                     if (skinnedMeshRenderer != null)
                     {
                         skinnedMeshRenderer.updateWhenOffscreen = true;
