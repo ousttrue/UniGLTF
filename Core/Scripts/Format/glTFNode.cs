@@ -39,7 +39,7 @@ namespace UniGLTF
         public int camera = -1;
 
         // empty schemas
-        public object extensions;
+        public glTFNode_extensions extensions;
         public glTFNode_extra extras = new glTFNode_extra();
 
         protected override void SerializeMembers(GLTFJsonFormatter f)

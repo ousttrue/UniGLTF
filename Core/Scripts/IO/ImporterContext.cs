@@ -540,6 +540,7 @@ namespace UniGLTF
                     _ =>
                     {
                         OnLoadModel();
+                        Debug.Log(GetSpeedLog());
                         return Unit.Default;
                     });
         }
@@ -547,7 +548,6 @@ namespace UniGLTF
         protected virtual void OnLoadModel()
         {
             Root.name = "GLTF";
-            Debug.Log(GetSpeedLog());
         }
 
         IEnumerator TexturesProcessOnAnyThread()
