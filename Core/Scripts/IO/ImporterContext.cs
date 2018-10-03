@@ -395,17 +395,7 @@ namespace UniGLTF
         public void Load()
         {
             var schedulable = LoadAsync();
-            foreach(var x in schedulable.GetRoot().Traverse())
-            {
-                while(true)
-                {
-                    var status = x.Execute();
-                    if (status != ExecutionStatus.Continue)
-                    {
-                        break;
-                    }
-                }
-            }
+            schedulable.ExecuteAll();
         }
 
         public void LoadAsync(Action<Unit> onLoaded, Action<Exception> onError = null)
