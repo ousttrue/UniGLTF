@@ -25,7 +25,6 @@ namespace UniGLTF
         public Dictionary<string, Texture2D> Converts
         {
             get { return m_converts; }
-            set { m_converts = value; }
         }
 
         public Texture2D ConvertTexture(string prop)
