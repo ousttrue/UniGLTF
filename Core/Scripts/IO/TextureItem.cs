@@ -21,21 +21,22 @@ namespace UniGLTF
             get { return m_texture; }
         }
 
-        private Texture2D m_converted;
-        public Texture2D Converted
+        private List<Texture2D> m_converted = new List<Texture2D>();
+        public List<Texture2D> Converted
         {
             get { return m_converted; }
             set { m_converted = value; }
         }
 
-        public bool UseConverted(bool isPlaying, string shader, string prop)
+        public Texture2D ConvertTexture(bool isPlaying, string shader, string prop)
         {
             if (prop == "_BumpMap")
             {
                 if (isPlaying)
                 {
-                    Converted = (new NormalConverter()).GetImportTexture(Texture);
-                    return true;
+                    var converted = new NormalConverter().GetImportTexture(Texture);
+                    m_converted.Add(converted);
+                    return converted;
                 }
                 else
                 {
@@ -50,23 +51,25 @@ namespace UniGLTF
                         Debug.LogWarningFormat("no asset for {0}", Texture);
                     }
 #endif
-                    return false;
+                    return null;
                 }
             }
 
             if (prop == "_MetallicGlossMap")
             {
-                Converted = (new MetallicRoughnessConverter()).GetImportTexture(Texture);
-                return true;
+                var converted = new MetallicRoughnessConverter().GetImportTexture(Texture);
+                m_converted.Add(converted);
+                return converted;
             }
 
             if (prop == "_OcclusionMap")
             {
-                Converted = (new OcclusionConverter()).GetImportTexture(Texture);
-                return true;
+                var converted = new OcclusionConverter().GetImportTexture(Texture);
+                m_converted.Add(converted);
+                return converted;
             }
 
-            return false;
+            return null;
         }
 
 
@@ -98,7 +101,13 @@ namespace UniGLTF
         public IEnumerable<Texture2D> GetTexturesForSaveAssets()
         {
             if (!IsAsset) yield return m_texture;
-            if (m_converted != null) yield return m_converted;
+            if (m_converted.Any())
+            {
+                foreach (var texture in m_converted)
+                {
+                    yield return texture;
+                }
+            }
         }
 
         Byte[] m_imageBytes;
