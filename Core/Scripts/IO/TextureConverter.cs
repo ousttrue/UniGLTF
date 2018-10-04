@@ -113,17 +113,8 @@ namespace UniGLTF
 
         public Texture2D GetImportTexture(Texture2D texture)
         {
-            if (!Application.isPlaying)
-            {
-                return texture;
-            }
-            else
-            {
-                var mat = GetEncoder();
-                var converted = TextureConverter.Convert(texture, glTFTextureTypes.Normal, null, mat);
-                TextureConverter.AppendTextureExtension(converted, m_extension);
-                return converted;
-            }
+            // None DTXnm
+            return texture;
         }
 
         public Texture2D GetExportTexture(Texture2D texture)
