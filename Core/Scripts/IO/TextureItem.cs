@@ -21,21 +21,25 @@ namespace UniGLTF
             get { return m_texture; }
         }
 
-        private Texture2D m_converted;
-        public Texture2D Converted
+        private Dictionary<string, Texture2D> m_converts = new Dictionary<string, Texture2D>();
+        public Dictionary<string, Texture2D> Converts
         {
-            get { return m_converted; }
-            set { m_converted = value; }
+            get { return m_converts; }
         }
 
-        public bool UseConverted(bool isPlaying, string shader, string prop)
+        public Texture2D ConvertTexture(string prop)
         {
+            var convertedTexture = Converts.FirstOrDefault(x => x.Key == prop);
+            if (convertedTexture.Value != null)
+                return convertedTexture.Value;
+
             if (prop == "_BumpMap")
             {
-                if (isPlaying)
+                if (Application.isPlaying)
                 {
-                    Converted = (new NormalConverter()).GetImportTexture(Texture);
-                    return true;
+                    var converted = new NormalConverter().GetImportTexture(Texture);
+                    m_converts.Add(prop, converted);
+                    return converted;
                 }
                 else
                 {
@@ -47,26 +51,28 @@ namespace UniGLTF
                     }
                     else
                     {
-                        Debug.LogWarningFormat("no asset for {0}", Texture);
+                        Debug.LogWarningFormat("no asset for {0}", m_texture);
                     }
 #endif
-                    return false;
+                    return m_texture;
                 }
             }
 
             if (prop == "_MetallicGlossMap")
             {
-                Converted = (new MetallicRoughnessConverter()).GetImportTexture(Texture);
-                return true;
+                var converted = new MetallicRoughnessConverter().GetImportTexture(Texture);
+                m_converts.Add(prop, converted);
+                return converted;
             }
 
             if (prop == "_OcclusionMap")
             {
-                Converted = (new OcclusionConverter()).GetImportTexture(Texture);
-                return true;
+                var converted = new OcclusionConverter().GetImportTexture(Texture);
+                m_converts.Add(prop, converted);
+                return converted;
             }
 
-            return false;
+            return null;
         }
 
 
@@ -98,7 +104,13 @@ namespace UniGLTF
         public IEnumerable<Texture2D> GetTexturesForSaveAssets()
         {
             if (!IsAsset) yield return m_texture;
-            if (m_converted != null) yield return m_converted;
+            if (m_converts.Any())
+            {
+                foreach (var texture in m_converts)
+                {
+                    yield return texture.Value;
+                }
+            }
         }
 
         Byte[] m_imageBytes;

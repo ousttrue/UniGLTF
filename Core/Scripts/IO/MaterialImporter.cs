@@ -160,8 +160,8 @@ namespace UniGLTF
                     var texture = Context.GetTexture(x.pbrMetallicRoughness.metallicRoughnessTexture.index);
                     if (texture != null)
                     {
-                        texture.Converted = (new MetallicRoughnessConverter()).GetImportTexture(texture.Texture);
-                        material.SetTexture("_MetallicGlossMap", texture.Converted);
+                        var prop = "_MetallicGlossMap";
+                        material.SetTexture(prop, texture.ConvertTexture(prop));
                     }
                 }
 
@@ -175,27 +175,8 @@ namespace UniGLTF
                 var texture = Context.GetTexture(x.normalTexture.index);
                 if (texture != null)
                 {
-                    if (Application.isPlaying)
-                    {
-                        texture.Converted = (new NormalConverter()).GetImportTexture(texture.Texture);
-                        material.SetTexture("_BumpMap", texture.Converted);
-                    }
-                    else
-                    {
-#if UNITY_EDITOR
-                        var textureAssetPath = AssetDatabase.GetAssetPath(texture.Texture);
-                        if (!string.IsNullOrEmpty(textureAssetPath))
-                        {
-                            TextureIO.MarkTextureAssetAsNormalMap(textureAssetPath);
-                        }
-                        else
-                        {
-                            Debug.LogWarningFormat("no asset for {0}", texture.Texture);
-                        }
-                        material.SetTexture("_BumpMap", texture.Texture);
-#endif
-                    }
-
+                    var prop = "_BumpMap";
+                    material.SetTexture(prop, texture.ConvertTexture(prop));
                     material.SetFloat("_BumpScale", x.normalTexture.scale);
                 }
             }
@@ -205,8 +186,8 @@ namespace UniGLTF
                 var texture = Context.GetTexture(x.occlusionTexture.index);
                 if (texture != null)
                 {
-                    texture.Converted = (new OcclusionConverter()).GetImportTexture(texture.Texture);
-                    material.SetTexture("_OcclusionMap", texture.Converted);
+                    var prop = "_OcclusionMap";
+                    material.SetTexture(prop, texture.ConvertTexture(prop));
                     material.SetFloat("_OcclusionStrength", x.occlusionTexture.strength);
                 }
             }
