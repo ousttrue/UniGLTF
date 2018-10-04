@@ -42,11 +42,13 @@
 			fixed4 frag(v2f i) : SV_Target
 			{
 				half4 col = tex2D(_MainTex, i.uv);
-				half3 normal;
-				normal.xy = col.wy * 2 - 1;
-				normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
+				half4 normal;
+				normal.x = 1.0;
+				normal.y = col.y;
+				normal.z = 1.0;
+				normal.w = col.x;
 
-				return half4(normal, 1);
+				return normal;
 			}
 			ENDCG
 		}
