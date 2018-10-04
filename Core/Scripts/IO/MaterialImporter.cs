@@ -160,9 +160,8 @@ namespace UniGLTF
                     var texture = Context.GetTexture(x.pbrMetallicRoughness.metallicRoughnessTexture.index);
                     if (texture != null)
                     {
-                        var converted = (new MetallicRoughnessConverter()).GetImportTexture(texture.Texture);
-                        texture.Converted.Add(converted);
-                        material.SetTexture("_MetallicGlossMap", converted);
+                        var prop = "_MetallicGlossMap";
+                        material.SetTexture(prop, texture.ConvertTexture(prop));
                     }
                 }
 
@@ -176,28 +175,8 @@ namespace UniGLTF
                 var texture = Context.GetTexture(x.normalTexture.index);
                 if (texture != null)
                 {
-                    if (Application.isPlaying)
-                    {
-                        var cpnverted = (new NormalConverter()).GetImportTexture(texture.Texture);
-                        texture.Converted.Add(cpnverted);
-                        material.SetTexture("_BumpMap", cpnverted);
-                    }
-                    else
-                    {
-#if UNITY_EDITOR
-                        var textureAssetPath = AssetDatabase.GetAssetPath(texture.Texture);
-                        if (!string.IsNullOrEmpty(textureAssetPath))
-                        {
-                            TextureIO.MarkTextureAssetAsNormalMap(textureAssetPath);
-                        }
-                        else
-                        {
-                            Debug.LogWarningFormat("no asset for {0}", texture.Texture);
-                        }
-                        material.SetTexture("_BumpMap", texture.Texture);
-#endif
-                    }
-
+                    var prop = "_BumpMap";
+                    material.SetTexture(prop, texture.ConvertTexture(prop));
                     material.SetFloat("_BumpScale", x.normalTexture.scale);
                 }
             }
@@ -207,9 +186,8 @@ namespace UniGLTF
                 var texture = Context.GetTexture(x.occlusionTexture.index);
                 if (texture != null)
                 {
-                    var converted = (new OcclusionConverter()).GetImportTexture(texture.Texture);
-                    texture.Converted.Add(converted);
-                    material.SetTexture("_OcclusionMap", converted);
+                    var prop = "_OcclusionMap";
+                    material.SetTexture(prop, texture.ConvertTexture(prop));
                     material.SetFloat("_OcclusionStrength", x.occlusionTexture.strength);
                 }
             }
