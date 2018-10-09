@@ -8,7 +8,6 @@ namespace UniGLTF.UniUnlit
         Opaque = 0,
         Cutout = 1,
         Transparent = 2,
-        TransparentWithZWrite = 3,
     }
 
     public enum UniUnlitVertexColorBlendOp
@@ -105,15 +104,6 @@ namespace UniGLTF.UniUnlit
                     SetKeyword(material, KeywordAlphaTestOn, false);
                     SetKeyword(material, KeywordAlphaBlendOn, true);
                     if (isRenderModeChangedByUser) material.renderQueue = (int)RenderQueue.Transparent;
-                    break;
-                case UniUnlitRenderMode.TransparentWithZWrite:
-                    material.SetOverrideTag(TagRenderTypeKey, TagRenderTypeValueTransparent);
-                    material.SetInt(PropNameSrcBlend, (int)BlendMode.SrcAlpha);
-                    material.SetInt(PropNameDstBlend, (int)BlendMode.OneMinusSrcAlpha);
-                    material.SetInt(PropNameZWrite, 1);
-                    SetKeyword(material, KeywordAlphaTestOn, false);
-                    SetKeyword(material, KeywordAlphaBlendOn, true);
-                    if (isRenderModeChangedByUser) material.renderQueue = (int)RenderQueue.AlphaTest + 150;
                     break;
             }
         }
