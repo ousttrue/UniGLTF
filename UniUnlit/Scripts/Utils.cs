@@ -8,7 +8,13 @@ namespace UniGLTF.UniUnlit
         Opaque = 0,
         Cutout = 1,
         Transparent = 2,
-        TransparentWithZWrite = 3,
+    }
+
+    public enum UniUnlitCullMode
+    {
+        Off = 0,
+//        Front = 1,
+        Back = 2,
     }
 
     public enum UniUnlitVertexColorBlendOp
@@ -16,7 +22,7 @@ namespace UniGLTF.UniUnlit
         None = 0,
         Multiply = 1,
     }
-
+    
     public static class Utils
     {
         public const string PropNameMainTex = "_MainTex";
@@ -45,7 +51,7 @@ namespace UniGLTF.UniUnlit
             material.SetInt(PropNameBlendMode, (int)mode);
         }
 
-        public static void SetCullMode(Material material, CullMode mode)
+        public static void SetCullMode(Material material, UniUnlitCullMode mode)
         {
             material.SetInt(PropNameCullMode, (int) mode);
         }
@@ -55,9 +61,9 @@ namespace UniGLTF.UniUnlit
             return (UniUnlitRenderMode)material.GetInt(PropNameBlendMode);
         }
 
-        public static CullMode GetCullMode(Material material)
+        public static UniUnlitCullMode GetCullMode(Material material)
         {
-            return (CullMode)material.GetInt(PropNameCullMode);
+            return (UniUnlitCullMode)material.GetInt(PropNameCullMode);
         }
 
         /// <summary>
@@ -105,15 +111,6 @@ namespace UniGLTF.UniUnlit
                     SetKeyword(material, KeywordAlphaTestOn, false);
                     SetKeyword(material, KeywordAlphaBlendOn, true);
                     if (isRenderModeChangedByUser) material.renderQueue = (int)RenderQueue.Transparent;
-                    break;
-                case UniUnlitRenderMode.TransparentWithZWrite:
-                    material.SetOverrideTag(TagRenderTypeKey, TagRenderTypeValueTransparent);
-                    material.SetInt(PropNameSrcBlend, (int)BlendMode.SrcAlpha);
-                    material.SetInt(PropNameDstBlend, (int)BlendMode.OneMinusSrcAlpha);
-                    material.SetInt(PropNameZWrite, 1);
-                    SetKeyword(material, KeywordAlphaTestOn, false);
-                    SetKeyword(material, KeywordAlphaBlendOn, true);
-                    if (isRenderModeChangedByUser) material.renderQueue = (int)RenderQueue.AlphaTest + 150;
                     break;
             }
         }
