@@ -238,7 +238,7 @@ namespace UniGLTF
             }
 
             var cullMode = UniUnlit.Utils.GetCullMode(m);
-            if (cullMode == CullMode.Off)
+            if (cullMode == UniUnlitCullMode.Off)
             {
                 material.doubleSided = true;
             }

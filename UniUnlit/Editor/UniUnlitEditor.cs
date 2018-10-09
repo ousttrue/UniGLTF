@@ -69,7 +69,7 @@ namespace UniGLTF.UniUnlit
                 {
                     ModeChanged(materials, isRenderModeChangedByUser: true);
                 }
-                if (PopupEnum<CullMode>("Cull Mode", _cullMode, materialEditor))
+                if (PopupEnum<UniUnlitCullMode>("Cull Mode", _cullMode, materialEditor))
                 {
                     ModeChanged(materials, isRenderModeChangedByUser: true);
                 }

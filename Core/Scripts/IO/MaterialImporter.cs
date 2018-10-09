@@ -124,11 +124,11 @@ namespace UniGLTF
                 // culling
                 if (x.doubleSided)
                 {
-                    UniUnlit.Utils.SetCullMode(material, CullMode.Off);
+                    UniUnlit.Utils.SetCullMode(material, UniUnlit.UniUnlitCullMode.Off);
                 }
                 else
                 {
-                    UniUnlit.Utils.SetCullMode(material, CullMode.Back);
+                    UniUnlit.Utils.SetCullMode(material, UniUnlit.UniUnlitCullMode.Back);
                 }
 
                 UniUnlit.Utils.ValidateProperties(material, true);

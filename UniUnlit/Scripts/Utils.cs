@@ -10,12 +10,19 @@ namespace UniGLTF.UniUnlit
         Transparent = 2,
     }
 
+    public enum UniUnlitCullMode
+    {
+        Off = 0,
+//        Front = 1,
+        Back = 2,
+    }
+
     public enum UniUnlitVertexColorBlendOp
     {
         None = 0,
         Multiply = 1,
     }
-
+    
     public static class Utils
     {
         public const string PropNameMainTex = "_MainTex";
@@ -44,7 +51,7 @@ namespace UniGLTF.UniUnlit
             material.SetInt(PropNameBlendMode, (int)mode);
         }
 
-        public static void SetCullMode(Material material, CullMode mode)
+        public static void SetCullMode(Material material, UniUnlitCullMode mode)
         {
             material.SetInt(PropNameCullMode, (int) mode);
         }
@@ -54,9 +61,9 @@ namespace UniGLTF.UniUnlit
             return (UniUnlitRenderMode)material.GetInt(PropNameBlendMode);
         }
 
-        public static CullMode GetCullMode(Material material)
+        public static UniUnlitCullMode GetCullMode(Material material)
         {
-            return (CullMode)material.GetInt(PropNameCullMode);
+            return (UniUnlitCullMode)material.GetInt(PropNameCullMode);
         }
 
         /// <summary>
