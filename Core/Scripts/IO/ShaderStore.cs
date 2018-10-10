@@ -10,7 +10,7 @@ namespace UniGLTF
 
     public class ShaderStore : IShaderStore
     {
-        string m_defaultShaderName;
+        readonly string m_defaultShaderName = "Standard";
         Shader m_default;
         Shader Default
         {
@@ -85,15 +85,9 @@ namespace UniGLTF
         }
 
         ImporterContext m_context;
-
-        public ShaderStore(ImporterContext context) : this(context, "Standard")
-        {
-        }
-
-        public ShaderStore(ImporterContext context, string defaultShaderName)
+        public ShaderStore(ImporterContext context)
         {
             m_context = context;
-            m_defaultShaderName = defaultShaderName;
         }
 
         public static bool IsWhite(float[] color)
@@ -120,12 +114,6 @@ namespace UniGLTF
             if (material.extensions != null && material.extensions.KHR_materials_unlit != null)
             {
                 return UniUnlit;
-            }
-
-            // custom shader for vertex color
-            if (m_context != null && m_context.GLTF.MaterialHasVertexColor(material))
-            {
-                return VColor;
             }
 
             // standard
