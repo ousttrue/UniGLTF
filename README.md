@@ -50,56 +50,7 @@ or
 * menu [UniGLTF] - [Import] 
 * open gltf file(gltf, glb, zip) from out of Asset Folder
 
-## Import in runTime
+## API
 
-```cs
-//
-// UniGLTF-1.22
-//
-var path = UnityEditor.EditorUtility.OpenFilePanel("open gltf", "", "gltf,glb,zip");
-if (string.IsNullOrEmpty(path))
-{
-    return;
-}
-Debug.LogFormat("open: {0}", path);
-
-var context = new ImporterContext();
-context.Load(path);
-context.ShowMeshes();
-context.EnableUpdateWhenOffscreen();
-context.Root.name = Path.GetFileNameWithoutExtension(path);
-```
-
-## Import in runTime asynchronous
-
-```cs
-//
-// UniGLTF-1.22
-//
-public static void LoadVrmAsync(string path, Byte[] bytes, Action<GameObject> onLoaded, Action<Exception> onError = null, bool show = true)
-{
-    var context = new ImporterContext();
-    context.Parse(path, bytes);
-    context.LoadAsync(onLoaded, onError, show);
-}
-```
-
-## Export from scene
-
-* select target root GameObject in scene(GameObect must be empty root, because target become gltf's ``/scene``. A scene includes nodes.
-* menu [UniGLTF] - [Export]
-* support only glb format
-
-## Export in runTime
-
-```cs
-GameObject go; // export target
-string path; // glb write path
-
-var gltf = gltfExporter.Export(go);
-var bytes = gltf.ToGlbBytes();
-File.WriteAllBytes(path, bytes);
-```
-
-* support only glb format
+* https://github.com/ousttrue/UniGLTF/wiki/Rutime-API
 
