@@ -398,6 +398,28 @@ namespace UniGLTF
             schedulable.ExecuteAll();
         }
 
+        public IEnumerator LoadCoroutine(Action<Unit> onLoaded, Action<Exception> onError = null)
+        {
+            if (onError == null)
+            {
+                onError = Debug.LogError;
+            }
+
+            var schedulable = LoadAsync();
+            foreach (var x in schedulable.GetRoot().Traverse())
+            {
+                while (true)
+                {
+                    var status = x.Execute();
+                    if (status != ExecutionStatus.Continue)
+                    {
+                        break;
+                    }
+                    yield return null;
+                }
+            }
+        }
+
         public void LoadAsync(Action<Unit> onLoaded, Action<Exception> onError = null)
         {
             if (onError == null)
