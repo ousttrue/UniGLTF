@@ -133,7 +133,11 @@ namespace UniGLTF
 
             // save as asset
             var assetPath = "";
+#if UNITY_2018_2_OR_NEWER
+            var prefab = PrefabUtility.GetCorrespondingObjectFromSource(go);
+#else
             var prefab = PrefabUtility.GetPrefabParent(go);
+#endif
             if (prefab != null)
             {
                 var prefabPath = AssetDatabase.GetAssetPath(prefab);
