@@ -398,8 +398,13 @@ namespace UniGLTF
             schedulable.ExecuteAll();
         }
 
-        public IEnumerator LoadCoroutine(Action<Unit> onLoaded, Action<Exception> onError = null)
+        public IEnumerator LoadCoroutine(Action<Unit> onLoaded = null, Action<Exception> onError = null)
         {
+            if (onLoaded == null)
+            {
+                onLoaded = _ => { };
+            }
+
             if (onError == null)
             {
                 onError = Debug.LogError;
