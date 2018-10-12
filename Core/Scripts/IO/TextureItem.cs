@@ -126,7 +126,9 @@ namespace UniGLTF
             }
             else
             {
-                return bytes.Array.Skip(bytes.Offset).Take(bytes.Count).ToArray();
+                Byte[] result = new byte[bytes.Count];
+                Buffer.BlockCopy(bytes.Array, bytes.Offset, result, 0, result.Length);
+                return result;
             }
         }
 

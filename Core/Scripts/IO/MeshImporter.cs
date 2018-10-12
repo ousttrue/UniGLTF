@@ -465,7 +465,7 @@ namespace UniGLTF
                         {
                             emptyVertices = new Vector3[mesh.vertexCount];
                         }
-                        Debug.LogFormat("empty blendshape: {0}.{1}", mesh.name, blendShape.Name);
+                        // Debug.LogFormat("empty blendshape: {0}.{1}", mesh.name, blendShape.Name);
                         // add empty blend shape for keep blend shape index
                         mesh.AddBlendShapeFrame(blendShape.Name, FRAME_WEIGHT,
                             emptyVertices,
