@@ -577,10 +577,10 @@ namespace UniGLTF
                     for (int i = 0; i < GLTF.materials.Count; ++i)
                     {
                         AddMaterial(MaterialImporter.CreateMaterial(i, GLTF.materials[i]));
-                        yield return null;
                     }
                 }
             }
+            yield return null;
         }
 
         IEnumerator LoadMeshes()
