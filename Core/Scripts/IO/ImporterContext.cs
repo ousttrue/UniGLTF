@@ -466,27 +466,9 @@ namespace UniGLTF
                         //
                     }
                 })
-                .ContinueWithCoroutine(Scheduler.ThreadPool, () =>
-                {
-                    using (MeasureTime("TexturesProcessOnAnyThread"))
-                    {
-                        return TexturesProcessOnAnyThread();
-                    }
-                })
-                .ContinueWithCoroutine(Scheduler.MainThread, () =>
-                {
-                    using (MeasureTime("TexturesProcessOnMainThread"))
-                    {
-                        return TexturesProcessOnMainThread();
-                    }
-                })
-                .ContinueWithCoroutine(Scheduler.MainThread, () =>
-                {
-                    using (MeasureTime("LoadMaterials"))
-                    {
-                        return LoadMaterials();
-                    }
-                })
+                .ContinueWithCoroutine(Scheduler.ThreadPool, TexturesProcessOnAnyThread)
+                .ContinueWithCoroutine(Scheduler.MainThread, TexturesProcessOnMainThread)
+                .ContinueWithCoroutine(Scheduler.MainThread, LoadMaterials)
                 .OnExecute(Scheduler.ThreadPool, parent =>
                 {
                     if (GLTF.meshes
@@ -535,23 +517,14 @@ namespace UniGLTF
                         ;
                     }
                 })
-                .ContinueWithCoroutine(Scheduler.MainThread, () =>
-                {
-                    using (MeasureTime("LoadNodes"))
-                    {
-                        return LoadNodes();
-                    }
-                })
-                .ContinueWithCoroutine(Scheduler.MainThread, () =>
-                {
-                    using (MeasureTime("BuildHierarchy"))
-                    {
-                        return BuildHierarchy();
-                    }
-                })
+                .ContinueWithCoroutine(Scheduler.MainThread, LoadNodes)
+                .ContinueWithCoroutine(Scheduler.MainThread, BuildHierarchy)
                 .ContinueWith(Scheduler.MainThread, _ =>
                 {
-                    AnimationImporter.ImportAnimation(this);
+                    using (MeasureTime("AnimationImporter"))
+                    {
+                        AnimationImporter.ImportAnimation(this);
+                    }
                 })
                 .ContinueWith(Scheduler.CurrentThread,
                     _ =>
@@ -569,34 +542,43 @@ namespace UniGLTF
 
         IEnumerator TexturesProcessOnAnyThread()
         {
-            foreach (var x in GetTextures())
+            using (MeasureTime("TexturesProcessOnAnyThread"))
             {
-                x.ProcessOnAnyThread(GLTF, Storage);
-                yield return null;
+                foreach (var x in GetTextures())
+                {
+                    x.ProcessOnAnyThread(GLTF, Storage);
+                    yield return null;
+                }
             }
         }
 
         IEnumerator TexturesProcessOnMainThread()
         {
-            foreach (var x in GetTextures())
+            using (MeasureTime("TexturesProcessOnMainThread"))
             {
-                x.ProcessOnMainThread(GLTF);
-                yield return null;
+                foreach (var x in GetTextures())
+                {
+                    x.ProcessOnMainThread(GLTF);
+                    yield return null;
+                }
             }
         }
 
         IEnumerator LoadMaterials()
         {
-            if (GLTF.materials == null || !GLTF.materials.Any())
+            using (MeasureTime("LoadMaterials"))
             {
-                AddMaterial(MaterialImporter.CreateMaterial(0, null));
-            }
-            else
-            {
-                for (int i = 0; i < GLTF.materials.Count; ++i)
+                if (GLTF.materials == null || !GLTF.materials.Any())
                 {
-                    AddMaterial(MaterialImporter.CreateMaterial(i, GLTF.materials[i]));
-                    yield return null;
+                    AddMaterial(MaterialImporter.CreateMaterial(0, null));
+                }
+                else
+                {
+                    for (int i = 0; i < GLTF.materials.Count; ++i)
+                    {
+                        AddMaterial(MaterialImporter.CreateMaterial(i, GLTF.materials[i]));
+                        yield return null;
+                    }
                 }
             }
         }
@@ -621,9 +603,12 @@ namespace UniGLTF
 
         IEnumerator LoadNodes()
         {
-            foreach (var x in GLTF.nodes)
+            using (MeasureTime("LoadNodes"))
             {
-                Nodes.Add(NodeImporter.ImportNode(x).transform);
+                foreach (var x in GLTF.nodes)
+                {
+                    Nodes.Add(NodeImporter.ImportNode(x).transform);
+                }
             }
 
             yield return null;
@@ -631,26 +616,29 @@ namespace UniGLTF
 
         IEnumerator BuildHierarchy()
         {
-            var nodes = new List<NodeImporter.TransformWithSkin>();
-            for (int i = 0; i < Nodes.Count; ++i)
+            using (MeasureTime("BuildHierarchy"))
             {
-                nodes.Add(NodeImporter.BuildHierarchy(this, i));
-            }
+                var nodes = new List<NodeImporter.TransformWithSkin>();
+                for (int i = 0; i < Nodes.Count; ++i)
+                {
+                    nodes.Add(NodeImporter.BuildHierarchy(this, i));
+                }
 
-            NodeImporter.FixCoordinate(this, nodes);
+                NodeImporter.FixCoordinate(this, nodes);
 
-            // skinning
-            for (int i = 0; i < nodes.Count; ++i)
-            {
-                NodeImporter.SetupSkinning(this, nodes, i);
-            }
+                // skinning
+                for (int i = 0; i < nodes.Count; ++i)
+                {
+                    NodeImporter.SetupSkinning(this, nodes, i);
+                }
 
-            // connect root
-            Root = new GameObject("_root_");
-            foreach (var x in GLTF.rootnodes)
-            {
-                var t = nodes[x].Transform;
-                t.SetParent(Root.transform, false);
+                // connect root
+                Root = new GameObject("_root_");
+                foreach (var x in GLTF.rootnodes)
+                {
+                    var t = nodes[x].Transform;
+                    t.SetParent(Root.transform, false);
+                }
             }
 
             yield return null;
