@@ -527,16 +527,17 @@ namespace UniGLTF
                 #region Animations
 
                 var clips = new List<AnimationClip>();
-                var animator = go.GetComponent<Animator>();
                 var animation = go.GetComponent<Animation>();
+                if (animation != null)
+                {
+                    clips.AddRange(AnimationExporter.GetAnimationClips(animation));
+                }
+                var animator = go.GetComponent<Animator>();
                 if (animator != null)
                 {
-                    clips = AnimationExporter.GetAnimationClips(animator);
+                    clips.AddRange(AnimationExporter.GetAnimationClips(animator));
                 }
-                else if (animation != null)
-                {
-                    clips = AnimationExporter.GetAnimationClips(animation);
-                }
+
 
                 if (clips.Any())
                 {
