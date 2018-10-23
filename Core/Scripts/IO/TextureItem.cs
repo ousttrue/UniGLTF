@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
-using System;
 using System.Collections;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -13,18 +12,14 @@ namespace UniGLTF
     public class TextureItem
     {
         private int m_textureIndex;
-
         public Texture2D Texture
         {
             get {
-                if (m_textureLoader == null)
-                {
-                    return null;
-                };
                 return m_textureLoader.Texture;
             }
         }
 
+        #region Texture converter
         private Dictionary<string, Texture2D> m_converts = new Dictionary<string, Texture2D>();
         public Dictionary<string, Texture2D> Converts
         {
@@ -78,37 +73,13 @@ namespace UniGLTF
 
             return null;
         }
-
-
-        ITextureLoader m_textureLoader;
-
-#if UNITY_EDITOR
-        UnityPath m_assetPath;
-        public void SetAssetInfo(UnityPath assetPath, string textureName)
-        {
-            m_assetPath = assetPath;
-            if (IsAsset)
-            {
-                m_textureLoader = new AssetTextureLoader(assetPath, textureName);
-            }
-        }
+        #endregion
 
         public bool IsAsset
         {
-            get
-            {
-                return m_assetPath.IsUnderAssetsFolder;
-            }
+            private set;
+            get;
         }
-#else
-        public bool IsAsset
-        {
-            get
-            {
-                return false;
-            }
-        }
-#endif
 
         public IEnumerable<Texture2D> GetTexturesForSaveAssets()
         {
@@ -125,10 +96,33 @@ namespace UniGLTF
             }
         }
 
+        /// <summary>
+        /// Texture from buffer
+        /// </summary>
+        /// <param name="index"></param>
         public TextureItem(int index)
         {
             m_textureIndex = index;
+            m_textureLoader = new TextureLoader(m_textureIndex);
         }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// Texture from asset
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="assetPath"></param>
+        /// <param name="textureName"></param>
+        public TextureItem(int index, UnityPath assetPath, string textureName)
+        {
+            m_textureIndex = index;
+            IsAsset = true;
+            m_textureLoader = new AssetTextureLoader(assetPath, textureName);
+        }
+#endif
+
+        #region Process
+        ITextureLoader m_textureLoader;
 
         public IEnumerator ProcessCoroutine(glTF gltf, IStorage storage)
         {
@@ -138,16 +132,6 @@ namespace UniGLTF
 
         public void ProcessOnAnyThread(glTF gltf, IStorage storage)
         {
-#if UNITY_EDITOR
-            if (IsAsset)
-            {
-            }
-            else
-#endif
-            {
-                m_textureLoader = new TextureLoader(m_textureIndex);
-            }
-
             m_textureLoader.ProcessOnAnyThread(gltf, storage);
         }
 
@@ -159,6 +143,7 @@ namespace UniGLTF
             yield return m_textureLoader.ProcessOnMainThread(isLinear);
             TextureSamplerUtil.SetSampler(Texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
         }
+        #endregion
 
         public static Texture2D CopyTexture(Texture src, RenderTextureReadWrite colorSpace, Material material)
         {

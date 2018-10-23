@@ -365,25 +365,27 @@ namespace UniGLTF
 
             for (int i = 0; i < GLTF.textures.Count; ++i)
             {
-                var item = new TextureItem(i);
+                var image = GLTF.GetImageFromTextureIndex(i);
 
+                TextureItem item = null;
 #if UNITY_EDITOR
-                if (imageBaseDir.IsUnderAssetsFolder)
+                if (imageBaseDir.IsUnderAssetsFolder
+                    && !string.IsNullOrEmpty(image.uri)
+                    && !image.uri.StartsWith("data:")
+                    )
                 {
-                    var image = GLTF.GetImageFromTextureIndex(i);
-                    if (!string.IsNullOrEmpty(image.uri)
-                        && !image.uri.StartsWith("data:")
-                        && imageBaseDir.IsUnderAssetsFolder)
-                    {
-                        ///
-                        /// required SaveTexturesAsPng or SetTextureBaseDir
-                        ///
-                        var assetPath = imageBaseDir.Child(image.uri);
-                        var textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
-                        item.SetAssetInfo(assetPath, textureName);
-                    }
+                    ///
+                    /// required SaveTexturesAsPng or SetTextureBaseDir
+                    ///
+                    var assetPath = imageBaseDir.Child(image.uri);
+                    var textureName = !string.IsNullOrEmpty(image.name) ? image.name : Path.GetFileNameWithoutExtension(image.uri);
+                    item = new TextureItem(i, assetPath, textureName);
                 }
+                else
 #endif
+                {
+                    item = new TextureItem(i);
+                }
 
                 AddTexture(item);
             }
