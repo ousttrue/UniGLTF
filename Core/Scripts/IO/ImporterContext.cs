@@ -558,8 +558,7 @@ namespace UniGLTF
             {
                 foreach (var x in GetTextures())
                 {
-                    x.ProcessOnMainThread(GLTF);
-                    yield return null;
+                    yield return x.ProcessOnMainThreadCoroutine(GLTF);
                 }
             }
         }
