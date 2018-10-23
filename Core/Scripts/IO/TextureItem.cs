@@ -103,7 +103,11 @@ namespace UniGLTF
         public TextureItem(int index)
         {
             m_textureIndex = index;
+#if UNIGLTF_USE_WEBREQUEST_TEXTURELOADER
+            m_textureLoader = new UnityWebRequestTextureLoader(m_textureIndex);
+#else
             m_textureLoader = new TextureLoader(m_textureIndex);
+#endif
         }
 
 #if UNITY_EDITOR
@@ -121,7 +125,7 @@ namespace UniGLTF
         }
 #endif
 
-        #region Process
+#region Process
         ITextureLoader m_textureLoader;
 
         public IEnumerator ProcessCoroutine(glTF gltf, IStorage storage)
@@ -137,13 +141,16 @@ namespace UniGLTF
 
         public IEnumerator ProcessOnMainThreadCoroutine(glTF gltf)
         {
-            var textureType = TextureIO.GetglTFTextureType(gltf, m_textureIndex);
-            var colorSpace = TextureIO.GetColorSpace(textureType);
-            var isLinear = colorSpace == RenderTextureReadWrite.Linear;
-            yield return m_textureLoader.ProcessOnMainThread(isLinear);
-            TextureSamplerUtil.SetSampler(Texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
+            using (m_textureLoader)
+            {
+                var textureType = TextureIO.GetglTFTextureType(gltf, m_textureIndex);
+                var colorSpace = TextureIO.GetColorSpace(textureType);
+                var isLinear = colorSpace == RenderTextureReadWrite.Linear;
+                yield return m_textureLoader.ProcessOnMainThread(isLinear);
+                TextureSamplerUtil.SetSampler(Texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
+            }
         }
-        #endregion
+#endregion
 
         public static Texture2D CopyTexture(Texture src, RenderTextureReadWrite colorSpace, Material material)
         {
