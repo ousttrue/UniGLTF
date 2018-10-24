@@ -299,5 +299,15 @@ namespace UniGLTF
         {
             return transform.GetComponent<T>() == t;
         }
+
+        public static T GetOrAddComponent<T>(this GameObject go) where T : Component
+        {
+            var c = go.GetComponent<T>();
+            if (c != null)
+            {
+                return c;
+            }
+            return go.AddComponent<T>();
+        }
     }
 }
