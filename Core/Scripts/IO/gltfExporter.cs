@@ -561,7 +561,6 @@ namespace UniGLTF
                             {
                                 case 1:
                                     outputAccessor.type = "SCALAR";
-                                    outputAccessor.count = 1;
                                     break;
                                 case 3:
                                     outputAccessor.type = "VEC3";
