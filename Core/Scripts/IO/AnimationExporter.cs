@@ -130,7 +130,7 @@ namespace UniGLTF
                 var curve = AnimationUtility.GetEditorCurve(clip, binding);
 
                 var property = AnimationExporter.PropertyToTarget(binding.propertyName);
-                if (property == glTFAnimationTarget.AnimationPropertys.NotImplemented || property == glTFAnimationTarget.AnimationPropertys.BlendShape)
+                if (property == glTFAnimationTarget.AnimationPropertys.NotImplemented)
                 {
                     Debug.LogWarning("Not Implemented keyframe property : " + binding.propertyName);
                     continue;
@@ -143,20 +143,46 @@ namespace UniGLTF
 
                 var nodeIndex = GetNodeIndex(root, nodes, binding.path);
                 var samplerIndex = animation.Animation.AddChannelAndGetSampler(nodeIndex, property);
+                var elementCount = 0;
+                if (property == glTFAnimationTarget.AnimationPropertys.BlendShape)
+                {
+                    var mesh = nodes[nodeIndex].GetComponent<SkinnedMeshRenderer>().sharedMesh;
+                    elementCount = mesh.blendShapeCount;
+                }
+                else
+                {
+                    elementCount = glTFAnimationTarget.GetElementCount(property);
+                }
 
                 // 同一のsamplerIndexが割り当てられているcurveDataがある場合はそれを使用し、無ければ作る
-                var curveData = curveDatas.FirstOrDefault(x => x.SamplerIndex == samplerIndex);
+                    var curveData = curveDatas.FirstOrDefault(x => x.SamplerIndex == samplerIndex);
                 if (curveData == null)
                 {
-                    curveData = new AnimationCurveData(AnimationUtility.GetKeyRightTangentMode(curve, 0), property, samplerIndex);
+                    curveData = new AnimationCurveData(AnimationUtility.GetKeyRightTangentMode(curve, 0), property, samplerIndex, elementCount);
                     curveDatas.Add(curveData);
                 }
 
                 // 全てのキーフレームを回収
-                var elementOffset = AnimationExporter.GetElementOffset(binding.propertyName);
-                for (int i = 0; i < curve.keys.Length; i++)
+                int elementOffset = 0;
+                float valueFactor = 1.0f;
+                if (property == glTFAnimationTarget.AnimationPropertys.BlendShape)
                 {
-                    curveData.SetKeyframeData(curve.keys[i].time, curve.keys[i].value, elementOffset);
+                    var mesh = nodes[nodeIndex].GetComponent<SkinnedMeshRenderer>().sharedMesh;
+                    var blendShapeName = binding.propertyName.Replace("blendShape.", "");
+                    elementOffset = mesh.GetBlendShapeIndex(blendShapeName);
+                    valueFactor = 0.01f;
+                }
+                else
+                {
+                    elementOffset = AnimationExporter.GetElementOffset(binding.propertyName);
+                }
+
+                if (elementOffset >= 0 && elementOffset < elementCount)
+                {
+                    for (int i = 0; i < curve.keys.Length; i++)
+                    {
+                        curveData.SetKeyframeData(curve.keys[i].time, curve.keys[i].value * valueFactor, elementOffset);
+                    }
                 }
             }
 
@@ -168,7 +194,7 @@ namespace UniGLTF
 
                 curve.RecountEmptyKeyframe();
 
-                var elementNum = curve.Keyframes.First().MValues.Length;
+                var elementNum = curve.Keyframes.First().Values.Length;
                 var values = default(InputOutputValues);
                 if (!animation.SamplerMap.TryGetValue(curve.SamplerIndex, out values))
                 {

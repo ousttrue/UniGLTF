@@ -72,6 +72,7 @@ namespace UniGLTF
             float[] input,
             float[] output,
             string interpolation,
+            Type curveType,
             ReverseZ reverse)
         {
             var tangentMode = GetTangentMode(interpolation);
@@ -150,7 +151,7 @@ namespace UniGLTF
                     curves[i].AddKey(keyframes[i][j]);
                 }
 
-                targetClip.SetCurve(relativePath, typeof(Transform), propertyNames[i], curves[i]);
+                targetClip.SetCurve(relativePath, curveType, propertyNames[i], curves[i]);
             }
         }
 
@@ -183,6 +184,7 @@ namespace UniGLTF
                                     input,
                                     output,
                                     sampler.interpolation,
+                                    typeof(Transform),
                                     (values, last) =>
                                     {
                                         Vector3 temp = new Vector3(values[0], values[1], values[2]);
@@ -205,6 +207,7 @@ namespace UniGLTF
                                     input,
                                     output,
                                     sampler.interpolation,
+                                    typeof(Transform),
                                     (values, last) =>
                                     {
                                         Quaternion currentQuaternion = new Quaternion(values[0], values[1], values[2], values[3]);
@@ -230,6 +233,7 @@ namespace UniGLTF
                                     input,
                                     output,
                                     sampler.interpolation,
+                                    typeof(Transform),
                                     (values, last) => values);
                             }
                             break;
@@ -238,20 +242,47 @@ namespace UniGLTF
                             {
                                 var node = ctx.GLTF.nodes[channel.target.node];
                                 var mesh = ctx.GLTF.meshes[node.mesh];
-                                for (int k = 0; k < mesh.weights.Length; ++k)
-                                {
-                                    //var weight = mesh.weights[k];
-                                    var curve = new AnimationCurve();
-                                    var sampler = animation.samplers[channel.sampler];
-                                    var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
-                                    var output = ctx.GLTF.GetArrayFromAccessor<float>(sampler.output);
-                                    for (int j = 0, l = k; j < input.Length; ++j, l += mesh.weights.Length)
-                                    {
-                                        curve.AddKey(input[j], output[l] * 100);
-                                    }
+                                var primitive = mesh.primitives.FirstOrDefault();
+                                var targets = primitive.targets;
 
-                                    clip.SetCurve(relativePath, typeof(SkinnedMeshRenderer), "blendShape." + k, curve);
+                                List<string> blendShapeNames = new List<string>();
+                                var transform = ctx.Nodes[channel.target.node];
+                                var skinnedMeshRenderer = transform.GetComponent<SkinnedMeshRenderer>();
+                                if (skinnedMeshRenderer == null)
+                                {
+                                    continue;
                                 }
+
+                                for (int j = 0; j < skinnedMeshRenderer.sharedMesh.blendShapeCount; j++)
+                                {
+                                    blendShapeNames.Add(skinnedMeshRenderer.sharedMesh.GetBlendShapeName(j));
+                                }
+
+                                var keyNames = blendShapeNames
+                                    .Where(x => !string.IsNullOrEmpty(x))
+                                    .Select(x => "blendShape." + x)
+                                    .ToArray();
+
+                                var sampler = animation.samplers[channel.sampler];
+                                var input = ctx.GLTF.GetArrayFromAccessor<float>(sampler.input);
+                                var output = ctx.GLTF.GetArrayFromAccessor<float>(sampler.output);
+                                AnimationImporter.SetAnimationCurve(
+                                    clip,
+                                    relativePath,
+                                    keyNames,
+                                    input,
+                                    output,
+                                    sampler.interpolation,
+                                    typeof(SkinnedMeshRenderer),
+                                    (values, last) =>
+                                    {
+                                        for (int j = 0; j < values.Length; j++)
+                                        {
+                                            values[j] *= 100.0f;
+                                        }
+                                        return values;
+                                    });
+                                
                             }
                             break;
 

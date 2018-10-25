@@ -6,35 +6,35 @@ namespace UniGLTF
         public float Time { get; set; }
         public delegate float[] ConverterFunc(float[] values);
         private ConverterFunc _converter;
-        private float[] m_values;
-        public float[] MValues
+        private float[] _values;
+        public float[] Values
         {
-            get { return m_values; }
+            get { return _values; }
         }
 
-        private bool[] m_enterValues;
-        public bool[] MEnterValues
+        private bool[] _enterValues;
+        public bool[] EnterValues
         {
-            get { return m_enterValues; }
+            get { return _enterValues; }
         }
 
         public AnimationKeyframeData(int elementCount, ConverterFunc converter)
         {
-            m_values = new float[elementCount];
-            m_enterValues = new bool[elementCount];
-            for (int i = 0; i < m_enterValues.Length; i++)
+            _values = new float[elementCount];
+            _enterValues = new bool[elementCount];
+            for (int i = 0; i < _enterValues.Length; i++)
             {
-                m_enterValues[i] = false;
+                _enterValues[i] = false;
             }
             _converter = converter;
         }
 
         public void SetValue(float src, int offset)
         {
-            if (m_values.Length > offset)
+            if (_values.Length > offset)
             {
-                m_values[offset] = src;
-                m_enterValues[offset] = true;
+                _values[offset] = src;
+                _enterValues[offset] = true;
             }
         }
 
@@ -42,11 +42,11 @@ namespace UniGLTF
         {
             if (_converter != null)
             {
-                return _converter(m_values);
+                return _converter(_values);
             }
             else
             {
-                return m_values;
+                return _values;
             }
         }
 #endif
