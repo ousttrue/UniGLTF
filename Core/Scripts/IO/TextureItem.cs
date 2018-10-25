@@ -128,6 +128,17 @@ namespace UniGLTF
 #region Process
         ITextureLoader m_textureLoader;
 
+
+        public void Process(glTF gltf, IStorage storage)
+        {
+            ProcessOnAnyThread(gltf, storage);
+            var it = ProcessOnMainThreadCoroutine(gltf);
+            while (it.MoveNext())
+            {
+
+            }
+        }
+
         public IEnumerator ProcessCoroutine(glTF gltf, IStorage storage)
         {
             ProcessOnAnyThread(gltf, storage);
