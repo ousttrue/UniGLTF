@@ -16,12 +16,12 @@ namespace UniGLTF
 
     public interface IMaterialExporter
     {
-        glTFMaterial ExportMaterial(Material m, List<Texture> textures, out List<Texture> exportTextures);
+        glTFMaterial ExportMaterial(Material m, List<Texture> textures, List<Texture> exportTextures);
     }
 
     public class MaterialExporter : IMaterialExporter
     {
-        public virtual glTFMaterial ExportMaterial(Material m, List<Texture> textures, out List<Texture> exportTextures)
+        public virtual glTFMaterial ExportMaterial(Material m, List<Texture> textures, List<Texture> exportTextures)
         {
             if (textures == null)
             {
@@ -29,7 +29,6 @@ namespace UniGLTF
             }
 
             var material = CreateMaterial(m);
-            exportTextures = new List<Texture>(textures);
 
             // common params
             material.name = m.name;

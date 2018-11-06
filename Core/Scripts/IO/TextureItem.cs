@@ -169,6 +169,20 @@ namespace UniGLTF
 
             var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32, colorSpace);
 
+            bool sRGBWrite = GL.sRGBWrite;
+            switch (colorSpace)
+            {
+                case RenderTextureReadWrite.sRGB:
+                    GL.sRGBWrite = true;
+                    break;
+                case RenderTextureReadWrite.Linear:
+                    GL.sRGBWrite = false;
+                    break;
+                default:
+                    GL.sRGBWrite = true;
+                    break;
+            }
+
             if (material != null)
             {
                 Graphics.Blit(src, renderTexture, material);
@@ -176,6 +190,11 @@ namespace UniGLTF
             else
             {
                 Graphics.Blit(src, renderTexture);
+            }
+
+            if (colorSpace == RenderTextureReadWrite.sRGB)
+            {
+                GL.sRGBWrite = sRGBWrite;
             }
 
             dst = new Texture2D(src.width, src.height, TextureFormat.ARGB32, false, colorSpace == RenderTextureReadWrite.Linear);
