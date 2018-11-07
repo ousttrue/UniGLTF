@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Collections;
+using System.IO;
+using System;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -164,15 +166,13 @@ namespace UniGLTF
         }
         #endregion
 
-        public static Texture2D CopyTexture(Texture src, RenderTextureReadWrite colorSpace, Material material)
+        struct ColorSpaceScope : IDisposable
         {
-            Texture2D dst = null;
+            bool m_sRGBWrite;
 
-            var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32, colorSpace);
-
-            bool sRGBWrite = GL.sRGBWrite;
-            try
+            public ColorSpaceScope(RenderTextureReadWrite colorSpace)
             {
+                m_sRGBWrite = GL.sRGBWrite;
                 switch (colorSpace)
                 {
                     case RenderTextureReadWrite.Linear:
@@ -184,7 +184,96 @@ namespace UniGLTF
                         GL.sRGBWrite = true;
                         break;
                 }
+            }
+            public ColorSpaceScope(bool sRGBWrite)
+            {
+                m_sRGBWrite = GL.sRGBWrite;
+                GL.sRGBWrite = sRGBWrite;
+            }
 
+            public void Dispose()
+            {
+                GL.sRGBWrite = m_sRGBWrite;
+            }
+        }
+
+#if UNITY_EDITOR && VRM_DEVELOP
+        [MenuItem("Assets/CopySRGBWrite", true)]
+        static bool CopySRGBWriteIsEnable()
+        {
+            return Selection.activeObject is Texture;
+        }
+
+        [MenuItem("Assets/CopySRGBWrite")]
+        static void CopySRGBWrite()
+        {
+            CopySRGBWrite(true);
+        }
+
+        [MenuItem("Assets/CopyNotSRGBWrite", true)]
+        static bool CopyNotSRGBWriteIsEnable()
+        {
+            return Selection.activeObject is Texture;
+        }
+
+        [MenuItem("Assets/CopyNotSRGBWrite")]
+        static void CopyNotSRGBWrite()
+        {
+            CopySRGBWrite(false);
+        }
+
+        static string AddPath(string path, string add)
+        {
+            return string.Format("{0}/{1}{2}{3}",
+            Path.GetDirectoryName(path),
+            Path.GetFileNameWithoutExtension(path),
+            add,
+            Path.GetExtension(path));
+        }
+
+        static void CopySRGBWrite(bool isSRGB)
+        {
+            var src = Selection.activeObject as Texture;
+            var texturePath = UnityPath.FromAsset(src);
+
+            var path = EditorUtility.SaveFilePanel("save prefab", "Assets",
+            Path.GetFileNameWithoutExtension(AddPath(texturePath.FullPath, ".sRGB")), "prefab");
+            var assetPath = UnityPath.FromFullpath(path);
+            if (!assetPath.IsUnderAssetsFolder)
+            {
+                return;
+            }
+            Debug.LogFormat("[CopySRGBWrite] {0} => {1}", texturePath, assetPath);
+
+            var renderTexture = new RenderTexture(src.width, src.height, 0,
+                RenderTextureFormat.ARGB32,
+                RenderTextureReadWrite.sRGB);
+            using (var scope = new ColorSpaceScope(isSRGB))
+            {
+                Graphics.Blit(src, renderTexture);
+            }
+
+            var dst = new Texture2D(src.width, src.height, TextureFormat.ARGB32, false,
+                RenderTextureReadWrite.sRGB == RenderTextureReadWrite.Linear);
+            dst.ReadPixels(new Rect(0, 0, src.width, src.height), 0, 0);
+            dst.Apply();
+
+            RenderTexture.active = null;
+
+            assetPath.CreateAsset(dst);
+
+            GameObject.DestroyImmediate(renderTexture);
+        }
+#endif
+
+        public static Texture2D CopyTexture(Texture src, RenderTextureReadWrite colorSpace, Material material)
+        {
+            Texture2D dst = null;
+
+            var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32, colorSpace);
+
+            using (var scope = new ColorSpaceScope(colorSpace))
+            {
                 if (material != null)
                 {
                     Graphics.Blit(src, renderTexture, material);
@@ -193,11 +282,6 @@ namespace UniGLTF
                 {
                     Graphics.Blit(src, renderTexture);
                 }
-
-            }
-            finally
-            {
-                GL.sRGBWrite = sRGBWrite;
             }
 
             dst = new Texture2D(src.width, src.height, TextureFormat.ARGB32, false, colorSpace == RenderTextureReadWrite.Linear);
