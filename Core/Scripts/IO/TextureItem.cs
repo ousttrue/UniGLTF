@@ -14,7 +14,8 @@ namespace UniGLTF
         private int m_textureIndex;
         public Texture2D Texture
         {
-            get {
+            get
+            {
                 return m_textureLoader.Texture;
             }
         }
@@ -125,7 +126,7 @@ namespace UniGLTF
         }
 #endif
 
-#region Process
+        #region Process
         ITextureLoader m_textureLoader;
 
 
@@ -161,7 +162,7 @@ namespace UniGLTF
                 TextureSamplerUtil.SetSampler(Texture, gltf.GetSamplerFromTextureIndex(m_textureIndex));
             }
         }
-#endregion
+        #endregion
 
         public static Texture2D CopyTexture(Texture src, RenderTextureReadWrite colorSpace, Material material)
         {
@@ -170,29 +171,31 @@ namespace UniGLTF
             var renderTexture = new RenderTexture(src.width, src.height, 0, RenderTextureFormat.ARGB32, colorSpace);
 
             bool sRGBWrite = GL.sRGBWrite;
-            switch (colorSpace)
+            try
             {
-                case RenderTextureReadWrite.sRGB:
-                    GL.sRGBWrite = true;
-                    break;
-                case RenderTextureReadWrite.Linear:
-                    GL.sRGBWrite = false;
-                    break;
-                default:
-                    GL.sRGBWrite = true;
-                    break;
-            }
+                switch (colorSpace)
+                {
+                    case RenderTextureReadWrite.Linear:
+                        GL.sRGBWrite = false;
+                        break;
 
-            if (material != null)
-            {
-                Graphics.Blit(src, renderTexture, material);
-            }
-            else
-            {
-                Graphics.Blit(src, renderTexture);
-            }
+                    case RenderTextureReadWrite.sRGB:
+                    default:
+                        GL.sRGBWrite = true;
+                        break;
+                }
 
-            if (colorSpace == RenderTextureReadWrite.sRGB)
+                if (material != null)
+                {
+                    Graphics.Blit(src, renderTexture, material);
+                }
+                else
+                {
+                    Graphics.Blit(src, renderTexture);
+                }
+
+            }
+            finally
             {
                 GL.sRGBWrite = sRGBWrite;
             }
