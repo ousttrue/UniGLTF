@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.IO;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 
 namespace UniGLTF
