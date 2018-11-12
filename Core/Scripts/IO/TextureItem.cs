@@ -135,10 +135,22 @@ namespace UniGLTF
         public void Process(glTF gltf, IStorage storage)
         {
             ProcessOnAnyThread(gltf, storage);
-            var it = ProcessOnMainThreadCoroutine(gltf);
-            while (it.MoveNext())
+            var stack = new Stack<IEnumerator>();
+            stack.Push(ProcessOnMainThreadCoroutine(gltf));
+            while (stack.Count > 0)
             {
-
+                if (stack.Peek().MoveNext())
+                {
+                    var nested = stack.Peek().Current as IEnumerator;
+                    if (nested != null)
+                    {
+                        stack.Push(nested);
+                    }
+                }
+                else
+                {
+                    stack.Pop();
+                }
             }
         }
 
