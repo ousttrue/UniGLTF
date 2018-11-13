@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System.IO;
 using System;
+using DepthFirstScheduler;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -131,27 +132,10 @@ namespace UniGLTF
         #region Process
         ITextureLoader m_textureLoader;
 
-
         public void Process(glTF gltf, IStorage storage)
         {
             ProcessOnAnyThread(gltf, storage);
-            var stack = new Stack<IEnumerator>();
-            stack.Push(ProcessOnMainThreadCoroutine(gltf));
-            while (stack.Count > 0)
-            {
-                if (stack.Peek().MoveNext())
-                {
-                    var nested = stack.Peek().Current as IEnumerator;
-                    if (nested != null)
-                    {
-                        stack.Push(nested);
-                    }
-                }
-                else
-                {
-                    stack.Pop();
-                }
-            }
+            ProcessOnMainThreadCoroutine(gltf).CoroutinetoEnd();
         }
 
         public IEnumerator ProcessCoroutine(glTF gltf, IStorage storage)
