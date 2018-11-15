@@ -7,12 +7,25 @@ namespace UniGLTF
     [Serializable]
     public class glTFAttributes : JsonSerializableBase
     {
+        [JsonSchema(Minimum = 0)]
         public int POSITION = -1;
+
+        [JsonSchema(Minimum = 0)]
         public int NORMAL = -1;
+
+        [JsonSchema(Minimum = 0)]
         public int TANGENT = -1;
+
+        [JsonSchema(Minimum = 0)]
         public int TEXCOORD_0 = -1;
+
+        [JsonSchema(Minimum = 0)]
         public int COLOR_0 = -1;
+
+        [JsonSchema(Minimum = 0)]
         public int JOINTS_0 = -1;
+
+        [JsonSchema(Minimum = 0)]
         public int WEIGHTS_0 = -1;
 
         public override int GetHashCode()
@@ -94,7 +107,7 @@ namespace UniGLTF
         [JsonSchema(MinItems = 1)]
         [ItemJsonSchema(SkipSchemaComparison = true)]
         public List<gltfMorphTarget> targets = new List<gltfMorphTarget>();
-       
+
         public glTFPrimitives_extras extras = new glTFPrimitives_extras();
 
         [JsonSchema(SkipSchemaComparison = true)]
@@ -110,7 +123,7 @@ namespace UniGLTF
             {
                 f.Key("targets"); f.GLTFValue(targets);
             }
-            if (extensions.KHR_draco_mesh_compression!=null)
+            if (extensions.KHR_draco_mesh_compression != null)
             {
                 f.KeyValue(() => extensions);
             }
