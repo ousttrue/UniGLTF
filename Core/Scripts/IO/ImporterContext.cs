@@ -9,7 +9,7 @@ using DepthFirstScheduler;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-#if (NET_4_6 && UNITY_2017_1_OR_NEWER)
+#if ((NET_4_6 || NET_STANDARD_2_0) && UNITY_2017_1_OR_NEWER)
 using System.Threading.Tasks;
 #endif
 
@@ -441,10 +441,11 @@ namespace UniGLTF
                 );
         }
 
-#if (NET_4_6 && UNITY_2017_1_OR_NEWER)
-        public Task<Unit> LoadAsyncTask()
+#if ((NET_4_6 || NET_STANDARD_2_0) && UNITY_2017_1_OR_NEWER)
+        public async Task<GameObject> LoadAsyncTask()
         {
-            return LoadAsync().ToTask();
+            await LoadAsync().ToTask();
+            return Root;
         }
 #endif
 
