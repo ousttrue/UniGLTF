@@ -9,7 +9,7 @@ namespace UniJSON
     {
         public static List<T> DeserializeList<T>(this JsonNode jsonList)
         {
-            return jsonList.ArrayItems.Select(x => {
+            return jsonList.ArrayItemsRaw.Select(x => {
 
                 return JsonUtility.FromJson<T>(x.Value.Segment.ToString());
                 
