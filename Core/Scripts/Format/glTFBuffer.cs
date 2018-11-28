@@ -31,7 +31,7 @@ namespace UniGLTF
 
         public string uri;
 
-        [JsonSchema(Required = true, Minimum = 1)]
+        //[JsonSchema(Required = true, Minimum = 1)]
         public int byteLength;
 
         // empty schemas
