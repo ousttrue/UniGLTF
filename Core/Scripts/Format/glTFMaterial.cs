@@ -194,7 +194,7 @@ namespace UniGLTF
             }
             if (emissiveFactor != null)
             {
-                f.Key("emissiveFactor"); f.Value(emissiveFactor);
+                f.Key("emissiveFactor"); f.Serialize(emissiveFactor);
             }
 
             f.KeyValue(() => doubleSided);

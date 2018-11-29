@@ -108,4 +108,35 @@ namespace UniGLTF
             return 4 + 4 + Bytes.Count + padding;
         }
     }
+
+    public static class Glb
+    {
+        public static byte[] ToBytes(string json, ArraySegment<byte> body)
+        {
+            using (var s = new MemoryStream())
+            {
+                GlbHeader.WriteTo(s);
+
+                var pos = s.Position;
+                s.Position += 4; // skip total size
+
+                int size = 12;
+
+                {
+                    var chunk = new GlbChunk(json);
+                    size += chunk.WriteTo(s);
+                }
+                {
+                    var chunk = new GlbChunk(body);
+                    size += chunk.WriteTo(s);
+                }
+
+                s.Position = pos;
+                var bytes = BitConverter.GetBytes(size);
+                s.Write(bytes, 0, bytes.Length);
+
+                return s.ToArray();
+            }
+        }
+    }
 }
