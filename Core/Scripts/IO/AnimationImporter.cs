@@ -242,8 +242,8 @@ namespace UniGLTF
                             {
                                 var node = ctx.GLTF.nodes[channel.target.node];
                                 var mesh = ctx.GLTF.meshes[node.mesh];
-                                var primitive = mesh.primitives.FirstOrDefault();
-                                var targets = primitive.targets;
+                                //var primitive = mesh.primitives.FirstOrDefault();
+                                //var targets = primitive.targets;
 
                                 List<string> blendShapeNames = new List<string>();
                                 var transform = ctx.Nodes[channel.target.node];
