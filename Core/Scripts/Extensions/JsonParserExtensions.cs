@@ -11,7 +11,7 @@ namespace UniJSON
         {
             return jsonList.ArrayItemsRaw.Select(x => {
 
-                return JsonUtility.FromJson<T>(x.Value.Segment.ToString());
+                return JsonUtility.FromJson<T>(new Utf8String(x.Bytes).ToString());
                 
             }).ToList();
         }
