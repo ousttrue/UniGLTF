@@ -456,16 +456,18 @@ namespace UniGLTF
             return false;
         }
 
-        void Traverse(JsonNode node, JsonFormatter f, string parentKey)
+        static Utf8String s_extensions = Utf8String.From("extensions");
+
+        void Traverse(JsonNode node, JsonFormatter f, Utf8String parentKey)
         {
             if(node.IsMap)
             {
                 f.BeginMap();
                 foreach(var kv in node.ObjectItemsRaw)
                 {
-                    if (parentKey == "extensions")
+                    if (parentKey == s_extensions)
                     {
-                        if (!UsedExtension(kv.Key))
+                        if (!UsedExtension(kv.Key.ToString()))
                         {
                             continue;
                         }
@@ -480,7 +482,7 @@ namespace UniGLTF
                 f.BeginList();
                 foreach(var x in node.ArrayItemsRaw)
                 {
-                    Traverse(x, f, null);
+                    Traverse(x, f, default(Utf8String));
                 }
                 f.EndList();
             }
@@ -494,7 +496,7 @@ namespace UniGLTF
         {
             var f = new JsonFormatter();
 
-            Traverse(JsonParser.Parse(json), f, null);
+            Traverse(JsonParser.Parse(json), f, default(Utf8String));
 
             return f.ToString();
         }

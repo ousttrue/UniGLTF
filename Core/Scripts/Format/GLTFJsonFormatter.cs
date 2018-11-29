@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UniJSON;
 
 
 namespace UniGLTF
@@ -26,7 +27,7 @@ namespace UniGLTF
             BeginList();
             foreach (var value in values)
             {
-                Value(value);
+                this.Value(value);
             }
             EndList();
         }
