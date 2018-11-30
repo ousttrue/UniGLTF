@@ -718,7 +718,7 @@ namespace UniGLTF
             }
         }
 
-        public AnimationClip Animation;
+        public List<AnimationClip> AnimationClips = new List<AnimationClip>();
 #endregion
 
 #if UNITY_EDITOR
@@ -736,7 +736,7 @@ namespace UniGLTF
             foreach (var x in textures) { yield return x; }
             foreach (var x in m_materials) { yield return x; }
             foreach (var x in Meshes) { yield return x.Mesh; }
-            if (Animation != null) yield return Animation;
+            foreach (var x in AnimationClips) { yield return x; }
         }
 
         public bool MeshAsSubAsset = false;
