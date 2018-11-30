@@ -573,7 +573,7 @@ namespace UniGLTF
                                     throw new NotImplementedException();
                             }
                         }
-
+                        animationWithCurve.Animation.name = clip.name;
                         gltf.animations.Add(animationWithCurve.Animation);
                     }
                 }

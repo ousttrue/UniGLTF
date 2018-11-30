@@ -155,10 +155,21 @@ namespace UniGLTF
             }
         }
 
-        public static void ImportAnimation(ImporterContext ctx, AnimationClip clip)
+        public static List<AnimationClip> ImportAnimationClip(ImporterContext ctx)
         {
+            List<AnimationClip> animasionClips = new List<AnimationClip>();
             for (int i = 0; i < ctx.GLTF.animations.Count; ++i)
             {
+                var clip = new AnimationClip();
+                clip.ClearCurves();
+                clip.legacy = true;
+                clip.name = ctx.GLTF.animations[i].name;
+                if (string.IsNullOrEmpty(clip.name))
+                {
+                    clip.name = "legacy_" + i;
+                }
+                clip.wrapMode = WrapMode.Loop;
+
                 var animation = ctx.GLTF.animations[i];
                 if (string.IsNullOrEmpty(animation.name))
                 {
@@ -291,7 +302,10 @@ namespace UniGLTF
                             break;
                     }
                 }
+                animasionClips.Add(clip);
             }
+
+            return animasionClips;
         }
 
         public static void ImportAnimation(ImporterContext ctx)
@@ -299,18 +313,16 @@ namespace UniGLTF
             // animation
             if (ctx.GLTF.animations != null && ctx.GLTF.animations.Any())
             {
-                ctx.Animation = new AnimationClip();
-                //ctx.Animation.name = ANIMATION_NAME;
-                ctx.Animation.name = "legacy";
-                ctx.Animation.ClearCurves();
-                ctx.Animation.legacy = true;
-
-                ImportAnimation(ctx, ctx.Animation);
-
-                ctx.Animation.wrapMode = WrapMode.Loop;
                 var animation = ctx.Root.AddComponent<Animation>();
-                animation.AddClip(ctx.Animation, ctx.Animation.name);
-                animation.clip = ctx.Animation;
+                ctx.AnimationClips = ImportAnimationClip(ctx);
+                foreach (var clip in ctx.AnimationClips)
+                {
+                    animation.AddClip(clip, clip.name);
+                }
+                if (ctx.AnimationClips.Count > 0)
+                {
+                    animation.clip = ctx.AnimationClips.First();
+                }
             }
         }
 
