@@ -155,7 +155,7 @@ namespace UniGLTF
             }
         }
 
-        public static IEnumerable<AnimationClip> ImportAnimationClip(ImporterContext ctx)
+        public static List<AnimationClip> ImportAnimationClip(ImporterContext ctx)
         {
             List<AnimationClip> animasionClips = new List<AnimationClip>();
             for (int i = 0; i < ctx.GLTF.animations.Count; ++i)
@@ -314,7 +314,7 @@ namespace UniGLTF
             if (ctx.GLTF.animations != null && ctx.GLTF.animations.Any())
             {
                 var animation = ctx.Root.AddComponent<Animation>();
-                ctx.AnimationClips = ImportAnimationClip(ctx).ToList();
+                ctx.AnimationClips = ImportAnimationClip(ctx);
                 foreach (var clip in ctx.AnimationClips)
                 {
                     animation.AddClip(clip, clip.name);
