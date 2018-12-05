@@ -460,7 +460,7 @@ namespace UniGLTF
 
         void Traverse(JsonNode node, JsonFormatter f, Utf8String parentKey)
         {
-            if(node.IsMap)
+            if(node.IsMap())
             {
                 f.BeginMap();
                 foreach(var kv in node.ObjectItemsRaw)
@@ -477,7 +477,7 @@ namespace UniGLTF
                 }
                 f.EndMap();
             }
-            else if(node.IsArray)
+            else if(node.IsArray())
             {
                 f.BeginList();
                 foreach(var x in node.ArrayItemsRaw)
