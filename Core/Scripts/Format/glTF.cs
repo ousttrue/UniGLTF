@@ -488,7 +488,7 @@ namespace UniGLTF
             }
             else
             {
-                f.Dump(node.Bytes);
+                f.Value(node);
             }
         }
 
