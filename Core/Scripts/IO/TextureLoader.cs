@@ -38,13 +38,11 @@ namespace UniGLTF
             get;
         }
 
-        private string m_textureName;
         UnityPath m_assetPath;
 
-        public AssetTextureLoader(UnityPath assetPath, string textureName)
+        public AssetTextureLoader(UnityPath assetPath, string _)
         {
             m_assetPath = assetPath;
-            m_textureName = textureName;
         }
 
         public void Dispose()

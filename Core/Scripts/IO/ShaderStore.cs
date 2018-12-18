@@ -84,10 +84,10 @@ namespace UniGLTF
             }
         }
 
-        ImporterContext m_context;
-        public ShaderStore(ImporterContext context)
+        //ImporterContext m_context;
+        public ShaderStore(ImporterContext _)
         {
-            m_context = context;
+            //m_context = context;
         }
 
         public static bool IsWhite(float[] color)
