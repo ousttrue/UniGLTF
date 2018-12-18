@@ -117,6 +117,10 @@ namespace UniGLTF
                 return -1;
             }
             var viewIndex = ExtendBufferAndGetViewIndex(gltf, bufferIndex, array, target);
+
+            // index buffer's byteStride is unnecessary
+            gltf.bufferViews[viewIndex].byteStride = 0;
+
             var accessorIndex = gltf.accessors.Count;
             gltf.accessors.Add(new glTFAccessor
             {
