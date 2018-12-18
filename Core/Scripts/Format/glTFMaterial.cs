@@ -158,7 +158,7 @@ namespace UniGLTF
         [ItemJsonSchema(Minimum = 0.0, Maximum = 1.0)]
         public float[] emissiveFactor;
 
-        [JsonSchema(EnumValues = new object[] { "OPAQUE", "MASK", "BLEND" })]
+        [JsonSchema(EnumValues = new object[] { "OPAQUE", "MASK", "BLEND" }, EnumSerializationType = EnumSerializationType.AsUpperString)]
         public string alphaMode;
 
         [JsonSchema(Dependencies = new string[] { "alphaMode" }, Minimum = 0.0)]

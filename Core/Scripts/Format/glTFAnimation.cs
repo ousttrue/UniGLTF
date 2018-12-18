@@ -12,7 +12,7 @@ namespace UniGLTF
         [JsonSchema(Minimum = 0)]
         public int node;
 
-        [JsonSchema(Required = true, EnumValues = new object[] { "translation", "rotation", "scale", "weights" })]
+        [JsonSchema(Required = true, EnumValues = new object[] { "translation", "rotation", "scale", "weights" }, EnumSerializationType = EnumSerializationType.AsString)]
         public string path;
 
         // empty schemas
@@ -132,7 +132,7 @@ namespace UniGLTF
         [JsonSchema(Required = true, Minimum = 0)]
         public int input = -1;
 
-        [JsonSchema(EnumValues = new object[] { "LINEAR", "STEP", "CUBICSPLINE" })]
+        [JsonSchema(EnumValues = new object[] { "LINEAR", "STEP", "CUBICSPLINE" }, EnumSerializationType = EnumSerializationType.AsString)]
         public string interpolation;
 
         [JsonSchema(Required = true, Minimum = 0)]

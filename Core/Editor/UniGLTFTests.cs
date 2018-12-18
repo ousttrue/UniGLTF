@@ -51,18 +51,25 @@ namespace UniGLTF
             {
                 // export
                 var gltf = new glTF();
+
+                string json = null;
                 using (var exporter = new gltfExporter(gltf))
                 {
                     exporter.Prepare(go);
                     exporter.Export();
 
-                    // import
-                    context.ParseJson(gltf.ToJson(), new SimpleStorage(new ArraySegment<byte>()));
-                    //Debug.LogFormat("{0}", context.Json);
-                    context.Load();
+                    // remove empty buffer
+                    gltf.buffers.Clear();
 
-                    AssertAreEqual(go.transform, context.Root.transform);
+                    json = gltf.ToJson();
                 }
+
+                // import
+                context.ParseJson(json, new SimpleStorage(new ArraySegment<byte>()));
+                //Debug.LogFormat("{0}", context.Json);
+                context.Load();
+
+                AssertAreEqual(go.transform, context.Root.transform);
             }
             finally
             {

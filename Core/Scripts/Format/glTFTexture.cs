@@ -52,7 +52,7 @@ namespace UniGLTF
         [JsonSchema(Dependencies = new string[] { "mimeType" }, Minimum = 0)]
         public int bufferView;
 
-        [JsonSchema(EnumValues = new object[] { "image/jpeg", "image/png" })]
+        [JsonSchema(EnumValues = new object[] { "image/jpeg", "image/png" }, EnumSerializationType =EnumSerializationType.AsString)]
         public string mimeType;
 
         public string GetExt()
