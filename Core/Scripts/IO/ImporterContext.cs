@@ -410,11 +410,17 @@ namespace UniGLTF
             schedulable.ExecuteAll();
         }
 
+        [Obsolete("Action<Unit> to Action")]
         public IEnumerator LoadCoroutine(Action<Unit> onLoaded = null, Action<Exception> onError = null)
+        {
+            return LoadCoroutine(() => onLoaded(Unit.Default), onError);
+        }
+
+        public IEnumerator LoadCoroutine(Action onLoaded = null, Action<Exception> onError = null)
         {
             if (onLoaded == null)
             {
-                onLoaded = _ => { };
+                onLoaded = () => { };
             }
 
             if (onError == null)
@@ -435,9 +441,17 @@ namespace UniGLTF
                     yield return null;
                 }
             }
+
+            onLoaded();
         }
 
+        [Obsolete("Action<Unit> to Action")]
         public void LoadAsync(Action<Unit> onLoaded, Action<Exception> onError = null)
+        {
+            LoadAsync(() => onLoaded(Unit.Default), onError);
+        }
+
+        public void LoadAsync(Action onLoaded, Action<Exception> onError = null)
         {
             if (onError == null)
             {
@@ -446,7 +460,7 @@ namespace UniGLTF
 
             LoadAsync()
                 .Subscribe(Scheduler.MainThread,
-                onLoaded,
+                _ => onLoaded(),
                 onError
                 );
         }
