@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UniJSON;
 using UnityEngine;
 
 
@@ -145,5 +146,50 @@ namespace UniGLTF
             Assert.True(ImporterContext.IsGeneratedUniGLTFAndOlderThan("UniGLTF-0.16", 1, 16));
             Assert.True(ImporterContext.IsGeneratedUniGLTFAndOlderThan("UniGLTF", 1, 16));
         }
+
+        [Test]
+        public void MeshTest()
+        {
+            var mesh = new glTFMesh("mesh")
+            {
+                primitives = new List<glTFPrimitives>
+                {
+                    new glTFPrimitives
+                    {
+                        attributes=new glTFAttributes
+                        {
+                            POSITION=0,
+                        }
+                    }
+                }
+            };
+
+            var f = new JsonFormatter();
+            f.Serialize(mesh);
+
+            var json = new Utf8String(f.GetStoreBytes()).ToString();
+            Debug.Log(json);
+        }
+
+        [Test]
+        public void PrimitiveTest()
+        {
+            var prims = new List<glTFPrimitives> {
+                new glTFPrimitives
+                {
+                    attributes = new glTFAttributes
+                    {
+                        POSITION = 0,
+                    }
+                }
+            };
+
+            var f = new JsonFormatter();
+            f.Serialize(prims);
+
+            var json = new Utf8String(f.GetStoreBytes()).ToString();
+            Debug.Log(json);
+        }
+
     }
 }
