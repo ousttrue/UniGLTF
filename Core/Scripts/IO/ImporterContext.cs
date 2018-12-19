@@ -22,6 +22,16 @@ namespace UniGLTF
     public class ImporterContext
     {
         #region MeasureTime
+        bool m_showSpeedLog
+#if UNIGLTF_DEVELOP
+            = true
+#endif
+            ;
+        public bool ShowSpeedLog
+        {
+            set { m_showSpeedLog = value; }
+        }
+
         public struct KeyElapsed
         {
             public string Key;
@@ -533,7 +543,10 @@ namespace UniGLTF
                     _ =>
                     {
                         OnLoadModel();
-                        Debug.Log(GetSpeedLog());
+                        if (m_showSpeedLog)
+                        {
+                            Debug.Log(GetSpeedLog());
+                        }
                         return Unit.Default;
                     });
         }
