@@ -91,9 +91,22 @@ namespace UniGLTF
             return new MaterialExporter();
         }
 
+        /// <summary>
+        /// このエクスポーターがサポートするExtension
+        /// </summary>
+        protected virtual IEnumerable<string> ExtensionUsed
+        {
+            get
+            {
+                yield return glTF_KHR_materials_unlit.ExtensionName;
+            }
+        }
+
         public gltfExporter(glTF gltf)
         {
             glTF = gltf;
+
+            glTF.extensionsUsed.AddRange(ExtensionUsed);
 
             glTF.asset = new glTFAssets
             {
@@ -115,10 +128,9 @@ namespace UniGLTF
 
         public virtual void Prepare(GameObject go)
         {
+            // コピーを作って、Z軸を反転することで左手系を右手系に変換する
             Copy = GameObject.Instantiate(go);
-
-            // Left handed to Right handed
-            Copy.transform.ReverseZ();
+            Copy.transform.ReverseZRecursive();
         }
 
         public void Export()
@@ -166,7 +178,7 @@ namespace UniGLTF
             return node;
         }
 
-        public void FromGameObject(glTF gltf, GameObject go, bool useSparseAccessorForMorphTarget = false)
+        void FromGameObject(glTF gltf, GameObject go, bool useSparseAccessorForMorphTarget = false)
         {
             var bytesBuffer = new ArrayByteBuffer(new byte[50 * 1024 * 1024]);
             var bufferIndex = gltf.AddBuffer(bytesBuffer);

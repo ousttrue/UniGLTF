@@ -256,7 +256,7 @@ namespace UniGLTF
             return new float[] { c.r, c.g, c.b, c.a };
         }
 
-        public static void ReverseZ(this Transform root)
+        public static void ReverseZRecursive(this Transform root)
         {
             var globalMap = root.Traverse().ToDictionary(x => x, x => PosRot.FromGlobalTransform(x));
 

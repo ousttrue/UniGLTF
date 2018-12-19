@@ -328,10 +328,7 @@ namespace UniGLTF
         public List<glTFCamera> cameras = new List<glTFCamera>();
 
         [JsonSchema(MinItems = 1)]
-        public List<string> extensionsUsed = new List<string>
-        {
-            glTF_KHR_materials_unlit.ExtensionName,
-        };
+        public List<string> extensionsUsed = new List<string>();
 
         [JsonSchema(MinItems = 1)]
         public List<string> extensionsRequired = new List<string>();
