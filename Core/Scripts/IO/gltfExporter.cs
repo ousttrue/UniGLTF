@@ -162,17 +162,20 @@ namespace UniGLTF
                 scale = x.transform.localScale.ToArray(),
             };
 
-            var meshFilter = x.GetComponent<MeshFilter>();
-            if (meshFilter != null)
+            if (x.gameObject.activeInHierarchy)
             {
-                node.mesh = meshes.IndexOf(meshFilter.sharedMesh);
-            }
+                var meshFilter = x.GetComponent<MeshFilter>();
+                if (meshFilter != null)
+                {
+                    node.mesh = meshes.IndexOf(meshFilter.sharedMesh);
+                }
 
-            var skinnredMeshRenderer = x.GetComponent<SkinnedMeshRenderer>();
-            if (skinnredMeshRenderer != null)
-            {
-                node.mesh = meshes.IndexOf(skinnredMeshRenderer.sharedMesh);
-                node.skin = skins.IndexOf(skinnredMeshRenderer);
+                var skinnredMeshRenderer = x.GetComponent<SkinnedMeshRenderer>();
+                if (skinnredMeshRenderer != null)
+                {
+                    node.mesh = meshes.IndexOf(skinnredMeshRenderer.sharedMesh);
+                    node.skin = skins.IndexOf(skinnredMeshRenderer);
+                }
             }
 
             return node;
