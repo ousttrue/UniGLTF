@@ -1,6 +1,6 @@
 ﻿using System;
-using System.IO;
 using UnityEngine;
+
 
 namespace UniGLTF
 {
@@ -38,7 +38,7 @@ namespace UniGLTF
         {
             var context = new ImporterContext();
             context.Parse(path, bytes);
-            context.LoadAsync(_ =>
+            context.LoadAsync(() =>
             {
                 if (show)
                 {
