@@ -469,8 +469,8 @@ namespace UniGLTF
                             continue;
                         }
                     }
-                    f.Key(kv.Key);
-                    Traverse(kv.Value, f, kv.Key);
+                    f.Key(kv.Key.GetUtf8String());
+                    Traverse(kv.Value, f, kv.Key.GetUtf8String());
                 }
                 f.EndMap();
             }
