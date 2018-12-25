@@ -455,16 +455,16 @@ namespace UniGLTF
 
         static Utf8String s_extensions = Utf8String.From("extensions");
 
-        void Traverse(JsonNode node, JsonFormatter f, Utf8String parentKey)
+        void Traverse(ListTreeNode<JsonValue> node, JsonFormatter f, Utf8String parentKey)
         {
             if(node.IsMap())
             {
                 f.BeginMap();
-                foreach(var kv in node.ObjectItemsRaw)
+                foreach(var kv in node.ObjectItems())
                 {
                     if (parentKey == s_extensions)
                     {
-                        if (!UsedExtension(kv.Key.ToString()))
+                        if (!UsedExtension(kv.Key.GetString()))
                         {
                             continue;
                         }
@@ -477,7 +477,7 @@ namespace UniGLTF
             else if(node.IsArray())
             {
                 f.BeginList();
-                foreach(var x in node.ArrayItemsRaw)
+                foreach(var x in node.ArrayItems())
                 {
                     Traverse(x, f, default(Utf8String));
                 }
