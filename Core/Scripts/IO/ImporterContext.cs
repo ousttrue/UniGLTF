@@ -927,11 +927,16 @@ namespace UniGLTF
             }
         }
 
+        public void Dispose()
+        {
+            DestroyRootAndResources();
+        }
+
         /// <summary>
         /// Destroy resources that created ImporterContext for runtime load.
         /// </summary>
-        public void Dispose()
-        {
+        public void DestroyRootAndResources()
+        { 
             if (!Application.isPlaying)
             {
                 Debug.LogWarningFormat("Dispose called in editor mode. This function is for runtime");
