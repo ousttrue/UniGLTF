@@ -58,7 +58,7 @@ namespace UniGLTF
                     {
                         context.Load();
                         context.SaveAsAsset(prefabPath);
-                        context.Destroy(false);
+                        context.EditorDestroyRoot();
                     }
                     catch (UniGLTFNotSupportedException ex)
                     {
@@ -66,13 +66,13 @@ namespace UniGLTF
                             src,
                             ex.Message
                             );
-                        context.Destroy(true);
+                        context.EditorDestroyRootAndAssets();
                     }
                     catch (Exception ex)
                     {
                         Debug.LogErrorFormat("import error: {0}", src);
                         Debug.LogErrorFormat("{0}", ex);
-                        context.Destroy(true);
+                        context.EditorDestroyRootAndAssets();
                     }
                 };
         }

@@ -76,7 +76,7 @@ namespace UniGLTF
             {
                 //Debug.LogFormat("Destory, {0}", go.name);
                 GameObject.DestroyImmediate(go);
-                context.Destroy(true);
+                context.EditorDestroyRootAndAssets();
             }
         }
 

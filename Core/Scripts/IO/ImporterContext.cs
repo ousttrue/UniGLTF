@@ -19,7 +19,7 @@ namespace UniGLTF
     /// <summary>
     /// GLTF importer
     /// </summary>
-    public class ImporterContext
+    public class ImporterContext: IDisposable
     {
         #region MeasureTime
         bool m_showSpeedLog
@@ -905,9 +905,14 @@ namespace UniGLTF
 
             CreateTextureItems(prefabParentDir);
         }
-#endregion
+        #endregion
 #endif
 
+        /// <summary>
+        /// This function is used for clean up after create assets.
+        /// </summary>
+        /// <param name="destroySubAssets">Ambiguous arguments</param>
+        [Obsolete("Use Dispose for runtime loader resource management")]
         public void Destroy(bool destroySubAssets)
         {
             if (Root != null) GameObject.DestroyImmediate(Root);
@@ -921,5 +926,50 @@ namespace UniGLTF
 #endif
             }
         }
+
+        /// <summary>
+        /// Destroy resources that created ImporterContext for runtime load.
+        /// </summary>
+        public void Dispose()
+        {
+            if (!Application.isPlaying)
+            {
+                Debug.LogWarningFormat("Dispose called in editor mode. This function is for runtime");
+            }
+
+            // Remove hierarchy
+            if (Root != null) GameObject.Destroy(Root);
+
+            // Remove resources. materials, textures meshes etc...
+            foreach (var o in ObjectsForSubAsset())
+            {
+                UnityEngine.Object.DestroyImmediate(o, true);
+            }
+        }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// Destroy the GameObject that became the basis of Prefab
+        /// </summary>
+        public void EditorDestroyRoot()
+        {
+            if (Root != null) GameObject.DestroyImmediate(Root);
+        }
+
+        /// <summary>
+        /// Destroy assets that created ImporterContext. This function is clean up for imoprter error.
+        /// </summary>
+        public void EditorDestroyRootAndAssets()
+        {
+            // Remove hierarchy
+            if (Root != null) GameObject.DestroyImmediate(Root);
+
+            // Remove resources. materials, textures meshes etc...
+            foreach (var o in ObjectsForSubAsset())
+            {
+                UnityEngine.Object.DestroyImmediate(o, true);
+            }
+        }
+#endif
     }
 }
