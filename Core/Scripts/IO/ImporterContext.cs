@@ -799,6 +799,16 @@ namespace UniGLTF
             }
         }
 
+        public virtual bool IsOverwrite(UnityEngine.Object o)
+        {
+            if(o is Material)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public void SaveAsAsset(UnityPath prefabPath)
         {
             ShowMeshes();
@@ -826,6 +836,15 @@ namespace UniGLTF
                 var assetPath = GetAssetPath(prefabPath, o);
                 if (!assetPath.IsNull)
                 {
+                    if (assetPath.IsFileExists)
+                    {
+                        if (!IsOverwrite(o))
+                        {
+                            // 上書きしない
+                            Debug.LogWarningFormat("already exists. skip {0}", assetPath);
+                            continue;
+                        }
+                    }
                     assetPath.Parent.EnsureFolder();
                     assetPath.CreateAsset(o);
                     paths.Add(assetPath);
