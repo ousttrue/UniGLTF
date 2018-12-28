@@ -751,10 +751,8 @@ namespace UniGLTF
         }
 
         public List<AnimationClip> AnimationClips = new List<AnimationClip>();
-#endregion
+        #endregion
 
-#if UNITY_EDITOR
-#region Assets
         protected virtual IEnumerable<UnityEngine.Object> ObjectsForSubAsset()
         {
             HashSet<Texture2D> textures = new HashSet<Texture2D>();
@@ -771,6 +769,8 @@ namespace UniGLTF
             foreach (var x in AnimationClips) { yield return x; }
         }
 
+#if UNITY_EDITOR
+        #region Assets
         public bool MeshAsSubAsset = false;
 
         protected virtual UnityPath GetAssetPath(UnityPath prefabPath, UnityEngine.Object o)
