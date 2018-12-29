@@ -1,3 +1,7 @@
+> I decided to integrate this library with UniVRM for maintenance reason (submodule burdensome). Continue updating within UniVRM
+
+* [UniVRM](https://github.com/dwango/UniVRM)
+
 # UniGLTF
 
 [glTF](https://github.com/KhronosGroup/glTF) 2.0 importer and exporter for Unity 5.6 or later
