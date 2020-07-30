@@ -1,6 +1,12 @@
 > I decided to integrate this library with UniVRM for maintenance reason (submodule burdensome). Continue updating within UniVRM
 
-* [UniVRM](https://github.com/dwango/UniVRM)
+* [UniGLTF in UniVRM](https://github.com/vrm-c/UniVRM/tree/master/Assets/VRM/UniGLTF)
+
+https://github.com/vrm-c/UniVRM/releases
+
+UniVRM-xxx.unitypackage contains UniGLTF.
+
+GLTF menu is under the VRM menu.
 
 # UniGLTF
 
