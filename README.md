@@ -1,12 +1,14 @@
 > I decided to integrate this library with UniVRM for maintenance reason (submodule burdensome). Continue updating within UniVRM
 
-* [UniGLTF in UniVRM](https://github.com/vrm-c/UniVRM/tree/master/Assets/VRM/UniGLTF)
-
-https://github.com/vrm-c/UniVRM/releases
+* [UniGLTF in UniVRM](https://github.com/vrm-c/UniVRM/tree/master/Assets/UniGLTF)
 
 UniVRM-xxx.unitypackage contains UniGLTF.
 
-GLTF menu is under the VRM menu.
+* https://github.com/vrm-c/UniVRM/releases
+
+UniGLTF is currently separated from UniVRM-0.63.2 for stand-alone use.
+
+* https://vrm.dev/docs/univrm/gltf/unigltf/
 
 # UniGLTF
 
